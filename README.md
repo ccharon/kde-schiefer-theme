@@ -4,7 +4,7 @@ Motif/CDE-artiges Erscheinungsbild für KDE Plasma 6, abgeleitet von Breeze. Abs
 Breeze, nur das Zeichnen ist ersetzt: 2-px-Kanten (hell oben links, dunkel unten rechts), versenkte Felder,
 erhabene Knöpfe, helles Schieferblau-grau.
 
-Stand: **Version 0.1**, über das lokale Gentoo-Overlay installiert auf dem Desktop (amd64) und dem
+Git-Repository (Branch `main`, lokal, kein Remote). Stand: **Version 0.1**, über das lokale Gentoo-Overlay installiert auf dem Desktop (amd64) und dem
 MacBook Air mit Gentoo Asahi (arm64).
 
 ## Aufbau
