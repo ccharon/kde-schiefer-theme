@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.16)
+project(svgbounds)
+find_package(Qt6 REQUIRED COMPONENTS Gui Svg)
+add_executable(svgbounds svgbounds.cpp)
+target_link_libraries(svgbounds Qt6::Gui Qt6::Svg)

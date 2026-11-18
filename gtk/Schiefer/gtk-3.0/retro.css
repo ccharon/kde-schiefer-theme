@@ -1,0 +1,669 @@
+/* Schiefer – Motif/CDE-Zeichnung über Breeze-GTK3.
+ *
+ * Grundregel: Breeze hat 1 px Rand. Motif-Kanten sind 2 px breit: äußere Linie = border,
+ * innere Linie = box-shadow inset. So bleiben alle Größen und Abstände wie bei Breeze.
+ * Licht/Schatten wie im Qt-Stil: mix(Grund, weiß, 0.55) / mix(Grund, schwarz, 0.5).
+ */
+
+@define-color retro_light mix(@theme_bg_color_breeze, white, 0.55);
+@define-color retro_dark mix(@theme_bg_color_breeze, black, 0.5);
+@define-color retro_trough mix(@theme_bg_color_breeze, black, 0.12);
+@define-color retro_hover mix(@theme_button_background_normal_breeze, white, 0.12);
+@define-color retro_pressed mix(@theme_button_background_normal_breeze, black, 0.08);
+@define-color retro_focus shade(@theme_selected_bg_color_breeze, 0.77);
+@define-color retro_outline mix(@theme_bg_color_breeze, black, 0.62);
+@define-color retro_title_light mix(@theme_titlebar_background_breeze, white, 0.45);
+@define-color retro_title_dark mix(@theme_titlebar_background_breeze, black, 0.45);
+
+/* ------------------------------------------------------------------ Knöpfe */
+
+button,
+button:backdrop,
+button:disabled,
+button:backdrop:disabled {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    background: @theme_button_background_normal_breeze;
+    background-image: none;
+}
+
+button:hover,
+button:hover:backdrop {
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    background: @retro_hover;
+}
+
+button:active,
+button:checked,
+button:checked:backdrop,
+button:checked:disabled,
+button:active:hover,
+button:checked:hover {
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    background: @retro_pressed;
+}
+
+button:focus {
+    /* Motif-Fokus: dunkle Linie innerhalb der Kante */
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark, inset 0 0 0 2px @retro_focus;
+}
+
+button.suggested-action,
+button.suggested-action:backdrop {
+    background: mix(@theme_button_background_normal_breeze, @theme_selected_bg_color_breeze, 0.25);
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+}
+
+button.destructive-action,
+button.destructive-action:backdrop {
+    background: mix(@theme_button_background_normal_breeze, @error_color_breeze, 0.2);
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+}
+
+/* flache Knöpfe (Werkzeugleisten, Kopfleisten, Verweise): erst beim Überfahren erhaben */
+button.flat,
+button.flat:backdrop,
+button.flat:disabled,
+toolbar button,
+toolbar button:backdrop,
+toolbar button:disabled,
+headerbar button,
+headerbar button:backdrop,
+headerbar button:disabled,
+.titlebar button,
+button.link,
+button.link:hover,
+button.link:active {
+    border-color: transparent;
+    box-shadow: none;
+    background: transparent;
+}
+
+button.flat:hover,
+toolbar button:hover,
+headerbar button:hover,
+.titlebar button:hover {
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    background: @retro_hover;
+}
+
+button.flat:active,
+button.flat:checked,
+toolbar button:active,
+toolbar button:checked,
+toolbar button:checked:backdrop,
+headerbar button:active,
+headerbar button:checked,
+.titlebar button:active,
+.titlebar button:checked {
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    background: @retro_pressed;
+}
+
+/* Knöpfe auf der blauen Kopfleiste: Kanten aus der Titelleistenfarbe */
+headerbar button:hover,
+.titlebar button:hover {
+    border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
+    box-shadow: inset 1px 1px @retro_title_light, inset -1px -1px @retro_title_dark;
+    background: @theme_titlebar_background_breeze;
+}
+
+headerbar button:active,
+headerbar button:checked,
+.titlebar button:active,
+.titlebar button:checked {
+    border-color: @retro_title_dark @retro_title_light @retro_title_light @retro_title_dark;
+    box-shadow: inset 1px 1px @retro_title_dark, inset -1px -1px @retro_title_light;
+    background: shade(@theme_titlebar_background_breeze, 0.92);
+}
+
+/* Fenster-Knöpfe der Kopfleiste (Firefox, Thunderbird …): immer erhaben wie die KWin-Dekoration */
+headerbar button.titlebutton,
+headerbar button.titlebutton:backdrop,
+.titlebar button.titlebutton,
+.titlebar button.titlebutton:backdrop {
+    border-radius: 0;
+    border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
+    box-shadow: inset 1px 1px @retro_title_light, inset -1px -1px @retro_title_dark;
+    background: @theme_titlebar_background_breeze;
+}
+
+headerbar button.titlebutton:active,
+.titlebar button.titlebutton:active {
+    border-color: @retro_title_dark @retro_title_light @retro_title_light @retro_title_dark;
+    box-shadow: inset 1px 1px @retro_title_dark, inset -1px -1px @retro_title_light;
+}
+
+/* ------------------------------------------------------------------ Eingabefelder */
+
+entry,
+entry:backdrop,
+entry:disabled,
+spinbutton:not(.vertical),
+spinbutton:not(.vertical):backdrop,
+spinbutton:not(.vertical):disabled {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    background-color: @theme_base_color_breeze;
+    background-image: none;
+}
+
+entry:focus,
+spinbutton:not(.vertical):focus {
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light, inset 0 0 0 2px @retro_focus;
+}
+
+/* Eingabefeld in einem Drehfeld oder in einer verbundenen Gruppe: keine doppelte Kante */
+spinbutton:not(.vertical) entry,
+spinbutton:not(.vertical) entry:focus,
+combobox entry + button,
+.linked > entry {
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.linked > entry,
+.linked > entry:focus {
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+}
+
+.linked > entry:focus {
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light, inset 0 0 0 2px @retro_focus;
+}
+
+/* Knöpfe im Drehfeld: kleine erhabene Felder */
+spinbutton:not(.vertical) button,
+spinbutton:not(.vertical) button:backdrop {
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    background: @theme_button_background_normal_breeze;
+    margin: 2px 2px 2px 0;
+}
+
+spinbutton:not(.vertical) button:active {
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    background: @retro_pressed;
+}
+
+/* ------------------------------------------------------------------ Auswahlkästchen */
+
+check,
+check:backdrop,
+radio,
+radio:backdrop {
+    border: 1px solid;
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    background-color: @theme_base_color_breeze;
+    background-image: none;
+}
+
+check {
+    border-radius: 0;
+}
+
+radio {
+    border-radius: 50%;
+}
+
+check:hover,
+radio:hover,
+check:checked,
+radio:checked,
+check:indeterminate,
+radio:indeterminate {
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    background-color: @theme_base_color_breeze;
+}
+
+/* gewählter Radioknopf: Punkt in der Hervorhebungsfarbe (wie Qt-Stil) */
+radio:checked,
+radio:checked:backdrop,
+radio:checked:hover {
+    -gtk-icon-source: none;
+    background-image: radial-gradient(circle closest-side, @theme_selected_bg_color_breeze 38%, transparent 48%);
+}
+
+radio:checked:disabled {
+    -gtk-icon-source: none;
+    background-image: radial-gradient(circle closest-side, @insensitive_fg_color_breeze 38%, transparent 48%);
+}
+
+/* ------------------------------------------------------------------ Schalter */
+
+switch,
+switch:backdrop {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    background-color: @retro_trough;
+    background-image: none;
+}
+
+switch:checked,
+switch:checked:backdrop {
+    background-color: @theme_selected_bg_color_breeze;
+}
+
+switch slider,
+switch slider:backdrop,
+switch:checked slider,
+switch:hover slider {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    background: @theme_button_background_normal_breeze;
+}
+
+/* ------------------------------------------------------------------ Regler, Fortschritt, Pegel */
+
+scale trough,
+scale trough:backdrop,
+scale trough:disabled,
+progressbar trough,
+progressbar trough:backdrop,
+levelbar trough,
+levelbar trough:backdrop {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    background: @retro_trough;
+}
+
+scale.horizontal trough {
+    min-height: 6px;
+}
+
+scale.vertical trough {
+    min-width: 6px;
+}
+
+scale highlight,
+scale highlight:backdrop,
+progressbar progress,
+progressbar progress:backdrop {
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    background: @theme_selected_bg_color_breeze;
+}
+
+scale highlight {
+    margin: 1px;
+}
+
+progressbar progress {
+    margin: 1px;
+}
+
+progressbar.horizontal trough,
+progressbar.horizontal progress {
+    min-height: 10px;
+}
+
+scale slider,
+scale slider:backdrop,
+scale slider:hover,
+scale slider:active,
+scale slider:disabled {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    background: @theme_button_background_normal_breeze;
+}
+
+/* Mittelrille wie beim Motif-Daumen */
+scale.horizontal slider {
+    background-image: linear-gradient(to right, transparent 7px, @retro_dark 7px, @retro_dark 8px,
+                                      @retro_light 8px, @retro_light 9px, transparent 9px);
+}
+
+scale.vertical slider {
+    background-image: linear-gradient(to bottom, transparent 7px, @retro_dark 7px, @retro_dark 8px,
+                                      @retro_light 8px, @retro_light 9px, transparent 9px);
+}
+
+levelbar trough block,
+levelbar trough block:backdrop,
+levelbar.horizontal.continuous trough block,
+levelbar.horizontal.discrete trough block {
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+}
+
+levelbar block.filled,
+levelbar block.low,
+levelbar block.high,
+levelbar block.full {
+    margin: 1px;
+}
+
+/* ------------------------------------------------------------------ Rollbalken */
+
+scrollbar,
+scrollbar:backdrop {
+    -GtkScrollbar-has-backward-stepper: true;
+    -GtkScrollbar-has-forward-stepper: true;
+    border: 1px solid;
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    background: @retro_trough;
+    padding: 1px;
+}
+
+scrollbar.vertical:dir(ltr),
+scrollbar.vertical:dir(rtl),
+scrollbar.vertical.right,
+scrollbar.vertical.left,
+scrollbar.horizontal.bottom,
+scrollbar.horizontal.top {
+    border: 1px solid;
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+}
+
+scrollbar trough,
+scrollbar:hover trough {
+    margin: 0;
+    background: transparent;
+    border: none;
+}
+
+scrollbar slider,
+scrollbar slider:hover,
+scrollbar slider:active,
+scrollbar:hover slider,
+scrollbar slider:backdrop {
+    min-width: 12px;
+    min-height: 12px;
+    margin: 0;
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    background: @theme_button_background_normal_breeze;
+    background-image: none;
+}
+
+scrollbar.vertical slider {
+    min-height: 30px;
+}
+
+scrollbar.horizontal slider {
+    min-width: 30px;
+}
+
+scrollbar button,
+scrollbar button:backdrop,
+scrollbar button:hover {
+    min-width: 12px;
+    min-height: 12px;
+    padding: 0;
+    margin: 0;
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    background: @theme_button_background_normal_breeze;
+    color: @theme_button_foreground_normal_breeze;
+}
+
+scrollbar button:active {
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    background: @retro_pressed;
+}
+
+scrollbar.vertical button.up { -gtk-icon-source: -gtk-icontheme("pan-up-symbolic"); }
+scrollbar.vertical button.down { -gtk-icon-source: -gtk-icontheme("pan-down-symbolic"); }
+scrollbar.horizontal button.up { -gtk-icon-source: -gtk-icontheme("pan-start-symbolic"); }
+scrollbar.horizontal button.down { -gtk-icon-source: -gtk-icontheme("pan-end-symbolic"); }
+
+/* schmale Überlagerungs-Rollbalken (Touchpad) bleiben schlicht */
+scrollbar.overlay-indicator:not(.dragging):not(.hovering) {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+scrollbar.overlay-indicator:not(.dragging):not(.hovering) slider {
+    min-width: 4px;
+    min-height: 4px;
+    border: 1px solid @retro_dark;
+    box-shadow: none;
+}
+
+scrollbar.overlay-indicator:not(.dragging):not(.hovering) button {
+    min-width: 0;
+    min-height: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    -gtk-icon-source: none;
+}
+
+/* ------------------------------------------------------------------ Rahmen */
+
+frame > border,
+frame:backdrop > border {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+}
+
+frame.flat > border,
+statusbar frame > border {
+    border: none;
+    box-shadow: none;
+}
+
+scrolledwindow.frame,
+scrolledwindow.frame:backdrop,
+frame.view > border {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    padding: 1px;
+}
+
+separator,
+separator:backdrop {
+    background: none;
+}
+
+separator.horizontal {
+    min-height: 2px;
+    background-image: linear-gradient(to bottom, @retro_dark 1px, @retro_light 1px);
+}
+
+separator.vertical {
+    min-width: 2px;
+    background-image: linear-gradient(to right, @retro_dark 1px, @retro_light 1px);
+}
+
+/* Tabellenköpfe: erhabene Felder */
+treeview.view header button,
+treeview.view header button:backdrop,
+treeview.view header button:hover {
+    border-radius: 0;
+    border-style: solid;
+    border-width: 1px;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: none;
+    background: @theme_button_background_normal_breeze;
+}
+
+treeview.view header button:active {
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+}
+
+/* ------------------------------------------------------------------ Reiter */
+
+notebook > header,
+notebook > header:backdrop {
+    background: @theme_bg_color_breeze;
+    border: none;
+    box-shadow: none;
+}
+
+notebook > header > tabs > tab,
+notebook > header > tabs > tab:backdrop,
+notebook > header > tabs > tab:hover {
+    border-radius: 0;
+    border: 1px solid;
+    box-shadow: none;
+    background: mix(@theme_bg_color_breeze, black, 0.07);
+    outline: none;
+}
+
+notebook > header > tabs > tab:checked,
+notebook > header > tabs > tab:checked:backdrop,
+notebook > header > tabs > tab:checked:hover {
+    background: @theme_bg_color_breeze;
+}
+
+notebook > header.top > tabs > tab {
+    border-color: @retro_light @retro_dark transparent @retro_light;
+    border-bottom-width: 0;
+    box-shadow: inset 1px 1px @retro_light, inset -1px 0 @retro_dark;
+    margin-top: 2px;
+}
+
+notebook > header.top > tabs > tab:checked {
+    margin-top: 0;
+}
+
+notebook > header.bottom > tabs > tab {
+    border-color: transparent @retro_dark @retro_dark @retro_light;
+    border-top-width: 0;
+    box-shadow: inset 1px 0 @retro_light, inset -1px -1px @retro_dark;
+    margin-bottom: 2px;
+}
+
+notebook > header.bottom > tabs > tab:checked {
+    margin-bottom: 0;
+}
+
+notebook > header.left > tabs > tab {
+    border-color: @retro_light transparent @retro_dark @retro_light;
+    border-right-width: 0;
+    box-shadow: inset 1px 1px @retro_light, inset 0 -1px @retro_dark;
+    margin-left: 2px;
+}
+
+notebook > header.right > tabs > tab {
+    border-color: @retro_light @retro_dark @retro_dark transparent;
+    border-left-width: 0;
+    box-shadow: inset 0 1px @retro_light, inset -1px -1px @retro_dark;
+    margin-right: 2px;
+}
+
+notebook > header.left > tabs > tab:checked { margin-left: 0; }
+notebook > header.right > tabs > tab:checked { margin-right: 0; }
+
+notebook.frame,
+notebook.frame:backdrop {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+}
+
+notebook > stack:not(:only-child) {
+    background: @theme_bg_color_breeze;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+}
+
+/* ------------------------------------------------------------------ Menüs und Popover */
+
+menu,
+.menu,
+.context-menu,
+menu:backdrop {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    background-color: @theme_bg_color_breeze;
+}
+
+.csd.popup decoration,
+.popup decoration {
+    border-radius: 0;
+    box-shadow: 0 0 0 1px @retro_outline;
+}
+
+menu menuitem:hover,
+.menu menuitem:hover,
+.context-menu menuitem:hover,
+menubar > menuitem:hover,
+popover.menu modelbutton:hover,
+popover modelbutton.flat:hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    background: @theme_bg_color_breeze;
+    color: @theme_fg_color_breeze;
+}
+
+menu menuitem:hover label,
+menu menuitem:hover accelerator,
+menubar > menuitem:hover label,
+popover modelbutton:hover label {
+    color: @theme_fg_color_breeze;
+}
+
+menubar > menuitem {
+    border: 1px solid transparent;
+}
+
+popover.background,
+popover.background:backdrop {
+    border-radius: 0;
+    border: 1px solid @retro_outline;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    background-color: @theme_bg_color_breeze;
+}
+
+tooltip,
+tooltip.background,
+.tooltip {
+    border-radius: 0;
+    border: 1px solid @retro_outline;
+    box-shadow: none;
+}
+
+/* ------------------------------------------------------------------ Kopfleiste (Fenster mit eigener Titelleiste) */
+
+headerbar,
+.titlebar:not(headerbar) {
+    border-radius: 0;
+}
+
+.csd decoration,
+.csd decoration:backdrop {
+    border-radius: 0;
+}
+
+window.csd > .titlebar:not(headerbar),
+window.csd > headerbar,
+.csd headerbar {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}

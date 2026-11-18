@@ -1,0 +1,8 @@
+# entpackte Upstream-Quellen (aus /var/cache/distfiles reproduzierbar)
+/src/
+# Build-Ordner
+build/
+# erzeugte Ausgaben
+/dist/
+/plasma/schiefer/
+__pycache__/

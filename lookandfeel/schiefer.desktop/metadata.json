@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [{ "Name": "Schiefer" }],
+        "Category": "",
+        "Description": "Motif/CDE-artiges Erscheinungsbild auf Basis von Breeze",
+        "Description[de]": "Motif/CDE-artiges Erscheinungsbild auf Basis von Breeze",
+        "Id": "schiefer.desktop",
+        "License": "GPL-2.0-or-later",
+        "Name": "Schiefer",
+        "Version": "0.1"
+    },
+    "X-Plasma-APIVersion": "2"
+}

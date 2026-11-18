@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Description": "Motif/CDE-style window decoration for Schiefer",
+        "Description[de]": "Fensterdekoration im Motif/CDE-Stil für Schiefer",
+        "EnabledByDefault": true,
+        "Name": "Schiefer",
+        "Name[de]": "Schiefer"
+    },
+    "org.kde.kdecoration3": {
+        "blur": false,
+        "recommendedBorderSize": "Normal"
+    }
+}

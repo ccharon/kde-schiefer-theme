@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=Schiefer
+Comment=Motif/CDE-Kanten auf Basis von Breeze-GTK (Abstände von Breeze)
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=Schiefer
