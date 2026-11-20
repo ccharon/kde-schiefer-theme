@@ -1,0 +1,23 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Schiefer"
+            }
+        ],
+        "Category": "Application Launchers",
+        "Description": "Front-panel launcher with a pull-up drawer",
+        "Description[de]": "Starter mit ausklappbarer Schublade wie im CDE-Frontpanel",
+        "Icon": "go-up",
+        "License": "GPL-2.0+",
+        "Name": "Schiefer Drawer",
+        "Name[de]": "Schiefer-Schublade",
+        "Version": "0.2",
+        "FormFactors": [
+            "desktop",
+            "panel"
+        ]
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

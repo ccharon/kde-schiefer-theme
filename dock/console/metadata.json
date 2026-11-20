@@ -1,0 +1,23 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Schiefer"
+            }
+        ],
+        "Category": "Windows and Tasks",
+        "Description": "Workspace buttons, window buttons, lock and exit",
+        "Description[de]": "Arbeitsflächen-Knöpfe, Fensterknöpfe, Sperren und Abmelden",
+        "Icon": "virtual-desktops",
+        "License": "GPL-2.0+",
+        "Name": "Schiefer Console",
+        "Name[de]": "Schiefer-Konsole",
+        "Version": "0.2",
+        "FormFactors": [
+            "desktop",
+            "panel"
+        ]
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

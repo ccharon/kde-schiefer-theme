@@ -13,7 +13,7 @@ printf 'masters = gentoo\nthin-manifests = true\n' > "$DIST/overlay/metadata/lay
 echo schiefer-dist > "$DIST/overlay/profiles/repo_name"
 
 FILES=(
-    VERSION UPSTREAM.md make_theme.py
+    VERSION UPSTREAM.md make_theme.py dither.py
     colors/Schiefer.colors
     gtk/Schiefer
     kdecoration/CMakeLists.txt kdecoration/schiefer.json kdecoration/retrodecoration.cpp kdecoration/retrodecoration.h
@@ -21,8 +21,9 @@ FILES=(
     lookandfeel
     plasma/make_plasma_theme.py
     wallpaper/apply.sh wallpaper/make_wallpaper_package.py wallpaper/tiles
+    dock
 )
-tar -C "$ROOT" --transform "s,^,schiefer-$V/," \
+tar -C "$ROOT" --transform "s,^,schiefer-$V/,SH" \
     --exclude=build --exclude=.upstream-base --exclude='vorschau*.png' --exclude=test --exclude=render.sh \
     --sort=name --mtime='2026-01-01 00:00Z' --owner=0 --group=0 --numeric-owner \
     -cJf "$DIST/schiefer-$V.tar.xz" "${FILES[@]}"

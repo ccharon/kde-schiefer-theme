@@ -11,6 +11,7 @@ KEYWORDS="amd64 arm64"
 RESTRICT="fetch mirror test"
 
 RDEPEND="
+	~x11-themes/schiefer-dock-${PV}
 	~x11-themes/schiefer-icons-${PV}
 	~x11-themes/schiefer-kde-${PV}
 	~x11-themes/schiefer-themes-${PV}

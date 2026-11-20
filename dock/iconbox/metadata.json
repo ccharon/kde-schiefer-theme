@@ -1,0 +1,23 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Schiefer"
+            }
+        ],
+        "Category": "Windows and Tasks",
+        "Description": "Motif-style icon box listing all windows; minimized ones as icons, open ones faded",
+        "Description[de]": "Icon Box wie bei Motif: alle Fenster als Symbole, offene ausgegraut",
+        "Icon": "view-list-icons",
+        "License": "GPL-2.0+",
+        "Name": "Schiefer Icon Box",
+        "Name[de]": "Schiefer-Icon-Box",
+        "Version": "0.2",
+        "FormFactors": [
+            "desktop",
+            "panel"
+        ]
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

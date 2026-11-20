@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name=""/>
+  <group name="General">
+    <entry name="onlyCurrentDesktop" type="Bool"><default>true</default></entry>
+    <!-- opening | app | lastActivated -->
+    <entry name="sortMode" type="String"><default>opening</default></entry>
+    <!-- auch offene Fenster zeigen; aus = nur minimierte Fenster -->
+    <entry name="showNormalWindows" type="Bool"><default>true</default></entry>
+    <!-- list (Icon-Manager) | icons (mwm) -->
+    <entry name="display" type="String"><default>list</default></entry>
+    <!-- Fenster einer Anwendung zu einer Gruppe mit seitlicher Schublade zusammenfassen -->
+    <entry name="groupWindows" type="Bool"><default>true</default></entry>
+    <entry name="desktopColors" type="StringList">
+      <default>#8fa3bf,#bba78e,#7fa39a,#b48f96,#a8a47e,#9c90b5,#8faf8f,#c09c7c</default>
+    </entry>
+    <entry name="showTitle" type="Bool"><default>true</default></entry>
+    <!-- Spalten (senkrecht) bzw. Zeilen (waagerecht) -->
+    <entry name="columns" type="Int"><default>1</default><min>1</min><max>4</max></entry>
+  </group>
+</kcfg>

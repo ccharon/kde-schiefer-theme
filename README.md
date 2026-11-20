@@ -4,8 +4,8 @@ Motif/CDE-artiges Erscheinungsbild für KDE Plasma 6, abgeleitet von Breeze. Abs
 Breeze, nur das Zeichnen ist ersetzt: 2-px-Kanten (hell oben links, dunkel unten rechts), versenkte Felder,
 erhabene Knöpfe, helles Schieferblau-grau.
 
-Git-Repository (Branch `main`, lokal, kein Remote). Stand: **Version 0.1**, über das lokale Gentoo-Overlay installiert auf dem Desktop (amd64) und dem
-MacBook Air mit Gentoo Asahi (arm64).
+Git-Repository (Branch `main`, lokal, kein Remote). Stand: **Version 0.2** (neu: Paket `schiefer-dock`); 0.1 ist über das lokale Gentoo-Overlay installiert auf dem
+Desktop (amd64) und dem MacBook Air mit Gentoo Asahi (arm64).
 
 ## Aufbau
 
@@ -14,12 +14,13 @@ MacBook Air mit Gentoo Asahi (arm64).
 | `colors/Schiefer.colors` | Farbschema. Fensterhintergrund muss `qGray ≥ 192` bleiben, sonst schalten GTK/Firefox auf dunkel. |
 | `kdecoration/` | Fensterdekoration (eigener C++-Code, Plugin-ID `schiefer`) |
 | `kstyle/` | Qt-Widget-Stil, Fork von Breeze 6.7.6 (Schlüssel `Schiefer`) – Update siehe `UPSTREAM.md` |
-| `make_theme.py` | erzeugt das Icon-Theme `schiefer` aus breeze-icons |
+| `make_theme.py` | erzeugt das Icon-Theme `schiefer` aus breeze-icons (SVGs umgefärbt, Schärfe wie Breeze; `--dither`: 56-Farben-Palette + Schachbrett-Dithering als Vektor-Maske, siehe `dither.py`) |
 | `plasma/make_plasma_theme.py` | erzeugt den Plasma-Stil `schiefer` (SVG-Rahmenstücke) |
 | `gtk/Schiefer/` | GTK3/4-Theme: importiert Breeze-GTK, `retro.css` überschreibt das Zeichnen |
 | `wallpaper/` | Muster (`tiles/`, gewählt: Köper), Hintergrundpaket-Generator, `apply.sh` (= `schiefer-wallpaper`) |
 | `lookandfeel/` | globales Design „Schiefer“ (setzt alles außer GTK auf einmal) |
-| `packaging/` | Ebuild-Vorlagen für `x11-themes/schiefer{,-kde,-icons,-themes}` |
+| `packaging/` | Ebuild-Vorlagen für `x11-themes/schiefer{,-kde,-icons,-themes,-dock}` |
+| `dock/` | Plasma-Widgets im CDE/Motif-Stil: `org.kde.schiefer.drawer` (Starter mit Schublade, Uhr, Kalenderblatt, Ordner – zeigt den Inhalt eines Ordners, z. B. des Schreibtischs –, optional Systemabschnitt), `org.kde.schiefer.console` (Arbeitsflächen, Sperren, Startlampe, EXIT; Fensterknöpfe abschaltbar), `org.kde.schiefer.iconbox` (Fensterliste als Icon-Manager wie bei twm oder als Icon Box wie bei mwm; Zustand über das Relief, Fenster einer Anwendung gruppiert mit seitlicher Schublade, auf Wunsch Abschnitte je Arbeitsfläche; `SCHIEFER_DOCK_OPEN=<Programm>` klappt im Test eine Gruppe auf), `org.kde.schiefer.endcap` (rein dekorative Abschlussstücke links und rechts wie die Griffe am CDE-Frontpanel; `dock/add-endcaps.js` fügt sie in eine vorhandene Leiste ein), `org.kde.schiefer.tiles` (Systemabschnitt als Kacheln wie Window-Maker-Dockapps; braucht einen ausgeblendeten Plasma-Systray in derselben Leiste). `dock/layout.js` baut Dock unten, Icon Box links und Kacheln rechts oben, die beiden letzten im Modus „Fenstern ausweichen“ (entfernt vorhandene Leisten unten, links und rechts!) |
 | `tools/` | Test- und Paketwerkzeuge (siehe unten) |
 | `src/` | entpackte Upstream-Quellen zum Nachschlagen (Breeze, libplasma, kde-gtk-config …), nicht Teil des Pakets |
 
@@ -41,10 +42,13 @@ Nach Deko-Änderungen: `kwin_wayland --replace &`.
   - `tools/screenshot.sh /tmp/a.png plasmashell` (+ `BR_SHELL_CMD="qdbus6 org.kde.plasmashell /PlasmaShell activateLauncherMenu"`)
   - `tools/screenshot.sh /tmp/a.png "plasmawindowed org.kde.plasma.volume"`
   - `tools/screenshot.sh /tmp/a.png "python3 $PWD/gtk/test/gallery3.py --popover"` (GTK4: `gallery4.py`)
+  - frisch erzeugte Icons prüfen: `python3 make_theme.py --out /tmp/ic && BR_ICON_DIR=/tmp/ic tools/screenshot.sh /tmp/a.png dolphin` (als Theme „schiefer-test“, das installierte bleibt unberührt)
+  - Dock: `BR_WIDTH=1920 BR_HEIGHT=1080 BR_DESKTOPS=4 BR_SHELL_CMD="qdbus6 org.kde.plasmashell /PlasmaShell evaluateScript \"\$(cat $PWD/dock/layout.js)\"" tools/screenshot.sh /tmp/a.png plasmashell`
+    (`SCHIEFER_DOCK_OPEN=<Schubladentitel>` öffnet eine Schublade, `SCHIEFER_DOCK_TRAY=<itemId>` z. B. `org.kde.plasma.volume` öffnet das Popup eines Systray-Eintrags, `=more` die Liste der Statuskacheln, `BR_LOG=datei` sammelt die Ausgaben)
   - Varianten: `BR_GTK_THEME=Breeze`, `BR_COLORS=andere.colors`
 - `kstyle/render.sh out.png` – Qt-Galerie offscreen
 - Bauen für Tests: `cmake -S kstyle -B kstyle/build -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DKDE_INSTALL_USE_QT_SYS_PATHS=ON`
-  (ebenso `kdecoration`), danach Symlinks `kstyle/build/plugins/styles/schiefer6.so` und
+  (ebenso `kdecoration` und `dock`; die Dock-Applets landen in `dock/build/bin/plasma/applets`), danach Symlinks `kstyle/build/plugins/styles/schiefer6.so` und
   `kdecoration/build/plugins/org.kde.kdecoration3/schiefer.so` auf `../../bin/…`.
   Für `gtk/tools` und `plasma/tools` jeweils `cmake -S … -B …/build -G Ninja` (Hilfsprogramme `gtkcolors`, `svgbounds`).
 
@@ -59,6 +63,7 @@ Nach Deko-Änderungen: `kwin_wayland --replace &`.
 - GTK4-Fensterknöpfe bleiben flach (Breeze gibt ihnen riesige Klickflächen); unter GTK3 sind sie erhaben.
 
 ## Mögliche nächste Schritte
+
 
 - Qt-Stil auf Breeze 6.8 heben, sobald Plasma 6.8 kommt (`UPSTREAM.md`)
 - `userChrome.css` für Firefox/Thunderbird

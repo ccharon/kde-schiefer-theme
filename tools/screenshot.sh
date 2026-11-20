@@ -31,19 +31,30 @@ if not d.has_section("KDE"): d.add_section("KDE")
 d.set("KDE","widgetStyle","Schiefer")
 if not d.has_section("Icons"): d.add_section("Icons")
 import os
-if os.path.isdir(os.path.expanduser("~/.local/share/icons/schiefer")): d.set("Icons","Theme","schiefer")
+if os.path.isdir(os.path.expanduser("~/.local/share/icons/schiefer")) or os.path.isdir("/usr/share/icons/schiefer"): d.set("Icons","Theme","schiefer")
+if os.environ.get("BR_ICON_DIR"): d.set("Icons","Theme","schiefer-test")
 with open(sys.argv[2],"w") as f: d.write(f,space_around_delimiters=False)
 PY
 printf '[org.kde.kdecoration2]\nlibrary=schiefer\ntheme=\nButtonsOnLeft=M\nButtonsOnRight=IAX\n' > "$CFG/kwinrc"
+# BR_DESKTOPS=4: Anzahl virtueller Arbeitsflächen (zwei Reihen)
+[ -n "${BR_DESKTOPS:-}" ] && printf '[Desktops]\nNumber=%s\nRows=2\n' "$BR_DESKTOPS" >> "$CFG/kwinrc"
 printf '[Theme]\nname=schiefer\n' > "$CFG/plasmarc"
 DATA=$(mktemp -d); mkdir -p "$DATA/plasma/desktoptheme"
 ln -s "$ROOT/plasma/schiefer" "$DATA/plasma/desktoptheme/schiefer"
-export XDG_DATA_DIRS="$DATA:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+# BR_ICON_DIR=<Ordner>: dieses Icon-Theme verwenden (z. B. frisch erzeugt von make_theme.py); eigener Name,
+# weil KDE gleichnamige Themes aus allen Datenverzeichnissen zusammenführt (das installierte gewänne)
+if [ -n "${BR_ICON_DIR:-}" ]; then mkdir -p "$DATA/icons"; ln -s "$(realpath "$BR_ICON_DIR")" "$DATA/icons/schiefer-test"; fi
+# eigene Daten-/Zustandsverzeichnisse: Dienste der Testsitzung (kactivitymanagerd, ksecretd …)
+# sollen nicht die Datenbanken der echten Sitzung öffnen; ~/.local/share bleibt lesbar
+HOMEDATA=$(mktemp -d)
+export XDG_DATA_DIRS="$DATA:$HOME/.local/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+export XDG_DATA_HOME="$HOMEDATA/data" XDG_STATE_HOME="$HOMEDATA/state" XDG_CACHE_HOME="$HOMEDATA/cache"
+mkdir -p "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
 export XDG_CONFIG_HOME="$CFG"
 # GTK: colors.css wie kde-gtk-config, Theme aus gtk/Schiefer (Vergleich: BR_GTK_THEME=Breeze)
 mkdir -p "$DATA/themes" "$CFG/gtk-3.0" "$CFG/gtk-4.0"
 ln -s "$ROOT/gtk/Schiefer" "$DATA/themes/Schiefer"
-ICONS=breeze; [ -d ~/.local/share/icons/schiefer ] && ICONS=schiefer
+ICONS=breeze; { [ -d ~/.local/share/icons/schiefer ] || [ -d /usr/share/icons/schiefer ]; } && ICONS=schiefer; [ -n "${BR_ICON_DIR:-}" ] && ICONS=schiefer-test
 for v in gtk-3.0 gtk-4.0; do
     QT_QPA_PLATFORM=offscreen "$ROOT/gtk/tools/build/gtkcolors" > "$CFG/$v/colors.css" 2>/dev/null
     printf "@import 'colors.css';\n" > "$CFG/$v/gtk.css"
@@ -52,18 +63,26 @@ done
 export GTK_THEME="${BR_GTK_THEME:-Schiefer}"
 # Dienste, die der Test-D-Bus selbst startet (z. B. das Portal), sollen die Testkonfiguration lesen.
 # Ohne --systemd: betrifft nur den privaten Bus dieser Sitzung, nicht die echte Sitzung.
-dbus-update-activation-environment XDG_CONFIG_HOME XDG_DATA_DIRS QT_PLUGIN_PATH QT_STYLE_OVERRIDE GTK_THEME
-export QT_PLUGIN_PATH="$ROOT/kdecoration/build/plugins:$ROOT/kstyle/build/plugins${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
+dbus-update-activation-environment XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME XDG_DATA_DIRS QT_PLUGIN_PATH QT_STYLE_OVERRIDE GTK_THEME
+export QT_PLUGIN_PATH="$ROOT/kdecoration/build/plugins:$ROOT/kstyle/build/plugins:$ROOT/dock/build/bin${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
 export QT_STYLE_OVERRIDE=Schiefer
-kwin_wayland --virtual --width 1280 --height 800 --socket brshot --no-lockscreen >/dev/null 2>&1 &
+kwin_wayland --virtual --width ${BR_WIDTH:-1280} --height ${BR_HEIGHT:-800} --socket brshot --no-lockscreen >/dev/null 2>&1 &
 K=$!
 sleep 3
 PIDS=()
-for a in "${APPS[@]}"; do WAYLAND_DISPLAY=brshot QT_QPA_PLATFORM=wayland $a >/dev/null 2>&1 & PIDS+=($!); sleep 3; done
+LOG="${BR_LOG:-/dev/null}"
+for a in "${APPS[@]}"; do WAYLAND_DISPLAY=brshot QT_QPA_PLATFORM=wayland $a >>"$LOG" 2>&1 & PIDS+=($!); sleep 3; done
 sleep 3
 [[ " ${APPS[*]} " == *" plasmashell "* ]] && sleep 6
 [ -n "${BR_SHELL_CMD:-}" ] && { WAYLAND_DISPLAY=brshot QT_QPA_PLATFORM=wayland bash -c "$BR_SHELL_CMD" >/dev/null 2>&1; sleep 3; }
 WAYLAND_DISPLAY=brshot QT_QPA_PLATFORM=wayland spectacle -b -n -f -o "$OUT" >/dev/null 2>&1
 sleep 1
 kill "${PIDS[@]}" 2>/dev/null; sleep 1; kill $K 2>/dev/null; sleep 1; kill -9 "${PIDS[@]}" $K 2>/dev/null
-rm -rf "$CFG" "$DATA"
+# alles beenden, was am Bus dieser Testsitzung hängt (vom Bus gestartete Dienste
+# überleben sonst dbus-run-session und halten z. B. die Aktivitäten-Datenbank offen)
+for p in $(pgrep -u "$(id -u)"); do
+    [ "$p" = "$$" ] && continue
+    tr '\0' '\n' < /proc/$p/environ 2>/dev/null | grep -qxF "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS" && kill "$p" 2>/dev/null
+done
+sleep 1
+rm -rf "$CFG" "$DATA" "$HOMEDATA"

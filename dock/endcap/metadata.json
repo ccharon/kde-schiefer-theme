@@ -1,0 +1,23 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Schiefer"
+            }
+        ],
+        "Category": "Miscellaneous",
+        "Description": "Decorative left or right end piece of the Schiefer dock, like the handles of the CDE front panel",
+        "Description[de]": "Dekoratives linkes oder rechtes Abschlussstück des Schiefer-Docks wie die Griffe des CDE-Frontpanels",
+        "Icon": "align-horizontal-left",
+        "License": "GPL-2.0+",
+        "Name": "Schiefer End Piece",
+        "Name[de]": "Schiefer-Abschluss",
+        "Version": "0.2",
+        "FormFactors": [
+            "desktop",
+            "panel"
+        ]
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

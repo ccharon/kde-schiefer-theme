@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 """
-Erzeugt aus dem installierten Breeze-Icon-Set ein Retro-Icon-Theme im CDE/Motif-Stil.
+Erzeugt aus dem installierten Breeze-Icon-Set das Icon-Theme „Schiefer“.
 
   python3 make_theme.py                       # -> ~/.local/share/icons/schiefer
   python3 make_theme.py --only places devices # nur einige Kategorien (schneller Test)
   python3 make_theme.py --force               # vorhandenes Ergebnis überschreiben
 
-Ablauf pro Icon: SVG mit rsvg-convert rastern (ohne Kantenglättung im Ergebnis), Farben
-auf eine gedämpfte Palette abbilden (Bayer-Dither nur in Verläufen), dunkle Kontur.
-Größen über 32 px werden halb so groß gerendert und pixelgenau verdoppelt (chunky),
-@2x/@3x-Ordner ebenso. Einfarbige Icons, die dem Farbschema folgen, werden standardmäßig
-ausgelassen -> dafür greift Breeze (Inherits=breeze). Symlinks werden nachgebildet.
+Die Icons bleiben Vektorgrafiken: Pro SVG werden nur die Farben umgeschrieben (fill, stroke,
+stop-color …). Form, Kantenglättung und Schärfe sind damit genau wie bei Breeze, in jeder
+Größe. Farbabbildung „weich“: leicht entsättigen und jede Farbe zur Hälfte an den nächsten
+Ton einer gedämpften CDE/Motif-Palette annähern – die Programme behalten ihre Erkennungsfarbe.
+Einfarbige Icons, die dem Farbschema folgen, werden standardmäßig ausgelassen -> dafür greift
+Breeze (Inherits=breeze). Symlinks werden nachgebildet.
 """
-import argparse, colorsys, configparser, io, os, re, shutil, subprocess, sys, time
+import argparse, colorsys, configparser, os, re, shutil, sys, time
+from functools import lru_cache
 from multiprocessing import Pool
 import numpy as np
-from PIL import Image
 
 MARKER = ".schiefer-generated"
 SKIP_CATEGORIES = {"animations"}
@@ -28,12 +29,8 @@ GRAYS8 = [[int(h[i:i + 2], 16) for i in (0, 2, 4)]
           for h in "000000 303030 585858 808080 a0a0a0 c3c3c3 dcdcdc ffffff".split()]
 CDE = np.array(GRAYS8 + _hsvpal([(h, [(.45, .45), (.40, .65), (.30, .85)])
                                  for h in (0, 35, 50, 110, 190, 220, 270)]), float)
-OUTLINE = (48, 48, 48)
-DITHER, SAT, ALPHA_MIN = 24, 0.8, 70
-
-BAYER4 = np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]) / 16 - 0.5
-N4 = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-N8 = N4 + [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+SAT = 0.8      # Sättigung gegenüber Breeze
+PULL = 0.5     # Anteil, mit dem jede Farbe zum nächsten Palettenton gezogen wird
 
 def to_lab(rgb):
     c = rgb / 255.0
@@ -45,35 +42,48 @@ def to_lab(rgb):
 
 PAL_LAB = to_lab(CDE)
 
-def shift(m, dy, dx):
-    out = np.zeros_like(m); h, w = m.shape[:2]
-    out[max(dy, 0):h + min(dy, 0), max(dx, 0):w + min(dx, 0)] = \
-        m[max(-dy, 0):h + min(-dy, 0), max(-dx, 0):w + min(-dx, 0)]
-    return out
+# Farbwerte in Attributen und CSS; url(#id) bleibt unberührt, weil davor kein „:“/„=“ steht
+COLOR_RE = re.compile(
+    r'((?:fill|stroke|stop-color|flood-color|lighting-color|color)\s*[:=]\s*["\']?)'
+    r'(#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|white\b|black\b)')
+NAMED = {"white": "#ffffff", "black": "#000000"}
 
-def retro(img):
-    a = np.asarray(img, float)
-    rgb, alpha = a[..., :3], a[..., 3]
-    h, w = alpha.shape
-    solid = alpha >= ALPHA_MIN
-    # Dither nur in sanften Verläufen
-    d = np.zeros((h, w))
-    for dy, dx in N8:
-        d = np.maximum(d, np.abs(rgb - shift(rgb, dy, dx)).max(-1))
-    grad = (d > 1.5) & (d < 40)
-    g = (rgb * [0.3, 0.59, 0.11]).sum(-1, keepdims=True)
-    x = np.clip(g + (rgb - g) * SAT, 0, 255)
-    t = np.tile(BAYER4, (h // 4 + 1, w // 4 + 1))[:h, :w, None]
-    x = np.clip(x + t * DITHER * grad[..., None], 0, 255)
-    q = CDE[((to_lab(x)[:, :, None, :] - PAL_LAB[None, None]) ** 2).sum(-1).argmin(-1)]
-    out = np.zeros((h, w, 4), np.uint8)
-    out[solid, :3] = q[solid]; out[solid, 3] = 255
-    edge = np.zeros_like(solid)
-    for dy, dx in N4:
-        edge |= shift(solid, dy, dx)
-    edge &= ~solid
-    out[edge, :3] = OUTLINE; out[edge, 3] = 255
-    return Image.fromarray(out, "RGBA")
+@lru_cache(maxsize=None)
+def map_color(value):
+    v = NAMED.get(value, value)[1:]
+    if len(v) == 3:
+        v = "".join(ch * 2 for ch in v)
+    x = np.array([int(v[i:i + 2], 16) for i in (0, 2, 4)], float)
+    g = (x * [0.3, 0.59, 0.11]).sum()
+    x = np.clip(g + (x - g) * SAT, 0, 255)
+    near = CDE[((to_lab(x[None])[0] - PAL_LAB) ** 2).sum(-1).argmin()]
+    y = (1 - PULL) * x + PULL * near
+    return "#%02x%02x%02x" % tuple(int(round(c)) for c in y)
+
+def recolor(svg_text):
+    return COLOR_RE.sub(lambda m: m.group(1) + map_color(m.group(2)), svg_text)
+
+# --- „Wenig Farben“ mit Dithering (siehe dither.py) ---------------------------------------
+DITHER = None   # wird in main() gesetzt
+# Palette für --dither: 8 Grau + 12 gedämpfte Farbtöne x 3 Stufen = 44 Farben
+GRAYS12 = [[v] * 3 for v in (0, 40, 72, 100, 128, 150, 172, 192, 210, 226, 242, 255)]
+DPAL = np.array(GRAYS12 + _hsvpal([(h, [(.60, .50), (.55, .75), (.35, .92)])
+                                  for h in (0, 25, 42, 55, 100, 165, 192, 205, 218, 240, 275, 330)]), float)
+
+def _make_ditherer():
+    import dither
+    q = dither.Quantizer(DPAL, sat=float(os.environ.get("SD_SAT", 0.9)),
+                         max_pair_de=float(os.environ.get("SD_DE", 26)))
+    pal = {dither.hexc(c) for c in DPAL}
+    def snap(svg_text):
+        def rep(m):
+            v = m.group(2)
+            rgb = dither.parse_color(NAMED.get(v, v))
+            if rgb is None or dither.hexc(rgb) in pal:
+                return m.group(0)
+            return m.group(1) + q.pure(rgb)
+        return COLOR_RE.sub(rep, svg_text)
+    return dither.Ditherer(q), snap
 
 # --- Klassifizierung & Größen ------------------------------------------------------------
 def is_symbolic(svg_text, name, base):
@@ -94,32 +104,27 @@ def parse_sizedir(name):
     m = re.fullmatch(r"(\d+)(?:@(\d)x)?", name)
     return (int(m.group(1)), int(m.group(2) or 1)) if m else None
 
-def plan(base, scale, chunky):
-    """-> (Renderauflösung, Vergrößerungsfaktor)"""
-    px, up = base, scale
-    if chunky and base > 32:
-        px, up = base // 2, up * 2
-    return px, up
-
 # --- Arbeit pro Datei --------------------------------------------------------------------
 def work(job):
-    src, dst, px, up, base, include_symbolic = job
+    src, dst, base, include_symbolic, dith = job
     try:
-        with open(src, errors="ignore") as f:
+        with open(src, encoding="utf-8", errors="surrogateescape") as f:
             text = f.read()
         if not include_symbolic and is_symbolic(text, os.path.basename(src), base):
             return "symbolic", src, None
-        png = subprocess.run(["rsvg-convert", "-w", str(px), "-h", str(px), src],
-                             capture_output=True, check=True, timeout=60).stdout
-        img = retro(Image.open(io.BytesIO(png)).convert("RGBA"))
-        if up > 1:
-            img = img.resize((px * up, px * up), Image.NEAREST)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        img.save(dst, optimize=True)
+        with open(dst, "w", encoding="utf-8", errors="surrogateescape") as f:
+            if dith:
+                global DITHER
+                if DITHER is None:
+                    DITHER = _make_ditherer()
+                d, snap = DITHER
+                f.write(d.process(text, base, snap))
+            else:
+                f.write(recolor(text))
         return "ok", src, None
     except Exception as e:  # noqa: BLE001 – Fehler sammeln, nicht abbrechen
-        msg = e.stderr.decode(errors="ignore").strip() if isinstance(e, subprocess.CalledProcessError) else repr(e)
-        return "error", src, msg
+        return "error", src, repr(e)
 
 # --- Hauptprogramm -----------------------------------------------------------------------
 def main():
@@ -129,15 +134,14 @@ def main():
     ap.add_argument("--name", default="Schiefer")
     ap.add_argument("--only", nargs="*", help="nur diese Kategorien (z. B. places devices apps)")
     ap.add_argument("--include-symbolic", action="store_true",
-                    help="auch einfarbige Farbschema-Icons umwandeln (passen dann nicht mehr zu dunklen Schemata)")
-    ap.add_argument("--no-chunky", action="store_true", help="große Größen nativ statt verdoppelt rendern")
+                    help="auch einfarbige Farbschema-Icons umfärben (passen dann nicht mehr zu dunklen Schemata)")
+    ap.add_argument("--dither", action="store_true",
+                    help="„wenig Farben“: Palette + Schachbrett-Dithering als Vektor-Muster (siehe dither.py)")
     ap.add_argument("-j", "--jobs", type=int, default=os.cpu_count())
     ap.add_argument("--force", action="store_true", help="vorhandenes (von diesem Skript erzeugtes) Theme ersetzen")
     a = ap.parse_args()
 
     src, out = os.path.abspath(a.src), os.path.abspath(os.path.expanduser(a.out))
-    if not shutil.which("rsvg-convert"):
-        sys.exit("rsvg-convert nicht gefunden (gnome-base/librsvg).")
     if os.path.exists(out):
         if not a.force:
             sys.exit(f"{out} existiert schon – mit --force ersetzen.")
@@ -160,75 +164,76 @@ def main():
             ddir = os.path.join(cdir, sd)
             if not sz or not os.path.isdir(ddir):
                 continue
-            px, up = plan(*sz, chunky=not a.no_chunky)
             for root, _, files in os.walk(ddir):
                 for f in files:
                     if not f.endswith(".svg"):
                         continue
                     p = os.path.join(root, f)
-                    rel = os.path.relpath(p, src)
-                    dst = os.path.join(out, rel[:-4] + ".png")
+                    dst = os.path.join(out, os.path.relpath(p, src))
                     if os.path.islink(p):
                         links.append((p, dst))
                     else:
-                        jobs.append((p, dst, px, up, sz[0], a.include_symbolic))
+                        jobs.append((p, dst, sz[0], a.include_symbolic, a.dither))
 
     print(f"Quelle:  {src}\nZiel:    {out}\nDateien: {len(jobs)} SVGs, {len(links)} Symlinks, {a.jobs} Prozesse\n")
     t0 = time.time()
     stats = {"ok": 0, "symbolic": 0, "error": 0}
     errors, done_src = [], set()
     with Pool(a.jobs) as pool:
-        for i, (st, s, msg) in enumerate(pool.imap_unordered(work, jobs, chunksize=8), 1):
+        for i, (st, s, msg) in enumerate(pool.imap_unordered(work, jobs, chunksize=64), 1):
             stats[st] += 1
             if st == "ok":
                 done_src.add(s)
             elif st == "error":
                 errors.append(f"{s}: {msg}")
-            if i % 50 == 0 or i == len(jobs):
-                el = time.time() - t0
-                eta = el / i * (len(jobs) - i)
+            if i % 500 == 0 or i == len(jobs):
                 print(f"\r  {i:5d}/{len(jobs)}  ({100 * i / len(jobs):5.1f} %)  "
-                      f"umgewandelt {stats['ok']}, einfarbig übersprungen {stats['symbolic']}, "
-                      f"Fehler {stats['error']}  –  noch ~{eta:4.0f}s ", end="", flush=True)
+                      f"umgefärbt {stats['ok']}, einfarbig übersprungen {stats['symbolic']}, "
+                      f"Fehler {stats['error']} ", end="", flush=True)
     print()
 
     # Symlinks nachbilden, wenn ihr endgültiges Ziel erzeugt wurde
     nlinks = 0
     for p, dst in links:
-        final = os.path.realpath(p)
-        target = os.readlink(p)
-        if final not in done_src or not target.endswith(".svg"):
+        if os.path.realpath(p) not in done_src:
             continue
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         try:
-            os.symlink(target[:-4] + ".png", dst)
+            os.symlink(os.readlink(p), dst)
             nlinks += 1
         except FileExistsError:
             pass
 
-    # index.theme
+    # index.theme: Abschnitte der vorhandenen Ordner aus Breeze übernehmen (Scalable, Min/MaxSize …)
     cp = configparser.ConfigParser(interpolation=None, strict=False)
     cp.optionxform = str
     cp.read(os.path.join(src, "index.theme"), encoding="utf-8")
-    dirs = sorted({os.path.relpath(os.path.dirname(os.path.join(r, f)), out)
-                   for r, _, fs in os.walk(out) for f in fs if f.endswith(".png")},
-                  key=lambda d: (d.split("/")[0], parse_sizedir(d.split("/")[1]) or (0, 0)))
+    present = {os.path.relpath(r, out) for r, _, fs in os.walk(out) if any(f.endswith(".svg") for f in fs)}
+    dirs = [d for d in cp.get("Icon Theme", "Directories", fallback="").split(",") if d in present]
+    sdirs = [d for d in cp.get("Icon Theme", "ScaledDirectories", fallback="").split(",") if d in present]
+    # Ordner, die index.theme nicht nennt, trotzdem eintragen
+    known = set(dirs) | set(sdirs)
+    extra = sorted(d for d in present if d not in known and parse_sizedir(d.split("/")[-1]))
     lines = ["[Icon Theme]", f"Name={a.name}",
-             "Comment=Breeze im Retro-Look (CDE/Motif-artig), automatisch erzeugt",
+             "Comment=Breeze in gedämpften CDE/Motif-Farben, automatisch erzeugt",
              "Inherits=breeze,hicolor", "DisplayDepth=32", "Example=folder",
-             f"Directories={','.join(dirs)}", ""]
-    for d in dirs:
-        base, scale = parse_sizedir(d.split("/")[1])
-        ctx = cp.get(d, "Context", fallback=None) if cp.has_section(d) else None
-        lines += [f"[{d}]", f"Size={base}", f"Scale={scale}"] + ([f"Context={ctx}"] if ctx else []) \
-                 + ["Type=Fixed", ""]
+             f"Directories={','.join(dirs + extra)}"]
+    if sdirs:
+        lines.append(f"ScaledDirectories={','.join(sdirs)}")
+    lines.append("")
+    for d in dirs + sdirs + extra:
+        if cp.has_section(d):
+            lines += [f"[{d}]"] + [f"{k}={v}" for k, v in cp.items(d)] + [""]
+        else:
+            base, scale = parse_sizedir(d.split("/")[-1])
+            lines += [f"[{d}]", f"Size={base}", f"Scale={scale}", "Type=Scalable", ""]
     with open(os.path.join(out, "index.theme"), "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 
     if errors:
         with open(os.path.join(out, "errors.log"), "w") as f:
             f.write("\n".join(errors) + "\n")
-    print(f"\nFertig in {time.time() - t0:.0f}s: {stats['ok']} PNGs, {nlinks} Symlinks, "
+    print(f"\nFertig in {time.time() - t0:.0f}s: {stats['ok']} SVGs, {nlinks} Symlinks, "
           f"{stats['symbolic']} einfarbige übersprungen (-> Breeze), {stats['error']} Fehler"
           + (f" (siehe {out}/errors.log)" if errors else ""))
     print(f"Theme: {a.name}  ->  Systemeinstellungen › Farben & Designs › Symbole")

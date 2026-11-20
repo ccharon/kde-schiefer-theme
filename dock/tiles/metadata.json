@@ -1,0 +1,23 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Schiefer"
+            }
+        ],
+        "Category": "System Information",
+        "Description": "Status and notification items as tiles, like Window Maker dockapps (needs a system tray in the same panel)",
+        "Description[de]": "Systemabschnitt als Kacheln wie die Dockapps von Window Maker (braucht einen Systemabschnitt im selben Panel)",
+        "Icon": "preferences-system",
+        "License": "GPL-2.0+",
+        "Name": "Schiefer Tray Tiles",
+        "Name[de]": "Schiefer-Statuskacheln",
+        "Version": "0.2",
+        "FormFactors": [
+            "desktop",
+            "panel"
+        ]
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
