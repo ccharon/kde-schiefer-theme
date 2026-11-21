@@ -114,18 +114,25 @@ def work(job):
     try:
         with open(src, encoding="utf-8", errors="surrogateescape") as f:
             text = f.read()
-        if not include_symbolic and is_symbolic(text, os.path.basename(src), base):
+        symbolic = is_symbolic(text, os.path.basename(src), base)
+        if not include_symbolic and symbolic:
             return "symbolic", src, None
+        if dith:
+            global DITHER
+            if DITHER is None:
+                DITHER = _make_ditherer()
+            d, snap = DITHER
+            out = d.process(text, base, snap)
+        else:
+            out = recolor(text)
+        if not symbolic:
+            # Das Theme hat FollowsColorScheme=true (damit einfarbige Symbole in dunklen Paletten hell werden);
+            # KIconLoader ersetzt dabei den Stylesheet mit id="current-color-scheme". Farbige Icons behalten
+            # ihre umgefärbten Werte (sonst würden z. B. Ordner zur Akzentfarbe des Schemas).
+            out = out.replace('id="current-color-scheme"', 'id="schiefer-feste-farben"')
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         with open(dst, "w", encoding="utf-8", errors="surrogateescape") as f:
-            if dith:
-                global DITHER
-                if DITHER is None:
-                    DITHER = _make_ditherer()
-                d, snap = DITHER
-                f.write(d.process(text, base, snap))
-            else:
-                f.write(recolor(text))
+            f.write(out)
         return "ok", src, None
     except Exception as e:  # noqa: BLE001 – Fehler sammeln, nicht abbrechen
         return "error", src, repr(e)
@@ -314,7 +321,10 @@ def build(a, src, out, tmp):
     extra = sorted(d for d in present if d not in known and parse_sizedir(d.split("/")[-1]))
     lines = ["[Icon Theme]", f"Name={a.name}",
              "Comment=Breeze in gedämpften CDE/Motif-Farben, automatisch erzeugt",
-             "Inherits=breeze,hicolor", "DisplayDepth=32", "Example=folder",
+             "Inherits=breeze,hicolor",
+             # wie Breeze: Stylesheet-Farben (ColorScheme-*) dem Farbschema folgen lassen – sonst bleiben
+             # Symbole (auch geerbte aus Breeze) in dunklen Paletten dunkel
+             "FollowsColorScheme=true", "DisplayDepth=32", "Example=folder",
              f"Directories={','.join(dirs + extra)}"]
     if sdirs:
         lines.append(f"ScaledDirectories={','.join(sdirs)}")

@@ -54,6 +54,11 @@ PlasmoidItem {
 
     preferredRepresentation: fullRepresentation
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
+    // Schalter frontpanel-farbe: Flächen in der CDE-Frontpanel-Farbe statt der Fensterfarbe;
+    // Kinder erben sie über Kirigami.Theme, FrameTint färbt den Leistenhintergrund mit
+    Kirigami.Theme.inherit: !Scheme.usePanelColor
+    Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
+    FrameTint {}
     Plasmoid.icon: "preferences-system"
 
     Layout.fillWidth: vertical
@@ -122,7 +127,7 @@ PlasmoidItem {
                 Bevel {
                     anchors.fill: parent
                     sunken: icon.expanded
-                    fill: icon.expanded ? Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(1, 1, 1, 0.18)) : Kirigami.Theme.backgroundColor
+                    fill: icon.expanded ? Scheme.hoverColor(Kirigami.Theme.backgroundColor) : Kirigami.Theme.backgroundColor
                 }
                 TrayItemIcon {
                     id: icon
@@ -187,6 +192,10 @@ PlasmoidItem {
             height: implicitHeight
             spacing: 2
             Keys.onEscapePressed: listPopup.visible = false
+            // Popup wie CDE-Schubladen in der Frontpanel-Farbe (Schalter frontpanel-farbe)
+            Kirigami.Theme.inherit: !Scheme.usePanelColor
+            Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
+            FrameTint {}
 
             component ListRow: Item {
                 id: row
@@ -201,7 +210,7 @@ PlasmoidItem {
                 Bevel {
                     anchors.fill: parent
                     sunken: row.sunken || (rowMouse.pressed && rowMouse.containsMouse)
-                    base: rowMouse.containsMouse ? Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(1, 1, 1, 0.15)) : Kirigami.Theme.backgroundColor
+                    base: rowMouse.containsMouse ? Scheme.hoverColor(Kirigami.Theme.backgroundColor) : Kirigami.Theme.backgroundColor
                 }
                 // Symbolfach links; Einträge legen dort ihr TrayItemIcon ab (iconSlot)
                 readonly property alias iconSlot: slot

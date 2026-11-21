@@ -60,6 +60,11 @@ PlasmoidItem {
 
     preferredRepresentation: fullRepresentation
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
+    // Schalter frontpanel-farbe: Flächen in der CDE-Frontpanel-Farbe statt der Fensterfarbe;
+    // Kinder erben sie über Kirigami.Theme, FrameTint färbt den Leistenhintergrund mit
+    Kirigami.Theme.inherit: !Scheme.usePanelColor
+    Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
+    FrameTint {}
     Plasmoid.icon: "view-list-icons"
 
     Layout.fillWidth: vertical
@@ -217,6 +222,10 @@ PlasmoidItem {
             height: implicitHeight
             spacing: 2
             Keys.onEscapePressed: root.closeGroup()
+            // Popup wie CDE-Schubladen in der Frontpanel-Farbe (Schalter frontpanel-farbe)
+            Kirigami.Theme.inherit: !Scheme.usePanelColor
+            Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
+            FrameTint {}
 
             // Kopfzeile wie bei einer Schublade
             Item {

@@ -21,6 +21,7 @@ DEPEND="
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kio:6
+	kde-frameworks/kirigami:6
 	kde-frameworks/knotifications:6
 	kde-frameworks/kservice:6
 	kde-plasma/libplasma:6=
@@ -30,7 +31,6 @@ DEPEND="
 RDEPEND="${DEPEND}
 	kde-frameworks/kcmutils:6
 	kde-frameworks/kdeclarative:6
-	kde-frameworks/kirigami:6
 	kde-frameworks/kitemmodels:6
 	kde-plasma/plasma-workspace:6
 "

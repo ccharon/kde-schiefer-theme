@@ -10,8 +10,15 @@
 #include <KConfigGroup>
 #include <KSharedConfig>
 
+#include <Kirigami/Platform/PlatformTheme>
+
 #include <QFile>
+#include <QQuickItem>
+#include <QQuickWindow>
 #include <QStandardPaths>
+#include <QtQml/qqml.h>
+
+#include <functional>
 
 SchieferScheme::SchieferScheme(QObject *parent)
     : QObject(parent)
@@ -29,6 +36,14 @@ SchieferScheme::SchieferScheme(QObject *parent)
             scheduleReload();
         }
     });
+    // Schalter frontpanel-farbe: schieferrc [Dock] FrontPanelColor
+    m_dockWatcher = KConfigWatcher::create(KSharedConfig::openConfig(QStringLiteral("schieferrc"), KConfig::NoGlobals));
+    connect(m_dockWatcher.data(), &KConfigWatcher::configChanged, this, [this](const KConfigGroup &group, const QByteArrayList &) {
+        if (group.name() == QLatin1String("Dock")) {
+            scheduleReload();
+        }
+    });
+    connect(&m_files, &QFileSystemWatcher::directoryChanged, this, &SchieferScheme::scheduleReload);
     reload();
 }
 
@@ -44,6 +59,51 @@ QVariantMap SchieferScheme::motifColors(const QColor &base) const
                        {QStringLiteral("bottom"), m.bottomShadow},
                        {QStringLiteral("select"), m.select},
                        {QStringLiteral("foreground"), m.foreground}};
+}
+
+QColor SchieferScheme::hoverColor(const QColor &base) const
+{
+    // Ein Drittel des Wegs von der Grundfarbe zur Motif-Lichtkante: bleibt sichtbar unter
+    // der Lichtkante (das Relief liest sich weiter) und wirkt hell wie dunkel ähnlich stark
+    // (Schiefer etwa wie das frühere Qt.tint(base, 15 % Weiß), Basalt ebenso)
+    const QColor top = SchieferColors::motifColors(base).topShadow;
+    const QColor b = base.toRgb();
+    auto third = [](int from, int to) {
+        return from + (to - from) / 3;
+    };
+    return QColor(third(b.red(), top.red()), third(b.green(), top.green()), third(b.blue(), top.blue()), b.alpha());
+}
+
+void SchieferScheme::tintFrames(QQuickItem *item) const
+{
+    if (!item || !item->window() || !item->window()->contentItem()) {
+        return;
+    }
+    const QColor color = panelColor();
+    // Leistenhintergrund (Panel.qml der Shell) und Popup-Hintergrund (DialogBackground) sind
+    // KSvg-Rahmen; sie färben ihre ColorScheme-Background-Flächen nach ihrem Kirigami.Theme.
+    // Gesetzt wird nur die eigene Hintergrundfarbe des Rahmens (wirkt nicht auf Kinder).
+    std::function<void(QQuickItem *)> walk = [&](QQuickItem *it) {
+        if (it->inherits("KSvg::FrameSvgItem")) {
+            const QString path = it->property("imagePath").toString();
+            if (path.endsWith(QLatin1String("widgets/panel-background")) || path.endsWith(QLatin1String("dialogs/background"))) {
+                const bool tinted = it->property("_schieferTint").toBool();
+                if (color.isValid() || tinted) {
+                    auto *theme = qobject_cast<Kirigami::Platform::PlatformTheme *>(
+                        qmlAttachedPropertiesObject<Kirigami::Platform::PlatformTheme>(it, true));
+                    if (theme) {
+                        theme->setCustomBackgroundColor(color);
+                        it->setProperty("_schieferTint", color.isValid());
+                    }
+                }
+            }
+        }
+        const auto children = it->childItems();
+        for (QQuickItem *c : children) {
+            walk(c);
+        }
+    };
+    walk(item->window()->contentItem());
 }
 
 void SchieferScheme::reload()
@@ -76,17 +136,33 @@ void SchieferScheme::reload()
     }
     QColor panel(g.readEntry("FrontPanel", QString()).trimmed());
 
+    auto rc = KSharedConfig::openConfig(QStringLiteral("schieferrc"), KConfig::NoGlobals);
+    rc->reparseConfiguration();
+    const bool panelEnabled = rc->group(QStringLiteral("Dock")).readEntry("FrontPanelColor", true);
+
     // Datei beobachten (atomares Neuschreiben entfernt den Eintrag, deshalb jedes Mal neu setzen)
     if (!m_files.files().isEmpty()) {
         m_files.removePaths(m_files.files());
+    }
+    if (!m_files.directories().isEmpty()) {
+        m_files.removePaths(m_files.directories());
     }
     if (!file.isEmpty()) {
         m_files.addPath(file);
     }
     // auch kdeglobals selbst (Schemawechsel ohne D-Bus-Meldung, z. B. kwriteconfig6 ohne --notify)
-    m_files.addPath(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QStringLiteral("/kdeglobals"));
+    const QString configDir = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
+    m_files.addPath(configDir + QStringLiteral("/kdeglobals"));
+    // schieferrc (schiefer-config schreibt ohne D-Bus-Meldung); fehlt sie noch, auf ihr Entstehen warten
+    const QString rcFile = configDir + QStringLiteral("/schieferrc");
+    if (QFile::exists(rcFile)) {
+        m_files.addPath(rcFile);
+    } else {
+        m_files.addPath(configDir);
+    }
 
-    if (name != m_name || file != m_file || colors != m_desktopColors || panel != m_frontPanel) {
+    if (name != m_name || file != m_file || colors != m_desktopColors || panel != m_frontPanel || panelEnabled != m_panelEnabled) {
+        m_panelEnabled = panelEnabled;
         m_name = name;
         m_file = file;
         m_desktopColors = colors;

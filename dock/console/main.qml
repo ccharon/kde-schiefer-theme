@@ -51,6 +51,11 @@ PlasmoidItem {
 
     preferredRepresentation: fullRepresentation
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
+    // Schalter frontpanel-farbe: Flächen in der CDE-Frontpanel-Farbe statt der Fensterfarbe;
+    // Kinder erben sie über Kirigami.Theme, FrameTint färbt den Leistenhintergrund mit
+    Kirigami.Theme.inherit: !Scheme.usePanelColor
+    Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
+    FrameTint {}
 
     Layout.preferredWidth: layout.implicitWidth + 2 * margin
     Layout.minimumWidth: Layout.preferredWidth - (cfg.showTasks ? taskPreferred - taskMinimum : 0)
@@ -339,6 +344,10 @@ PlasmoidItem {
         mainItem: Column {
             spacing: root.sp
             width: root.taskWidth + Kirigami.Units.gridUnit * 4
+            // Popup wie CDE-Schubladen in der Frontpanel-Farbe (Schalter frontpanel-farbe)
+            Kirigami.Theme.inherit: !Scheme.usePanelColor
+            Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
+            FrameTint {}
             Repeater {
                 model: overflowPopup.visible ? tasksModel : null
                 delegate: TaskButton {

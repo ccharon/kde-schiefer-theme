@@ -4,8 +4,8 @@ Motif/CDE-artiges Erscheinungsbild für KDE Plasma 6, abgeleitet von Breeze. Abs
 Breeze, nur das Zeichnen ist ersetzt: 2-px-Kanten (hell oben links, dunkel unten rechts), versenkte Felder,
 erhabene Knöpfe, helles Schieferblau-grau.
 
-Git-Repository (Branch `main`, lokal, kein Remote). Stand: **Version 0.4** (neu: Farbkern nach Motif, fünf Paletten,
-Hintergrund-Plugin je Arbeitsfläche, Mauszeiger, Fensterwechsler, Rauten, `schiefer-config`); über das lokale
+Git-Repository (Branch `main`, lokal, kein Remote). Stand: **Version 0.5** (neu: Dock in Frontpanel-Farbe, Symbole folgen dunklen Paletten; 0.4: Farbkern nach Motif,
+fünf Paletten, Hintergrund-Plugin je Arbeitsfläche, Mauszeiger, Fensterwechsler, Rauten, `schiefer-config`); über das lokale
 Gentoo-Overlay laufen ältere Versionen auf dem Desktop (amd64) und dem MacBook Air mit Gentoo Asahi (arm64).
 
 Grundsatz seit 0.4: Jede Motif-Eigenheit, die sich sinnvoll abschalten lässt, hat einen Schalter
@@ -40,7 +40,6 @@ schiefer-config                   # Liste: Schalter, Zustand, Vorgabe, Beschreib
 schiefer-config raute aus         # Schalter setzen, wirkt sofort (soweit das Programm neu lädt)
 schiefer-config standard          # alle Schalter auf die Motif-Vorgabe (z. B. nach dem globalen Design)
 schiefer-config palette basalt    # Farbschema + Arbeitsflächenfarben (schiefer, sandstein, jade, granit, basalt)
-schiefer-config schrift helvetica # Nimbus Sans / TeX Gyre Heros wie bei CDE; zurück: schrift noto
 ```
 
 | Schalter | Vorgabe | wirkt auf | gespeichert in |
@@ -56,9 +55,10 @@ schiefer-config schrift helvetica # Nimbus Sans / TeX Gyre Heros wie bei CDE; zu
 | `fensterwechsler` | an | Alt+Tab im Motif-Stil | `kwinrc [TabBox] LayoutName` |
 | `kicker` | an | Programmmenü mit Untermenüs statt Kickoff (gleiche Stelle, Symbol bleibt) | Leiste |
 | `muster-hintergrund` | an | Hintergrund-Plugin statt Bild | Arbeitsflächen |
-| `je-arbeitsflaeche` | an | eigenes Muster/eigene Farbe je Arbeitsfläche | Plugin `PerDesktop` |
+| `je-arbeitsflaeche` | an | eigenes Muster/eigene Farbe je Arbeitsfläche (aus: überall Muster `Pattern`, Farbe = erste Arbeitsflächenfarbe der Palette) | Plugin `PerDesktop` |
 | `ueberblenden` | aus | beim Wechsel überblenden statt sofort | Plugin `Crossfade` |
 | `mauszeiger` | an | Schiefer-Zeiger statt Breeze | `kcminputrc [Mouse] cursorTheme` |
+| `frontpanel-farbe` | an | Schiefer-Dock samt Leisten und Schubladen in der CDE-Frontpanel-Farbe der Palette (`[Schiefer] FrontPanel`) statt der Fensterfarbe; wirkt sofort | `schieferrc [Dock] FrontPanelColor` |
 
 GTK-Optionen arbeiten über eine Überlagerung `~/.local/share/themes/Schiefer/` (importiert per absolutem Pfad die
 installierten Teile ohne die abgeschalteten `opt-*.css`; sind alle Optionen auf Vorgabe, wird sie gelöscht).
@@ -67,7 +67,7 @@ Plasma-Schalter brauchen eine laufende Plasma-Sitzung (`evaluateScript`). Ohne P
 ## Neue Version ausrollen
 
 ```bash
-echo 0.4 > VERSION
+echo 0.5 > VERSION
 tools/install-overlay.sh          # packt dist/, dann per sudo: Overlay /var/db/repos/local, digest, root:root, 644/755
 sudo emerge -av x11-themes/schiefer
 ```
@@ -85,7 +85,7 @@ Nach Deko-Änderungen: `kwin_wayland --replace &`.
   - frisch erzeugte Icons prüfen: `python3 make_theme.py --out /tmp/ic && BR_ICON_DIR=/tmp/ic tools/screenshot.sh /tmp/a.png dolphin` (als Theme „schiefer-test“, das installierte bleibt unberührt)
   - Dock: `BR_WIDTH=1920 BR_HEIGHT=1080 BR_DESKTOPS=4 BR_SHELL_CMD="qdbus6 org.kde.plasmashell /PlasmaShell evaluateScript \"\$(cat $PWD/dock/layout.js)\"" tools/screenshot.sh /tmp/a.png plasmashell`
     (`SCHIEFER_DOCK_OPEN=<Schubladentitel>` öffnet eine Schublade, `SCHIEFER_DOCK_TRAY=<itemId>` z. B. `org.kde.plasma.volume` öffnet das Popup eines Systray-Eintrags, `=more` die Liste der Statuskacheln, `BR_LOG=datei` sammelt die Ausgaben)
-  - Varianten: `BR_GTK_THEME=Breeze`, `BR_COLORS=andere.colors`
+  - Varianten: `BR_GTK_THEME=Breeze`, `BR_COLORS=andere.colors`, `BR_PLASMA_THEME=default` (Plasma-Stil Breeze)
   - zusätzliche Datenverzeichnisse: `BR_DATA_DIRS=$PWD/wallpaper/plugin/build/data:…` (Hintergrund-Plugin, Ordner mit
     `color-schemes/` für die Paletten, `kwin-wayland/tabbox/schiefer` als Symlink, `icons/Schiefer` aus `make_cursors.py --out`)
   - `schiefer-config` in der Testsitzung: `BR_SHELL_CMD="tools/schiefer-config standard"` (schreibt nur in die
@@ -103,6 +103,9 @@ Nach Deko-Änderungen: `kwin_wayland --replace &`.
 
 - Plasma 6.7 kann Bild-Hintergründe nicht kacheln – deshalb das eigene Hintergrund-Plugin (Shader, pixelgenau).
   Das Bildpaket und `schiefer-wallpaper` bleiben für den Sperrbildschirm und als Rückfall.
+- Das Icon-Theme hat `FollowsColorScheme=true`: einfarbige (meist von Breeze geerbte) Symbole übernehmen die
+  Textfarbe des Schemas, sonst blieben sie in Basalt dunkel. Farbige Schiefer-Icons benennen ihren Stylesheet um
+  (`schiefer-feste-farben`), damit KIconLoader ihre gedämpften Farben nicht durch Schemafarben ersetzt.
 - Das Farbschema hat absichtlich keine `[Colors:Header]`-Gruppe: so übernehmen GTK-Kopfleisten (Firefox usw.)
   die Titelleistenfarbe aus `[WM]`.
 - Firefox/Thunderbird zeichnen Leisten und Formulare selbst; sie übernehmen Farben und Hell/Dunkel,
@@ -112,6 +115,13 @@ Nach Deko-Änderungen: `kwin_wayland --replace &`.
 - Plasma-Mausaktionen heißen teils ohne `org.kde.`-Präfix (`switchwindow`); unbekannte Namen verwirft Plasma still.
 - Leistenreihenfolge in Plasma 6 steht in `[General] AppletOrder` der Leiste; Plasma schreibt sie nach `addWidget`
   verzögert neu – `schiefer-config kicker` setzt sie deshalb in einem zweiten Schritt.
+- Dock-Farben (`dock/common/schieferscheme.*`, `FrameTint.qml`): Bei `frontpanel-farbe` setzen die Applets
+  `Kirigami.Theme.backgroundColor` auf die Frontpanel-Farbe (Kinder erben sie). Den Leistenhintergrund zeichnet
+  aber die Shell (`Panel.qml`, `widgets/panel-background`); `FrameTint` sucht im Leisten- bzw. Popup-Fenster die
+  KSvg-Rahmen (`panel-background`, `dialogs/background`) und gibt ihrem Kirigami.Theme dieselbe Hintergrundfarbe –
+  so bleiben keine Lücken in der Fensterfarbe. Folge: Die ganze Leiste, in der ein Schiefer-Widget steckt, wird
+  frontpanelfarben, auch unter fremden Widgets darin. Hover-Tönung überall `Scheme.hoverColor(base)`: ein Drittel
+  des Wegs zur Motif-Lichtkante (hell wie dunkel ähnlich stark, auf Schiefer gleich dem früheren 15-%-Weiß).
 
 ## Mögliche nächste Schritte
 

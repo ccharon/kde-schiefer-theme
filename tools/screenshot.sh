@@ -50,6 +50,10 @@ for sec in s.sections():
     if sec=="General": continue
     if not d.has_section(sec): d.add_section(sec)
     for k,v in s.items(sec): d.set(sec,k,v)
+# Schemaname passend zur Datei (Leser der Gruppe [Schiefer], z. B. das Dock, öffnen color-schemes/<Name>.colors)
+import os.path
+if not d.has_section("General"): d.add_section("General")
+d.set("General","ColorScheme",os.path.splitext(os.path.basename(sys.argv[1]))[0])
 if not d.has_section("KDE"): d.add_section("KDE")
 d.set("KDE","widgetStyle","Schiefer")
 if not d.has_section("Icons"): d.add_section("Icons")
@@ -61,8 +65,9 @@ PY
 printf '[org.kde.kdecoration2]\nlibrary=schiefer\ntheme=\nButtonsOnLeft=M\nButtonsOnRight=IAX\n' > "$CFG/kwinrc"
 # BR_DESKTOPS=4: Anzahl virtueller Arbeitsflächen (zwei Reihen)
 [ -n "${BR_DESKTOPS:-}" ] && printf '[Desktops]\nNumber=%s\nRows=2\n' "$BR_DESKTOPS" >> "$CFG/kwinrc"
-printf '[Theme]\nname=schiefer\n' > "$CFG/plasmarc"
+printf '[Theme]\nname=%s\n' "${BR_PLASMA_THEME:-schiefer}" > "$CFG/plasmarc"   # BR_PLASMA_THEME=default: Breeze zum Vergleich
 DATA=$(mktemp -d); mkdir -p "$DATA/plasma/desktoptheme"
+mkdir -p "$DATA/color-schemes"; ln -s "$(realpath "${BR_COLORS:-$ROOT/colors/Schiefer.colors}")" "$DATA/color-schemes/"
 ln -s "$ROOT/plasma/schiefer" "$DATA/plasma/desktoptheme/schiefer"
 # BR_ICON_DIR=<Ordner>: dieses Icon-Theme verwenden (z. B. frisch erzeugt von make_theme.py); eigener Name,
 # weil KDE gleichnamige Themes aus allen Datenverzeichnissen zusammenführt (das installierte gewänne)

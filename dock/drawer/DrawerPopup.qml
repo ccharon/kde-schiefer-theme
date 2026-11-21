@@ -29,6 +29,10 @@ Item {
     height: implicitHeight
 
     Keys.onEscapePressed: content.Window.window.visible = false
+    // Popup wie CDE-Schubladen in der Frontpanel-Farbe (Schalter frontpanel-farbe)
+    Kirigami.Theme.inherit: !Scheme.usePanelColor
+    Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
+    FrameTint {}
 
     ColumnLayout {
         id: column
@@ -64,7 +68,7 @@ Item {
                 Bevel {
                     anchors.fill: parent
                     sunken: (trayMouse.pressed && trayMouse.containsMouse) || trayIcon.expanded
-                    base: trayMouse.containsMouse ? Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(1, 1, 1, 0.15)) : Kirigami.Theme.backgroundColor
+                    base: trayMouse.containsMouse ? Scheme.hoverColor(Kirigami.Theme.backgroundColor) : Kirigami.Theme.backgroundColor
                 }
                 RowLayout {
                     anchors.fill: parent
@@ -120,7 +124,7 @@ Item {
             Bevel {
                 anchors.fill: parent
                 sunken: cfgMouse.pressed && cfgMouse.containsMouse
-                base: cfgMouse.containsMouse ? Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(1, 1, 1, 0.15)) : Kirigami.Theme.backgroundColor
+                base: cfgMouse.containsMouse ? Scheme.hoverColor(Kirigami.Theme.backgroundColor) : Kirigami.Theme.backgroundColor
             }
             RowLayout {
                 anchors.fill: parent
@@ -174,7 +178,7 @@ Item {
                 Bevel {
                     anchors.fill: parent
                     sunken: fileMouse.pressed && fileMouse.containsMouse
-                    base: fileMouse.containsMouse ? Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(1, 1, 1, 0.15)) : Kirigami.Theme.backgroundColor
+                    base: fileMouse.containsMouse ? Scheme.hoverColor(Kirigami.Theme.backgroundColor) : Kirigami.Theme.backgroundColor
                 }
                 RowLayout {
                     anchors.fill: parent
@@ -276,7 +280,7 @@ Item {
                 Bevel {
                     anchors.fill: parent
                     sunken: mouse.pressed && mouse.containsMouse
-                    base: mouse.containsMouse ? Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(1, 1, 1, 0.15)) : Kirigami.Theme.backgroundColor
+                    base: mouse.containsMouse ? Scheme.hoverColor(Kirigami.Theme.backgroundColor) : Kirigami.Theme.backgroundColor
                 }
                 RowLayout {
                     anchors.fill: parent

@@ -48,7 +48,7 @@ Item {
             depth: win.minimized && !win.sunken ? 1 : 2
             sunken: win.sunken
             base: win.base
-            fill: mouse.containsMouse ? Qt.tint(base, Qt.rgba(1, 1, 1, 0.18)) : base
+            fill: mouse.containsMouse ? Scheme.hoverColor(base) : base
         }
         Kirigami.Icon {
             id: icon

@@ -52,7 +52,7 @@ Item {
         sunken: row.sunken
         base: row.base
         fill: row.active ? Kirigami.Theme.highlightColor
-            : mouse.containsMouse ? Qt.tint(row.base, Qt.rgba(1, 1, 1, 0.15)) : row.base
+            : mouse.containsMouse ? Scheme.hoverColor(row.base) : row.base
         filled: !row.minimized || row.sunken || mouse.containsMouse || row.attention
     }
 

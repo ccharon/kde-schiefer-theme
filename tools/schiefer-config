@@ -5,7 +5,6 @@
   schiefer-config                      wie „liste“
   schiefer-config liste                alle Schalter mit Zustand und Vorgabe
   schiefer-config <schalter> an|aus    Schalter setzen (sofort wirksam, soweit möglich)
-  schiefer-config schrift helvetica|noto
   schiefer-config palette [<Name>]     Paletten zeigen bzw. eine anwenden (Farbschema + Arbeitsflächenfarben)
   schiefer-config standard             alle Schalter auf die Schiefer-Vorgabe setzen
 
@@ -27,11 +26,6 @@ DATA_DIRS = [d for d in (os.environ.get("XDG_DATA_DIRS") or "/usr/local/share:/u
 
 BACKDROP = "org.kde.schiefer.backdrop"
 GTK_MARKE = "/* erzeugt von schiefer-config"
-HELVETICA = ("Nimbus Sans", "TeX Gyre Heros", "Helvetica", "Liberation Sans")
-NOTO = "Noto Sans"
-FONT_KEYS = [("kdeglobals", ["General"], "font"), ("kdeglobals", ["General"], "menuFont"),
-             ("kdeglobals", ["General"], "toolBarFont"), ("kdeglobals", ["General"], "smallestReadableFont"),
-             ("kdeglobals", ["WM"], "activeFont")]
 
 
 class Fehler(Exception):
@@ -459,9 +453,7 @@ for (var i = 0; i < ds.length; i++) ds[i].wallpaperPlugin = {js_str(plugin)};"""
         schema = kread("kdeglobals", ["General"], "ColorScheme", "")
         for kurz, (name, pfad) in paletten().items():
             if name == schema:
-                farben = lies_schema(pfad).get("Schiefer", "DesktopColors", fallback="")
-                if farben:
-                    backdrop_schreiben_wert("DesktopColors", js_str(farben))
+                arbeitsflaechenfarben(pfad)
 
 
 def zeiger_lesen():
@@ -522,60 +514,13 @@ SCHALTER = [
     Schalter("ueberblenden", "Hintergrund", "beim Wechsel der Arbeitsfläche überblenden (aus: sofort)", False,
              *backdrop("Crossfade", False)),
     Schalter("mauszeiger", "KDE", "Schiefer-Mauszeiger (aus: Breeze)", True, zeiger_lesen, zeiger_schreiben),
+    # die Dock-Widgets beobachten schieferrc selbst, kein Neuladen nötig
+    Schalter("frontpanel-farbe", "Dock", "Schiefer-Dock, seine Leisten und Schubladen in der CDE-Frontpanel-Farbe "
+             "der Palette (aus: Fensterfarbe)", True, *schieferrc("Dock", "FrontPanelColor", True, "dock")),
 ]
 NACH_NAME = {s.name: s for s in SCHALTER}
 # „?“ heißt hier: kein Starter in den Leisten (z. B. Schiefer-Dock) – dann gibt es nichts umzuschalten
 NACH_NAME["kicker"].ohne_ziel = True
-
-
-# ---------------------------------------------------------------- Schrift
-
-def helvetica_familie():
-    if not have("fc-list"):
-        return HELVETICA[0]
-    r = run(["fc-list", ":", "family"])
-    vorhanden = set()
-    for z in (r.stdout if r else "").splitlines():
-        for fam in z.split(","):
-            vorhanden.add(fam.strip())
-    for f in HELVETICA:
-        if f in vorhanden:
-            return f
-    return None
-
-
-def schrift_lesen():
-    fam = (kread("kdeglobals", ["General"], "font", NOTO + ",10") or "").split(",")[0]
-    if fam in HELVETICA:
-        return "helvetica"
-    if fam == NOTO:
-        return "noto"
-    return fam
-
-
-def schrift_setzen(wahl):
-    if wahl == "helvetica":
-        fam = helvetica_familie()
-        if fam is None:
-            raise Fehler("keine Helvetica-artige Schrift installiert – z. B. media-fonts/urw-fonts "
-                         "(Nimbus Sans) oder media-fonts/tex-gyre (TeX Gyre Heros) installieren")
-    elif wahl == "noto":
-        fam = NOTO
-    else:
-        raise Fehler("schrift: helvetica oder noto")
-    for datei, gruppen, key in FONT_KEYS:
-        alt = kread(datei, gruppen, key)
-        if alt:
-            teile = alt.split(",")
-            teile[0] = fam
-            neu = ",".join(teile)
-        else:
-            groesse = "8" if key == "smallestReadableFont" else "10"
-            neu = f"{fam},{groesse},-1,5,400,0,0,0,0,0,0,0,0,0,0,1"
-        kwrite(datei, gruppen, key, neu, notify=True)
-    NEULADEN.add("kwin")
-    NEULADEN.add("programme")
-    print(f"schrift: {fam}")
 
 
 # ---------------------------------------------------------------- Paletten
@@ -605,6 +550,17 @@ def lies_schema(pfad):
     return cp
 
 
+def arbeitsflaechenfarben(pfad):
+    """DesktopColors des Schemas ins Hintergrund-Plugin; die Einzelfarbe (je-arbeitsflaeche aus)
+    wird die erste davon, damit sie zur Palette passt"""
+    farben = lies_schema(pfad).get("Schiefer", "DesktopColors", fallback="").strip()
+    if not farben:
+        return False
+    if not backdrop_schreiben_wert("DesktopColors", js_str(farben)):
+        return False
+    return backdrop_schreiben_wert("Color", js_str(farben.split(",")[0].strip()))
+
+
 def palette(name):
     alle = paletten()
     aktuell = kread("kdeglobals", ["General"], "ColorScheme", "")
@@ -625,12 +581,10 @@ def palette(name):
     if r is None or r.returncode != 0:
         raise Fehler("plasma-apply-colorscheme fehlgeschlagen" + (": " + (r.stderr or r.stdout).strip() if r else ""))
     print(f"Farbschema: {schema}")
-    farben = lies_schema(pfad).get("Schiefer", "DesktopColors", fallback="")
-    if farben and plasma_laeuft():
-        backdrop_schreiben_wert("DesktopColors", js_str(farben))
-        print("Arbeitsflächenfarben übernommen")
-    elif farben:
+    if not plasma_laeuft():
         warn("Plasma läuft nicht – Arbeitsflächenfarben nicht übernommen")
+    elif arbeitsflaechenfarben(pfad):
+        print("Arbeitsflächenfarben übernommen")
     # Dock (Konsole, Icon Box) liest die Farben selbst aus dem Schema; GTK über kde-gtk-config
 
 
@@ -648,11 +602,6 @@ def liste():
         except Fehler:
             z = "?"
         zeilen.append((s.name, z, zustand_text(s.standard), s.bereich, s.beschreibung))
-    try:
-        sch = schrift_lesen()
-    except Fehler:
-        sch = "?"
-    zeilen.append(("schrift", sch, "noto", "KDE", "helvetica = Nimbus Sans/TeX Gyre Heros wie bei CDE; noto = Noto Sans"))
     aktuell = kread("kdeglobals", ["General"], "ColorScheme", "?")
     zeilen.append(("palette", aktuell, "Schiefer", "Farben", "schiefer-config palette zeigt alle"))
     b = max(len(z[0]) for z in zeilen)
@@ -697,10 +646,6 @@ def main(argv):
     try:
         if cmd == "palette":
             palette(argv[1] if len(argv) > 1 else None)
-        elif cmd == "schrift":
-            if len(argv) != 2:
-                raise Fehler("schiefer-config schrift helvetica|noto")
-            schrift_setzen(argv[1].lower())
         elif cmd == "standard":
             n = standard()
             neu_laden()
