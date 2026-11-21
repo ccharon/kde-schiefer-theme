@@ -1,10 +1,10 @@
 /*
- * Ein Eintrag der Icon Box in der Listenansicht (Icon-Manager wie bei twm/FvwmIconMan):
- * Symbol links, Titel und Programm rechts daneben. Zustand über das Motif-Relief:
- *   offen = erhaben, aktiv = eingedrückt + Hervorhebung, minimiert = flach + kursiv,
- *   will Aufmerksamkeit = orange getönt.
- * Gruppen (mehrere Fenster einer Anwendung) zeigen Programm, Anzahl und einen Pfeil;
- * ein Klick klappt seitlich eine Schublade mit den einzelnen Fenstern auf.
+ * An icon box entry in the list view (icon manager as in twm/FvwmIconMan):
+ * icon on the left, title and application to its right. State through the Motif relief:
+ *   open = raised, active = pressed in + highlight, minimized = flat + italic,
+ *   demands attention = tinted orange.
+ * Groups (several windows of one application) show the application, count and an arrow;
+ * a click opens a drawer with the single windows to the side.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -20,8 +20,8 @@ Item {
     id: row
 
     required property var tasksModel
-    required property var modelIndex     // QModelIndex dieses Eintrags
-    required property var model          // Rollen des TasksModel
+    required property var modelIndex     // QModelIndex of this entry
+    required property var model          // roles of the TasksModel
     required property var box            // PlasmoidItem (openGroup, closeGroup, desktopInfo)
     property bool inGroupPopup: false
     property bool groupOpen: false
@@ -34,8 +34,8 @@ Item {
     readonly property int childCount: model?.ChildCount ?? 0
     readonly property string appName: model?.AppName || ""
     readonly property string title: isGroup ? (appName || (model?.display ?? "")) : (model?.display ?? "")
-    // zweite Zeile: Programm; bei Gruppen die Anzahl, in der Gruppen-Schublade nichts
-    readonly property string subtitle: isGroup ? i18np("%1 Fenster", "%1 Fenster", childCount)
+    // second line: application; for groups the count; nothing in the group drawer
+    readonly property string subtitle: isGroup ? i18np("%1 window", "%1 windows", childCount)
                                      : inGroupPopup ? "" : (appName !== title ? appName : "")
     readonly property bool pressed: mouse.pressed && mouse.containsMouse
     readonly property bool sunken: active || pressed || groupOpen
@@ -46,7 +46,7 @@ Item {
 
     Bevel {
         anchors.fill: parent
-        // minimiert: flach, nur beim Überfahren eine feine Kante
+        // minimized: flat, a fine edge only on hover
         visible: !row.minimized || row.sunken || mouse.containsMouse
         depth: row.minimized && !row.sunken ? 1 : 2
         sunken: row.sunken
@@ -59,7 +59,7 @@ Item {
     RowLayout {
         anchors.fill: parent
         anchors.rightMargin: Kirigami.Units.smallSpacing + 2
-        // eingedrückt: Inhalt 1 px nach unten rechts, wie im Qt-Stil
+        // pressed in: content 1 px down and right, as in the Qt style
         anchors.topMargin: row.sunken ? 1 : 0
         anchors.leftMargin: row.sunken ? Kirigami.Units.smallSpacing + 3 : Kirigami.Units.smallSpacing + 2
         spacing: Kirigami.Units.smallSpacing + 2
@@ -99,7 +99,7 @@ Item {
                 opacity: 0.7
             }
         }
-        // Gruppen: Pfeil vom Rand weg (Schublade klappt seitlich auf)
+        // groups: arrow pointing away from the edge (the drawer opens to the side)
         MotifArrow {
             visible: row.isGroup
             Layout.preferredWidth: 11
@@ -148,7 +148,7 @@ Item {
         subText: {
             const parts = [];
             if (row.appName && row.appName !== row.model?.display) parts.push(row.appName);
-            if (row.minimized) parts.push(i18n("minimiert"));
+            if (row.minimized) parts.push(i18n("minimized"));
             return parts.join(" – ");
         }
         icon: row.model?.decoration

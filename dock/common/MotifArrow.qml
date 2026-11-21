@@ -1,5 +1,5 @@
 /*
- * Schiefer – Motif-Pfeil (Dreieck mit Licht- und Schattenkante)
+ * Schiefer: Motif arrow (triangle with light and shadow edge)
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -25,7 +25,7 @@ Canvas {
         const ctx = getContext("2d");
         ctx.reset();
         const w = Math.floor(width), h = Math.floor(height);
-        // Dreieck mit ganzzahligen Ecken, Spitze oben bzw. unten
+        // triangle with integer corners, tip up or down
         const l = 0.5, r = w - 0.5, mid = w / 2;
         const top = up ? 0.5 : h - 0.5, base_ = up ? h - 0.5 : 0.5;
         const lit = sunken ? darkColor : lightColor;
@@ -33,7 +33,7 @@ Canvas {
         ctx.lineWidth = 1;
         ctx.fillStyle = base;
         ctx.beginPath(); ctx.moveTo(mid, top); ctx.lineTo(r, base_); ctx.lineTo(l, base_); ctx.closePath(); ctx.fill();
-        // linke Flanke hell; rechte Flanke und Grundlinie (Spitze oben) dunkel
+        // left flank light; right flank and base line (tip up) dark
         ctx.strokeStyle = up ? lit : shade;
         ctx.beginPath(); ctx.moveTo(l, base_); ctx.lineTo(mid, top); ctx.stroke();
         ctx.strokeStyle = shade;

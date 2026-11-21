@@ -1,5 +1,5 @@
-// gtkcolors – gibt (für das kdeglobals in $XDG_CONFIG_HOME) die colors.css aus, die kde-gtk-config aus kdeglobals erzeugen würde.
-// Die Funktion colors() ist unverändert aus kde-gtk-config 6.7.6 (configvalueprovider.cpp) übernommen
+// gtkcolors: prints the colors.css that kde-gtk-config would generate from kdeglobals in $XDG_CONFIG_HOME.
+// colors() is copied unchanged from kde-gtk-config 6.7.6 (configvalueprovider.cpp)
 // (GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL).
 #include <QGuiApplication>
 #include <QColor>
@@ -242,7 +242,7 @@ static QMap<QString, QColor> colors()
 int main(int argc, char **argv)
 {
     QGuiApplication app(argc, argv);
-    // liest kdeglobals aus $XDG_CONFIG_HOME (wie KColorScheme selbst)
+    // read kdeglobals from $XDG_CONFIG_HOME (as KColorScheme does)
     kdeglobalsConfig = KSharedConfig::openConfig();
     const auto c = colors();
     for (auto it = c.cbegin(); it != c.cend(); ++it)

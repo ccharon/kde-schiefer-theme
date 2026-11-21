@@ -4,7 +4,7 @@
       xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
   <kcfgfile name=""/>
   <group name="General">
-    <!-- left: Knopf mit Strich (Fenstermenü) | right: Knopf mit Quadrat (Minimieren) -->
+    <!-- left: button with a bar (window menu) | right: button with a square (minimize) -->
     <entry name="side" type="String"><default>left</default></entry>
   </group>
 </kcfg>

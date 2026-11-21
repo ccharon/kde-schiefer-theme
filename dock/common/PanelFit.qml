@@ -1,10 +1,10 @@
 /*
- * Lage eines Applets im Leistenfenster. Plasma polstert Applets ungleich (längs 8 px
- * plus Rest, quer 4 px) und weiß nichts von der erhabenen Leistenkante. Diese
- * Komponente misst Lage, Fenstergröße, sichtbare Kanten und das überschüssige Polster,
- * damit das Applet seinen Inhalt mit gleichem Rand zwischen die sichtbaren Kanten
- * setzen und eine um das Polster gekürzte Länge melden kann. Der Inhalt ragt dafür
- * über das Applet hinaus (nichts clippt, Klicks gehen).
+ * Position of an applet in the panel window. Plasma pads applets unevenly (8 px along
+ * plus remainder, 4 px across) and knows nothing of the raised panel edge. This
+ * component measures position, window size, visible edges and the extra padding,
+ * so the applet can place its content with an even margin between the visible edges
+ * and report a length reduced by the padding. The content extends beyond the applet
+ * for this (nothing clips, clicks work).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -15,16 +15,16 @@ Item {
 
     required property Item target
     required property bool vertical
-    // Rand zwischen Inhalt und sichtbarer Leistenkante, ringsum gleich
+    // margin between content and visible panel edge, equal on all sides
     property int gap: 3
-    // Breite der erhabenen Leistenkante (plasma/make_plasma_theme.py: raised(2))
+    // width of the raised panel edge (plasma/make_plasma_theme.py: raised(2))
     property int bevel: 2
 
     property point winPos: Qt.point(0, 0)
     property size winSize: Qt.size(target.width, target.height)
     property int borders: KSvg.FrameSvg.AllBorders
     property int excess: 0
-    // das Applet ist allein sichtbar in seiner Leiste
+    // the applet is the only visible one in its panel
     property bool alone: true
 
     readonly property int edgeL: (borders & KSvg.FrameSvg.LeftBorder) ? bevel : 0
@@ -32,15 +32,15 @@ Item {
     readonly property int edgeT: (borders & KSvg.FrameSvg.TopBorder) ? bevel : 0
     readonly property int edgeB: (borders & KSvg.FrameSvg.BottomBorder) ? bevel : 0
     readonly property int edgesAlong: vertical ? edgeT + edgeB : edgeL + edgeR
-    // Dicke zwischen den sichtbaren Kanten
+    // thickness between the visible edges
     readonly property int thickness: vertical ? winSize.width - edgeL - edgeR : winSize.height - edgeT - edgeB
-    // Innenfläche (Fenster ohne Kanten und Rand) in Koordinaten des Applets
+    // inner area (window without edges and margin) in applet coordinates
     readonly property int innerX: edgeL + gap - winPos.x
     readonly property int innerY: edgeT + gap - winPos.y
     readonly property int innerWidth: winSize.width - edgeL - edgeR - 2 * gap
     readonly property int innerHeight: winSize.height - edgeT - edgeB - 2 * gap
 
-    // Länge, die das Applet melden muss, damit das Fenster Kanten + Rand + Inhalt umfasst
+    // length the applet must report so the window covers edges + margin + content
     function lengthFor(contentLength) {
         return Math.max(1, edgesAlong + 2 * gap + contentLength - excess);
     }
@@ -63,9 +63,9 @@ Item {
             }
         }
         alone = others === 0;
-        // Polster nur messen, wenn das Fenster frei der gemeldeten Länge folgt; steht es
-        // an seiner Mindest- oder Höchstlänge (Leiste mit eigener Länge), steckt im
-        // Unterschied auch Leerraum, und die gemeldete Länge liefe davon
+        // Measure the padding only while the window follows the reported length freely. At
+        // its minimum or maximum length (panel with a custom length) the difference also
+        // contains empty space, and the reported length would run away
         const winLen = vertical ? w.height : w.width;
         // lengthMode 2 = PanelView::Custom
         const clamped = w.lengthMode === 2 && ((w.minimumLength !== undefined && w.minimumLength > 0 && winLen <= w.minimumLength)
@@ -75,7 +75,7 @@ Item {
         } else if (!clamped) {
             excess = Math.max(0, winLen - (vertical ? target.height : target.width));
         }
-        // sichtbarer Leistenrahmen: das sichtbare FrameSvgItem in Fenstergröße
+        // visible panel frame: the visible FrameSvgItem of window size
         for (let it = target.parent; it; it = it.parent) {
             for (const c of it.children) {
                 if (c.enabledBorders !== undefined && c.visible && c.width === w.width && c.height === w.height) {
@@ -86,8 +86,8 @@ Item {
         }
     }
 
-    // erst messen, wenn Applet und Fenster zur Ruhe gekommen sind; das Fenster folgt
-    // der gemeldeten Länge verzögert, sofortiges Messen schaukelt sich auf
+    // measure only after applet and window have settled; the window follows the
+    // reported length with a delay, and measuring right away oscillates
     Timer {
         id: measureTimer
         interval: 250

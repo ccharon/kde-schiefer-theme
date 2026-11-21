@@ -1,11 +1,11 @@
 #!/bin/bash
-# Erzeugt aus einem Breeze-Quell-Tarball einen *unveränderten*, nur umbenannten Fork des
-# Widget-Stils (Namespace Schiefer, Plugin-Schlüssel Schiefer, Konfig schieferrc).
-#   tools/import-upstream.sh /var/cache/distfiles/breeze-6.7.6.tar.xz /ziel/verzeichnis
-# Eigene Dateien (CMakeLists.txt, test/, render.sh) werden NICHT erzeugt – die gehören zum Retro-Stand.
+# Creates an *unmodified*, only renamed fork of the widget style from a Breeze source
+# tarball (namespace Schiefer, plugin key Schiefer, config schieferrc).
+#   tools/import-upstream.sh /var/cache/distfiles/breeze-6.7.6.tar.xz /target/directory
+# Schiefer's own files (CMakeLists.txt, test/, render.sh) are not created; they belong to the fork.
 set -euo pipefail
 TARBALL="$1"; DEST="$2"
-[ -e "$DEST" ] && { echo "$DEST existiert schon" >&2; exit 1; }
+[ -e "$DEST" ] && { echo "$DEST already exists" >&2; exit 1; }
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 tar -xJf "$TARBALL" -C "$TMP"
 SRC=$(echo "$TMP"/breeze-*)
@@ -25,7 +25,7 @@ grep -rl --include=*.cpp --include=*.h --include=*.kcfgc -e Breeze . | xargs sed
 sed -i 's/<kcfgfile name="breezerc"\/>/<kcfgfile name="schieferrc"\/>/' breeze.kcfg kdeco/breezesettingsdata.kcfg
 sed -i 's/QLatin1String("breeze")/QLatin1String("schiefer")/; s/QStringLiteral("Breeze"))/QStringLiteral("Schiefer"))/' breezestyleplugin.cpp
 echo '{ "Keys": [ "Schiefer" ] }' > breeze.json
-printf '[Misc]\nName=Schiefer\nComment=Motif/CDE-artiger Widget-Stil auf Basis von Breeze\n[KDE]\nWidgetStyle=Schiefer\n' > schiefer.themerc
+printf '[Misc]\nName=Schiefer\nComment=Motif/CDE-like widget style based on Breeze\n[KDE]\nWidgetStyle=Schiefer\n' > schiefer.themerc
 rm -f breeze.themerc
 basename "$SRC" > UPSTREAM_VERSION
 echo "Fork erzeugt: $DEST ($(cat UPSTREAM_VERSION))"

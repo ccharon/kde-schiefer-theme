@@ -15,7 +15,7 @@ find_package(Qt6 6.6 REQUIRED COMPONENTS Core Gui DBus)
 find_package(KF6 6.0 REQUIRED COMPONENTS CoreAddons Config)
 find_package(KDecoration3 REQUIRED)
 
-# gemeinsamer Farbkern (Motif-Formel), nur Header
+# shared color core (Motif formula), header only
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
 
 add_library(schieferdecoration MODULE retrodecoration.cpp)

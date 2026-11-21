@@ -18,7 +18,7 @@ KDecoration3::BorderSize MockSettings::borderSize() const
 
 QList<KDecoration3::DecorationButtonType> MockSettings::decorationButtonsLeft() const
 {
-    return {KDecoration3::DecorationButtonType::Menu}; // Schiefer-Test: Fenstermenü links
+    return {KDecoration3::DecorationButtonType::Menu}; // Schiefer test: window menu on the left
 }
 
 QList<KDecoration3::DecorationButtonType> MockSettings::decorationButtonsRight() const

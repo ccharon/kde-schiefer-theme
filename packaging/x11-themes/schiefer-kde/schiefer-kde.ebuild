@@ -1,19 +1,20 @@
-# Lokales Paket – erzeugt von ~/claude/schiefer/tools/make-dist.sh
+# Copyright 2026 Schiefer authors
+# Distributed under the terms of the GNU General Public License v2
 EAPI=8
 
 inherit cmake
 
-DESCRIPTION="Schiefer: Fensterdekoration und Qt-Widget-Stil im Motif/CDE-Stil (Fork von Breeze)"
-SRC_URI="schiefer-${PV}.tar.xz"
+DESCRIPTION="Schiefer: window decoration and Qt widget style in Motif/CDE style (fork of Breeze)"
+SRC_URI="https://github.com/ccharon/kde-schiefer-theme/releases/download/v${PV}/schiefer-${PV}.tar.xz"
+HOMEPAGE="https://github.com/ccharon/kde-schiefer-theme"
 S="${WORKDIR}/schiefer-${PV}"
 
 LICENSE="GPL-2+"
 SLOT="0"
 KEYWORDS="amd64 arm64"
-# Quelltarball liegt nur lokal vor (tools/install-overlay.sh legt ihn in DISTDIR)
-RESTRICT="fetch mirror test"
+RESTRICT="test"
 
-# qtbase:6= und kdecoration:6= sorgen für automatischen Neubau bei ABI-Änderungen
+# qtbase:6= and kdecoration:6= trigger rebuilds on ABI changes
 DEPEND="
 	dev-qt/qtbase:6=[dbus,gui,widgets]
 	dev-qt/qtdeclarative:6
@@ -29,11 +30,7 @@ DEPEND="
 RDEPEND="${DEPEND}"
 BDEPEND="kde-frameworks/extra-cmake-modules:0"
 
-pkg_nofetch() {
-	einfo "Den Quelltarball ${A} erzeugt und kopiert ~/claude/schiefer/tools/install-overlay.sh."
-}
-
-# Zwei eigenständige CMake-Projekte (kdecoration, kstyle) – jeweils vorbereiten, bauen, installieren
+# Two separate CMake projects (kdecoration, kstyle)
 src_prepare() {
 	default
 	local c
@@ -64,7 +61,7 @@ src_install() {
 }
 
 pkg_postinst() {
-	elog "Fensterdekoration: Systemeinstellungen › Fensterdekorationen › Schiefer"
-	elog "Anwendungsstil:    Systemeinstellungen › Anwendungsstil › Schiefer"
-	elog "Nach einem Update der Dekoration: kwin_wayland --replace & (oder neu anmelden)"
+	elog "Window decoration: System Settings > Window Decorations > Schiefer"
+	elog "Application style: System Settings > Application Style > Schiefer"
+	elog "After a decoration update: log out and back in"
 }

@@ -1,10 +1,10 @@
-// Test-Galerie für Schiefer: zeigt typische Bedienelemente.
-//   retrogallery                       -> Fenster anzeigen
-//   retrogallery --grab out.png        -> offscreen in PNG rendern (inkl. aufgeklapptem Menü)
-//   Zusätze (ändern das Standardbild nicht):
-//     --menu view     statt „File“ das Menü „View“ mit Optionsfeldern (exklusive Häkchen) daneben setzen
-//     --busy out2.png Fortschrittsbalken „besetzt“; out2.png wird 400 ms nach out.png aufgenommen
-//     --delay ms      Aufnahme erst nach ms (Standard 300)
+// Test gallery for Schiefer: shows typical controls.
+//   retrogallery                       -> show the window
+//   retrogallery --grab out.png        -> render offscreen to PNG (including an open menu)
+//   extras (do not change the default image):
+//     --menu view     show the "View" menu with radio items (exclusive checks) instead of "File"
+//     --busy out2.png busy progress bar; out2.png is captured 400 ms after out.png
+//     --delay ms      capture after ms (default 300)
 #include <QAction>
 #include <QActionGroup>
 #include <QApplication>
@@ -43,36 +43,36 @@ static QWidget *controlsPage()
     auto *page = new QWidget;
     auto *grid = new QHBoxLayout(page);
 
-    // Spalte 1: Knöpfe & Auswahl
+    // Column 1: buttons and choices
     auto *col1 = new QVBoxLayout;
-    auto *buttons = new QGroupBox(QStringLiteral("Knöpfe"));
+    auto *buttons = new QGroupBox(QStringLiteral("Buttons"));
     auto *bl = new QVBoxLayout(buttons);
-    auto *def = new QPushButton(QStringLiteral("Standard"));
+    auto *def = new QPushButton(QStringLiteral("Default"));
     def->setDefault(true);
     bl->addWidget(def);
     bl->addWidget(new QPushButton(QStringLiteral("Button")));
     auto *menuButton = new QPushButton(QStringLiteral("Menu Button"));
     auto *m = new QMenu(menuButton);
-    m->addAction(QStringLiteral("Eins"));
+    m->addAction(QStringLiteral("One"));
     menuButton->setMenu(m);
     bl->addWidget(menuButton);
-    auto *dis = new QPushButton(QStringLiteral("Deaktiviert"));
+    auto *dis = new QPushButton(QStringLiteral("Disabled"));
     dis->setEnabled(false);
     bl->addWidget(dis);
     auto *tb = new QToolButton;
-    tb->setText(QStringLiteral("Werkzeug"));
+    tb->setText(QStringLiteral("Tool"));
     tb->setCheckable(true);
     tb->setChecked(true);
     bl->addWidget(tb);
     col1->addWidget(buttons);
 
-    auto *choice = new QGroupBox(QStringLiteral("Auswahl"));
+    auto *choice = new QGroupBox(QStringLiteral("Choice"));
     auto *cl = new QVBoxLayout(choice);
-    auto *c1 = new QCheckBox(QStringLiteral("Checkbox an"));
+    auto *c1 = new QCheckBox(QStringLiteral("Check box on"));
     c1->setChecked(true);
     cl->addWidget(c1);
-    cl->addWidget(new QCheckBox(QStringLiteral("Checkbox aus")));
-    auto *c3 = new QCheckBox(QStringLiteral("Teilweise"));
+    cl->addWidget(new QCheckBox(QStringLiteral("Check box off")));
+    auto *c3 = new QCheckBox(QStringLiteral("Partial"));
     c3->setTristate(true);
     c3->setCheckState(Qt::PartiallyChecked);
     cl->addWidget(c3);
@@ -84,9 +84,9 @@ static QWidget *controlsPage()
     col1->addStretch();
     grid->addLayout(col1);
 
-    // Spalte 2: Eingaben
+    // Column 2: inputs
     auto *col2 = new QVBoxLayout;
-    auto *inputs = new QGroupBox(QStringLiteral("Eingaben"));
+    auto *inputs = new QGroupBox(QStringLiteral("Inputs"));
     auto *fl = new QFormLayout(inputs);
     fl->addRow(QStringLiteral("Text:"), new QLineEdit(QStringLiteral("abc")));
     auto *combo = new QComboBox;
@@ -94,8 +94,8 @@ static QWidget *controlsPage()
     fl->addRow(QStringLiteral("ComboBox:"), combo);
     auto *ecombo = new QComboBox;
     ecombo->setEditable(true);
-    ecombo->addItem(QStringLiteral("editierbar"));
-    fl->addRow(QStringLiteral("Editierbar:"), ecombo);
+    ecombo->addItem(QStringLiteral("editable"));
+    fl->addRow(QStringLiteral("Editable:"), ecombo);
     auto *spin = new QSpinBox;
     spin->setValue(42);
     fl->addRow(QStringLiteral("SpinBox:"), spin);
@@ -105,14 +105,14 @@ static QWidget *controlsPage()
     auto *ticks = new QSlider(Qt::Horizontal);
     ticks->setTickPosition(QSlider::TicksBelow);
     ticks->setValue(70);
-    fl->addRow(QStringLiteral("Mit Skala:"), ticks);
+    fl->addRow(QStringLiteral("With scale:"), ticks);
     auto *progress = new QProgressBar;
     progress->setValue(60);
-    fl->addRow(QStringLiteral("Fortschritt:"), progress);
+    fl->addRow(QStringLiteral("Progress:"), progress);
     auto *dial = new QDial;
     dial->setValue(30);
     dial->setFixedSize(56, 56);
-    fl->addRow(QStringLiteral("Drehregler:"), dial);
+    fl->addRow(QStringLiteral("Dial:"), dial);
     col2->addWidget(inputs);
 
     auto *list = new QListWidget;
@@ -127,16 +127,16 @@ static QWidget *controlsPage()
     // Spalte 3: Baum, Text, Scrollbalken
     auto *col3 = new QVBoxLayout;
     auto *tree = new QTreeWidget;
-    tree->setHeaderLabels({QStringLiteral("Name"), QStringLiteral("Größe")});
+    tree->setHeaderLabels({QStringLiteral("Name"), QStringLiteral("Size")});
     for (int i = 0; i < 3; ++i) {
-        auto *it = new QTreeWidgetItem(tree, {QStringLiteral("Ordner %1").arg(i + 1), QStringLiteral("–")});
-        new QTreeWidgetItem(it, {QStringLiteral("datei.txt"), QStringLiteral("4 KB")});
+        auto *it = new QTreeWidgetItem(tree, {QStringLiteral("Folder %1").arg(i + 1), QStringLiteral("-")});
+        new QTreeWidgetItem(it, {QStringLiteral("file.txt"), QStringLiteral("4 KB")});
         it->setExpanded(i == 0);
     }
     tree->setMaximumHeight(130);
     col3->addWidget(tree);
     auto *text = new QTextEdit;
-    text->setPlainText(QStringLiteral("Mehrzeiliger Text\n").repeated(12));
+    text->setPlainText(QStringLiteral("Multi-line text\n").repeated(12));
     text->setMaximumHeight(110);
     col3->addWidget(text);
     auto *hs = new QScrollBar(Qt::Horizontal);
@@ -156,32 +156,32 @@ int main(int argc, char **argv)
     const int grabIdx = args.indexOf(QStringLiteral("--grab"));
 
     QMainWindow win;
-    win.setWindowTitle(QStringLiteral("Schiefer – Galerie"));
+    win.setWindowTitle(QStringLiteral("Schiefer Gallery"));
     auto *file = win.menuBar()->addMenu(QStringLiteral("&File"));
-    file->addAction(QIcon::fromTheme(QStringLiteral("document-open")), QStringLiteral("&Öffnen …"))->setShortcut(QKeySequence::Open);
-    file->addAction(QIcon::fromTheme(QStringLiteral("document-save")), QStringLiteral("&Speichern"))->setShortcut(QKeySequence::Save);
-    auto *chk = file->addAction(QStringLiteral("Automatisch speichern"));
+    file->addAction(QIcon::fromTheme(QStringLiteral("document-open")), QStringLiteral("&Open…"))->setShortcut(QKeySequence::Open);
+    file->addAction(QIcon::fromTheme(QStringLiteral("document-save")), QStringLiteral("&Save"))->setShortcut(QKeySequence::Save);
+    auto *chk = file->addAction(QStringLiteral("Save Automatically"));
     chk->setCheckable(true);
     chk->setChecked(true);
     file->addSeparator();
-    auto *sub = file->addMenu(QStringLiteral("Zuletzt geöffnet"));
-    sub->addAction(QStringLiteral("projekt.bip"));
-    file->addAction(QStringLiteral("Deaktiviert"))->setEnabled(false);
+    auto *sub = file->addMenu(QStringLiteral("Open Recent"));
+    sub->addAction(QStringLiteral("project.bip"));
+    file->addAction(QStringLiteral("Disabled"))->setEnabled(false);
     file->addSeparator();
-    file->addAction(QIcon::fromTheme(QStringLiteral("application-exit")), QStringLiteral("&Beenden"))->setShortcut(QKeySequence::Quit);
+    file->addAction(QIcon::fromTheme(QStringLiteral("application-exit")), QStringLiteral("&Quit"))->setShortcut(QKeySequence::Quit);
     win.menuBar()->addMenu(QStringLiteral("&Edit"));
-    // Optionsfelder im Menü (nur sichtbar mit --menu view)
+    // radio items in the menu (visible only with --menu view)
     auto *view = win.menuBar()->addMenu(QStringLiteral("&View"));
     auto *group = new QActionGroup(view);
-    for (const auto &name : {QStringLiteral("Symbole"), QStringLiteral("Liste"), QStringLiteral("Details")}) {
+    for (const auto &name : {QStringLiteral("Icons"), QStringLiteral("List"), QStringLiteral("Details")}) {
         auto *a = view->addAction(name);
         a->setCheckable(true);
         a->setActionGroup(group);
-        a->setChecked(name == QStringLiteral("Liste"));
+        a->setChecked(name == QStringLiteral("List"));
     }
     view->addSeparator();
-    auto *dis1 = view->addAction(QStringLiteral("Deaktiviert an"));
-    auto *dis2 = view->addAction(QStringLiteral("Deaktiviert aus"));
+    auto *dis1 = view->addAction(QStringLiteral("Disabled on"));
+    auto *dis2 = view->addAction(QStringLiteral("Disabled off"));
     auto *group2 = new QActionGroup(view);
     for (auto *a : {dis1, dis2}) {
         a->setCheckable(true);
@@ -190,22 +190,22 @@ int main(int argc, char **argv)
     }
     dis1->setChecked(true);
     view->addSeparator();
-    view->addAction(QStringLiteral("Statusleiste"))->setCheckable(true);
+    view->addAction(QStringLiteral("Status bar"))->setCheckable(true);
     win.menuBar()->addMenu(QStringLiteral("&Help"));
 
-    auto *toolbar = win.addToolBar(QStringLiteral("Werkzeuge"));
+    auto *toolbar = win.addToolBar(QStringLiteral("Tools"));
     toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    toolbar->addAction(QIcon::fromTheme(QStringLiteral("document-new")), QStringLiteral("Neu"));
-    toolbar->addAction(QIcon::fromTheme(QStringLiteral("document-open")), QStringLiteral("Öffnen"));
+    toolbar->addAction(QIcon::fromTheme(QStringLiteral("document-new")), QStringLiteral("New"));
+    toolbar->addAction(QIcon::fromTheme(QStringLiteral("document-open")), QStringLiteral("Open"));
     toolbar->addSeparator();
-    auto *tog = toolbar->addAction(QIcon::fromTheme(QStringLiteral("view-preview")), QStringLiteral("Vorschau"));
+    auto *tog = toolbar->addAction(QIcon::fromTheme(QStringLiteral("view-preview")), QStringLiteral("Preview"));
     tog->setCheckable(true);
     tog->setChecked(true);
 
     auto *tabs = new QTabWidget;
     tabs->addTab(controlsPage(), QStringLiteral("Controls"));
-    tabs->addTab(new QLabel(QStringLiteral("Zweite Seite")), QStringLiteral("Panes"));
-    tabs->addTab(new QLabel(QStringLiteral("Dritte Seite")), QStringLiteral("Windows"));
+    tabs->addTab(new QLabel(QStringLiteral("Second page")), QStringLiteral("Panes"));
+    tabs->addTab(new QLabel(QStringLiteral("Third page")), QStringLiteral("Windows"));
     win.setCentralWidget(tabs);
     win.statusBar()->showMessage(QStringLiteral("17 Items 1 Hidden"));
     win.resize(980, 600);
@@ -226,21 +226,21 @@ int main(int argc, char **argv)
         for (auto *bar : win.findChildren<QProgressBar *>()) {
             bar->setRange(0, 0);
         }
-        // zweite Aufnahme nach 400 ms: der Balken muss sich auch ohne Animationen weiterbewegen
+        // second capture after 400 ms: the bar must move on even without animations
         QTimer::singleShot(700, [&] {
             win.grab().toImage().save(args.at(busyIdx + 1));
         });
     }
     win.show();
-    const int delayIdx = args.indexOf(QStringLiteral("--delay")); // --delay ms: später aufnehmen (z. B. nach D-Bus-Neuladen)
+    const int delayIdx = args.indexOf(QStringLiteral("--delay")); // --delay ms: capture later (for example after a D-Bus reload)
     const int delay = delayIdx >= 0 && delayIdx + 1 < args.size() ? args.at(delayIdx + 1).toInt() : 300;
     QTimer::singleShot(delay, [&] {
         QImage shot = win.grab().toImage();
-        // Menü separat rendern und rechts neben das Fenster setzen
+        // render the menu separately and place it to the right of the window
         shown->adjustSize();
         shown->ensurePolished();
         const QImage menu = shown->grab().toImage();
-        // in logischen Maßen zusammensetzen, Bild in Gerätepixeln (QT_SCALE_FACTOR=1.5: Pixel bleiben unverändert)
+        // compose in logical units, image in device pixels (QT_SCALE_FACTOR=1.5 keeps the pixels unchanged)
         const qreal dpr = shot.devicePixelRatio();
         const QSizeF ss = shot.deviceIndependentSize(), ms = menu.deviceIndependentSize();
         QImage sheet(qCeil((ss.width() + ms.width() + 24) * dpr), qCeil(std::max(ss.height(), ms.height() + 40) * dpr), QImage::Format_ARGB32);
@@ -252,7 +252,7 @@ int main(int argc, char **argv)
         p.end();
         sheet.save(out);
         if (busyIdx >= 0) {
-            QTimer::singleShot(500, &app, &QApplication::quit); // auf die zweite Aufnahme warten
+            QTimer::singleShot(500, &app, &QApplication::quit); // wait for the second capture
         } else {
             app.quit();
         }

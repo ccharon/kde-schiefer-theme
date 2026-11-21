@@ -1,6 +1,6 @@
 /*
- * Schiefer-Schublade: großes Symbol im Frontpanel, darüber eine Lasche, die eine Liste
- * weiterer Starter nach oben ausklappt (CDE-Subpanel).
+ * Schiefer drawer: large icon in the front panel with a tab above it that slides up a list
+ * of more launchers (CDE subpanel).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -26,7 +26,7 @@ PlasmoidItem {
     readonly property string drawerTitle: Plasmoid.configuration.title
         || (mainData.name ?? "")
         || (isFolder ? folder.folderName : "")
-        || (face === "clock" ? i18n("Uhr") : face === "date" ? i18n("Kalender") : face === "system" ? i18n("System") : i18n("Schublade"))
+        || (face === "clock" ? i18n("Clock") : face === "date" ? i18n("Calendar") : face === "system" ? i18n("System") : i18n("Drawer"))
     readonly property bool isSystem: face === "system"
     readonly property bool isFolder: face === "folder"
     readonly property string folderUrl: Plasmoid.configuration.folderUrl
@@ -34,11 +34,11 @@ PlasmoidItem {
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
     readonly property int tabSize: Math.max(10, Math.round(Kirigami.Units.gridUnit * 0.7))
     readonly property int pad: Kirigami.Units.smallSpacing
-    // Seitenlänge des Symbolfelds: aus der Leistendicke abgeleitet
+    // side length of the icon field, derived from the panel thickness
     readonly property int faceSize: vertical ? width - 2 * pad : height - tabSize - 2 * pad
     readonly property bool drawerOpen: popup.visible
 
-    // gemeinsame Zeit für Uhr, Kalenderblatt und Tooltip; springt genau zur vollen Minute
+    // shared time for clock, calendar page and tooltip; ticks exactly on the full minute
     property date now: new Date()
     function refreshNow() {
         const d = new Date();
@@ -56,8 +56,8 @@ PlasmoidItem {
 
     preferredRepresentation: fullRepresentation
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
-    // Schalter frontpanel-farbe: Flächen in der CDE-Frontpanel-Farbe statt der Fensterfarbe;
-    // Kinder erben sie über Kirigami.Theme, FrameTint färbt den Leistenhintergrund mit
+    // option frontpanel-color: surfaces in the CDE front panel color instead of the window color;
+    // children inherit it through Kirigami.Theme, FrameTint also tints the panel background
     Kirigami.Theme.inherit: !Scheme.usePanelColor
     Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
     FrameTint {}
@@ -87,8 +87,8 @@ PlasmoidItem {
         if (at < 0 || at > list.length) list.push(url); else list.splice(at, 0, url);
         Plasmoid.configuration.drawerUrls = list;
     }
-    // Indizes kommen aus Delegaten, die beim Umbau des Modells schon veraltet sein können;
-    // splice(-1, 1) würde sonst still den letzten Eintrag löschen
+    // Indices come from delegates that may already be stale while the model is rebuilt;
+    // splice(-1, 1) would otherwise silently delete the last entry
     function validIndex(index) {
         return Number.isInteger(index) && index >= 0 && index < drawerUrls.length;
     }
@@ -105,7 +105,7 @@ PlasmoidItem {
         list.splice(to, 0, u);
         Plasmoid.configuration.drawerUrls = list;
     }
-    // Eintrag aus der Schublade wird Hauptsymbol, das alte Hauptsymbol rutscht an seine Stelle
+    // a drawer entry becomes the main icon, and the old main icon takes its place
     function promote(index) {
         if (!validIndex(index)) return;
         const list = drawerUrls.slice();
@@ -120,14 +120,14 @@ PlasmoidItem {
         helper.openUrl(url);
         launchFeedback.restart();
     }
-    // Eintrag der Ordner-Schublade: öffnen, aber keine Programme/Skripte ausführen
+    // folder drawer entry: open it, but never run programs or scripts
     function openEntry(url) {
         popup.visible = false;
         helper.openFile(url);
         launchFeedback.restart();
     }
 
-    // ---------- Ordner (nur Gesicht „folder“) ----------
+    // ---------- Folder (face "folder" only) ----------
     FolderModel {
         id: folder
         url: root.isFolder ? root.folderUrl : ""
@@ -135,12 +135,12 @@ PlasmoidItem {
     readonly property alias folder: folder
     Dialogs.FolderDialog {
         id: folderDialog
-        title: i18n("Ordner für die Schublade wählen")
+        title: i18n("Choose a folder for the drawer")
         currentFolder: root.folderUrl || "file://" + StandardPaths.writableLocation(StandardPaths.HomeLocation)
         onAccepted: Plasmoid.configuration.folderUrl = selectedFolder.toString()
     }
 
-    // ---------- Systemabschnitt (nur Gesicht „system“) ----------
+    // ---------- System tray (face "system" only) ----------
     TrayBridge {
         id: tray
         applet: root.isSystem ? Plasmoid : null
@@ -148,7 +148,7 @@ PlasmoidItem {
         hideTray: root.isSystem && Plasmoid.configuration.hideTray
     }
     readonly property alias tray: tray
-    // im Gesicht: was der Systray im Panel zeigen würde
+    // in the face: what the system tray would show in the panel
     KItemModels.KSortFilterProxyModel {
         id: trayActive
         sourceModel: tray.model
@@ -156,7 +156,7 @@ PlasmoidItem {
         filterRowCallback: (sourceRow, sourceParent) =>
             sourceModel.data(sourceModel.index(sourceRow, 0, sourceParent), filterRole) === PlasmaCore.Types.ActiveStatus
     }
-    // in der Schublade: alle sichtbaren Einträge
+    // in the drawer: all visible entries
     KItemModels.KSortFilterProxyModel {
         id: trayAll
         sourceModel: tray.model
@@ -168,7 +168,7 @@ PlasmoidItem {
     }
     readonly property alias trayAllModel: trayAll
 
-    // nur für tools/screenshot.sh: SCHIEFER_DOCK_OPEN=<Titel> öffnet diese Schublade beim Start
+    // only for tools/screenshot.sh: SCHIEFER_DOCK_OPEN=<title> opens this drawer on start
     Timer {
         interval: 1500; running: helper.testOpen(root.drawerTitle)
         onTriggered: popup.visible = true
@@ -176,26 +176,26 @@ PlasmoidItem {
 
     Plasmoid.contextualActions: [
         PlasmaCore.Action {
-            text: i18n("Ordner wählen …")
+            text: i18n("Choose Folder…")
             icon.name: "folder-open"
             visible: root.isFolder
             onTriggered: folderDialog.open()
         },
         PlasmaCore.Action {
-            text: i18n("Hauptprogramm wählen …")
+            text: i18n("Choose Main Application…")
             visible: !root.isFolder
             icon.name: "document-edit"
             onTriggered: helper.chooseLauncher("main")
         },
         PlasmaCore.Action {
-            text: i18n("Programm in die Schublade legen …")
+            text: i18n("Add Application to Drawer…")
             visible: !root.isFolder
             icon.name: "list-add"
             onTriggered: helper.chooseLauncher("drawer")
         }
     ]
 
-    // ---------- Lasche ----------
+    // ---------- Tab ----------
     Item {
         id: tab
         anchors { left: parent.left; right: parent.right; top: parent.top }
@@ -205,13 +205,13 @@ PlasmoidItem {
             anchors.fill: parent
             anchors.leftMargin: 1
             anchors.rightMargin: 1
-            // wie in CDE versenkt; beim Drücken dunkelt die Mulde nach
+            // sunken as in CDE; the well darkens when pressed
             sunken: true
             fill: tabMouse.pressed ? Qt.tint(base, Qt.rgba(0, 0, 0, 0.12)) : base
         }
         MotifArrow {
             anchors.centerIn: parent
-            // klein und fein (1-px-Kanten), halb so hoch wie breit, mit Luft im Balken
+            // small and fine (1 px edges), half as high as wide, with room inside the bar
             width: (root.tabSize - 2) | 1
             height: (width + 1) / 2
             visible: root.drawerUrls.length > 0 || root.drawerOpen || root.isSystem || root.isFolder
@@ -256,7 +256,7 @@ PlasmoidItem {
                 source: root.isFolder ? folder.folderIcon : (root.mainData.icon ?? "list-add")
                 active: faceMouse.containsMouse
                 opacity: (root.isFolder ? root.folderUrl : root.mainUrl) ? 1 : 0.4
-                // kleiner Hüpfer beim Start, wie die blinkende Lampe im Original
+                // small hop on launch, like the blinking lamp in the original
                 transform: Translate { id: hop; y: 0 }
                 SequentialAnimation {
                     id: hopAnim
@@ -283,13 +283,13 @@ PlasmoidItem {
         MouseArea {
             id: faceMouse
             anchors.fill: parent
-            // die Systemsymbole nehmen ihre Klicks selbst
+            // the system icons take their own clicks
             enabled: !root.isSystem
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton
             onClicked: {
                 if (root.isFolder) {
-                    // folder.url: schon aufgelöst („~/…“, relative Pfade)
+                    // folder.url: already resolved ("~/...", relative paths)
                     if (root.folderUrl) root.launch(folder.url); else folderDialog.open();
                 } else if (root.mainUrl) root.launch(root.mainUrl);
                 else if (root.face === "launcher") helper.chooseLauncher("main");
@@ -299,13 +299,13 @@ PlasmoidItem {
         PlasmaCore.ToolTipArea {
             anchors.fill: parent
             active: !root.isSystem
-            // nach Ruhezustand o. Ä. kann der Minutentakt hinterherhinken
+            // after hibernation or similar the minute tick can lag behind
             onContainsMouseChanged: if (containsMouse && (root.face === "clock" || root.face === "date")) root.refreshNow()
-            mainText: root.isFolder ? (root.folderUrl ? folder.folderName : i18n("Kein Ordner gewählt"))
+            mainText: root.isFolder ? (root.folderUrl ? folder.folderName : i18n("No folder chosen"))
                     : (root.face === "date" || root.face === "clock") ? Qt.formatDate(root.now, Qt.locale().dateFormat(Locale.LongFormat))
-                    : (root.mainData.name ?? i18n("Kein Programm"))
-            subText: root.isFolder ? (root.folderUrl ? i18np("%1 Eintrag – Klick öffnet den Ordner", "%1 Einträge – Klick öffnet den Ordner", folder.count) : i18n("Klicken, um einen Ordner zu wählen"))
-                   : root.mainUrl ? (root.mainData.genericName ?? "") : i18n("Klicken oder Programm hierher ziehen")
+                    : (root.mainData.name ?? i18n("No application"))
+            subText: root.isFolder ? (root.folderUrl ? i18np("%1 entry. Click to open the folder.", "%1 entries. Click to open the folder.", folder.count) : i18n("Click to choose a folder"))
+                   : root.mainUrl ? (root.mainData.genericName ?? "") : i18n("Click or drag an application here")
             location: Plasmoid.location
         }
         DragAndDrop.DropArea {

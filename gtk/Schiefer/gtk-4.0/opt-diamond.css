@@ -1,10 +1,10 @@
-/* Schiefer: Optionsfelder als Raute (Motif 1.2 / CDE) – abschaltbar durch Weglassen des Imports in gtk.css.
+/* Schiefer: radio buttons as a diamond (Motif 1.2 / CDE). Disabled by leaving out its import in gtk.css.
  *
- * Versenkte Raute, gesetzt = mit der Auswahlfarbe gefüllt. CSS kann keine Raute zeichnen (kein clip-path, keine
- * Drehung); sie entsteht aus vier Eckmasken (Farbe des Fensterhintergrunds) und vier 2 px breiten Kantenstreifen,
- * alle als diagonale Verläufe. Die Fläche des Knotens ist ein Quadrat von 16 x 16 px; Prozentwerte gelten entlang
- * der Diagonale (25 % = Rand der Raute, 8,8 % = 2 px Kantenbreite).
- * Ohne diese Datei bleiben die runden Optionsfelder aus retro.css.
+ * Sunken diamond, filled with the select color when checked. CSS cannot draw a diamond (no clip-path, no
+ * rotation), so it is built from four corner masks (window background color) and four 2 px edge stripes,
+ * all as diagonal gradients. The node is a 16 x 16 px square; percentages run along
+ * the diagonal (25 % = edge of the diamond, 8.8 % = 2 px edge width).
+ * Without this file the round radio buttons from retro.css apply.
  */
 
 radio,

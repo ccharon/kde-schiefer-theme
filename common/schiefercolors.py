@@ -1,15 +1,15 @@
-"""Schiefer – Farbkern nach Motif (Python-Fassung von schiefercolors.h).
+"""Schiefer color core after Motif (Python version of schiefercolors.h).
 
-Motif leitet aus einer Hintergrundfarbe Vordergrund, obere/untere Schattenfarbe und
-Auswahlfarbe ab. Die Formel ist exakt aus Motif 2.3.8 übernommen
+Motif derives foreground, top and bottom shadow and select color from a background color.
+The formula is taken exactly from Motif 2.3.8
 (lib/Xm/Color.c: Brightness, CalculateColorsFor{Light,Dark,Medium}Background,
-CalculateColorsRGB; Konstanten aus lib/Xm/ColorP.h und lib/Xm/Xm.h.in),
+CalculateColorsRGB; constants from lib/Xm/ColorP.h and lib/Xm/Xm.h.in),
 Copyright (c) 1987-2012 The Open Group, LGPL-2.1-or-later.
 
-Gerechnet wird wie in Motif in 16 bit je Kanal (8 bit -> c * 257, wie XQueryColor auf
-TrueColor-Bildschirmen) mit ganzzahliger C-Division (Abschneiden zur Null). Zurück auf
-8 bit wird wie in Qt gerundet (QColor::fromRgba64(v).red() = round(v / 257)), damit Python
-und C++ (schiefercolors.h) dieselben Werte liefern – geprüft mit common/test_colors.py.
+Like Motif it computes with 16 bits per channel (8 bit -> c * 257, as XQueryColor on
+TrueColor screens) and C integer division (truncation toward zero). The way back to 8 bit
+rounds like Qt (QColor::fromRgba64(v).red() = round(v / 257)), so Python and C++
+(schiefercolors.h) give the same values. common/test_colors.py checks this.
 
     motif_colors((190, 194, 211))
     -> {'fg': (0,0,0), 'top': (227,229,236), 'bottom': (105,107,116), 'select': (162,165,179), 'model': 'medium'}
@@ -29,11 +29,11 @@ XmINTENSITY_FACTOR = 75
 XmLIGHT_FACTOR = 0
 XmLUMINOSITY_FACTOR = 25
 
-XmCOLOR_LITE_SEL_FACTOR = 15                      # zu Schwarz hin
+XmCOLOR_LITE_SEL_FACTOR = 15                      # toward black
 XmCOLOR_LITE_BS_FACTOR = 40
 XmCOLOR_LITE_TS_FACTOR = 20
 
-XmCOLOR_DARK_SEL_FACTOR = 15                      # zu Weiß hin
+XmCOLOR_DARK_SEL_FACTOR = 15                      # toward white
 XmCOLOR_DARK_BS_FACTOR = 30
 XmCOLOR_DARK_TS_FACTOR = 50
 
@@ -45,7 +45,7 @@ XmCOLOR_LO_SEL_FACTOR = 15
 XmCOLOR_LO_BS_FACTOR = 60
 XmCOLOR_LO_TS_FACTOR = 50
 
-# lib/Xm/Xm.h.in (Standardwerte der XmScreen-Ressourcen in Prozent)
+# lib/Xm/Xm.h.in (defaults of the XmScreen resources, in percent)
 XmDEFAULT_DARK_THRESHOLD = 20
 XmDEFAULT_LIGHT_THRESHOLD = 93
 XmDEFAULT_FOREGROUND_THRESHOLD = 70
@@ -57,7 +57,7 @@ XmFOREGROUND_THRESHOLD = XmDEFAULT_FOREGROUND_THRESHOLD * XmCOLOR_PERCENTILE    
 
 
 def _cdiv(a, b):
-    """Ganzzahlige Division wie in C (schneidet zur Null ab, nicht nach unten)."""
+    """Integer division as in C (truncates toward zero, not down)."""
     q = abs(a) // abs(b)
     return q if (a >= 0) == (b >= 0) else -q
 
@@ -67,12 +67,12 @@ def to16(c):
 
 
 def to8(v):
-    """16 -> 8 bit wie Qt (QColor::red() einer 16-bit-Farbe = round(v / 257))."""
+    """16 -> 8 bit like Qt (QColor::red() of a 16-bit color = round(v / 257))."""
     return (v * 255 + 32767) // 65535
 
 
 def brightness16(rgb16):
-    """Color.c: Brightness() – Helligkeit 0 … 65535."""
+    """Color.c: Brightness(), 0 ... 65535."""
     red, green, blue = rgb16
     intensity = (red + green + blue) // 3
     luminosity = int((XmRED_LUMINOSITY * float(red))
@@ -87,7 +87,7 @@ def brightness16(rgb16):
 
 
 def model(rgb):
-    """'dark', 'light' oder 'medium' (welcher Zweig von CalculateColorsRGB greift)."""
+    """'dark', 'light' or 'medium' (which branch of CalculateColorsRGB applies)."""
     b = brightness16(tuple(to16(c) for c in rgb[:3]))
     if b < XmCOLOR_DARK_THRESHOLD:
         return "dark"
@@ -97,12 +97,12 @@ def model(rgb):
 
 
 def brightness(rgb):
-    """Motif-Helligkeit einer 8-bit-Farbe als Anteil 0 … 1."""
+    """Motif brightness of an 8-bit color as a fraction 0 ... 1."""
     return brightness16(tuple(to16(c) for c in rgb[:3])) / XmMAX_SHORT
 
 
 def motif_colors16(bg16):
-    """Color.c: CalculateColorsRGB() auf 16-bit-Werten -> dict mit fg/top/bottom/select (16 bit)."""
+    """Color.c: CalculateColorsRGB() on 16-bit values -> dict with fg/top/bottom/select (16 bit)."""
     b = brightness16(bg16)
     fg = (0, 0, 0) if b > XmFOREGROUND_THRESHOLD else (XmMAX_SHORT,) * 3
 
@@ -134,17 +134,17 @@ def motif_colors16(bg16):
 
 
 def motif_colors(rgb):
-    """8-bit-Farbe (r, g, b) -> dict fg/top/bottom/select als 8-bit-Tupel, dazu 'model'."""
+    """8-bit color (r, g, b) -> dict fg/top/bottom/select as 8-bit tuples, plus 'model'."""
     c16 = motif_colors16(tuple(to16(c) for c in rgb[:3]))
     out = {k: tuple(to8(v) for v in c16[k]) for k in ("fg", "top", "bottom", "select")}
     out["model"] = c16["model"]
     return out
 
 
-# ---------------------------------------------------------------- kleine Helfer
+# ---------------------------------------------------------------- small helpers
 
 def parse(spec):
-    """'#rrggbb', 'r,g,b' oder Tupel -> (r, g, b)."""
+    """'#rrggbb', 'r,g,b' or tuple -> (r, g, b)."""
     if isinstance(spec, (tuple, list)):
         return tuple(int(v) for v in spec[:3])
     s = spec.strip()
@@ -158,12 +158,12 @@ def hexcolor(rgb):
 
 
 def kde(rgb):
-    """KDE-Schreibweise 'r,g,b'."""
+    """KDE notation 'r,g,b'."""
     return "%d,%d,%d" % tuple(rgb[:3])
 
 
 def mix(a, b, t):
-    """Lineare Mischung wie KColorUtils::mix (sRGB), gerundet."""
+    """Linear mix like KColorUtils::mix (sRGB), rounded."""
     return tuple(int(round(x + (y - x) * t)) for x, y in zip(a[:3], b[:3]))
 
 
@@ -174,12 +174,12 @@ def qgray(rgb):
 
 
 def factors(rgb):
-    """Mischanteile der Motif-Formel für eine 8-bit-Farbe: (oben, unten, Auswahl) als 0 … 1.
+    """Mix fractions of the Motif formula for an 8-bit color: (top, bottom, select) as 0 ... 1.
 
-    Im mittleren Zweig gilt  oben = mix(bg, weiß, oben),  unten = mix(bg, schwarz, unten),
-    Auswahl = mix(bg, schwarz, Auswahl). Für Stile, die nicht rechnen können (Plasma-SVG,
-    GTK-CSS), ist das die feste Näherung an einer Bezugsfarbe. Im dunklen und hellen Zweig zeigt
-    ein negativer Wert die umgekehrte Richtung an (dunkel: unten/Auswahl zu Weiß; hell: oben zu Schwarz)."""
+    In the medium branch  top = mix(bg, white, top),  bottom = mix(bg, black, bottom),
+    select = mix(bg, black, select). Styles that cannot compute (Plasma SVG, GTK CSS) use
+    these as a fixed approximation around a reference color. In the dark and light branches a
+    negative value means the opposite direction (dark: bottom/select toward white; light: top toward black)."""
     b = brightness16(tuple(to16(c) for c in rgb[:3]))
     if b < XmCOLOR_DARK_THRESHOLD:
         return (XmCOLOR_DARK_TS_FACTOR / 100, -XmCOLOR_DARK_BS_FACTOR / 100, -XmCOLOR_DARK_SEL_FACTOR / 100)

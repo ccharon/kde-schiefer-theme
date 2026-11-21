@@ -1,134 +1,127 @@
 # Schiefer
 
-Motif/CDE-artiges Erscheinungsbild für KDE Plasma 6, abgeleitet von Breeze. Abstände und Verhalten bleiben bei
-Breeze, nur das Zeichnen ist ersetzt: 2-px-Kanten (hell oben links, dunkel unten rechts), versenkte Felder,
-erhabene Knöpfe, helles Schieferblau-grau.
+A Motif/CDE look for KDE Plasma 6, derived from Breeze. Spacing and behavior stay as in Breeze; only the
+drawing changes: 2 px bevels (light top left, dark bottom right), sunken fields, raised buttons and a light
+slate blue palette. Every Motif feature that can reasonably be switched off has an option in
+`schiefer-config`; the default is the Motif behavior.
 
-Git-Repository (Branch `main`, lokal, kein Remote). Stand: **Version 0.5** (neu: Dock in Frontpanel-Farbe, Symbole folgen dunklen Paletten; 0.4: Farbkern nach Motif,
-fünf Paletten, Hintergrund-Plugin je Arbeitsfläche, Mauszeiger, Fensterwechsler, Rauten, `schiefer-config`); über das lokale
-Gentoo-Overlay laufen ältere Versionen auf dem Desktop (amd64) und dem MacBook Air mit Gentoo Asahi (arm64).
+The user interface is available in English and German.
 
-Grundsatz seit 0.4: Jede Motif-Eigenheit, die sich sinnvoll abschalten lässt, hat einen Schalter
-(`schiefer-config`, siehe unten); Vorgabe ist das Motif-Verhalten.
+## Parts
 
-## Aufbau
-
-| Ordner / Datei | Inhalt |
+| Directory | Content |
 |---|---|
-| `colors/*.colors` | Farbschemata Schiefer, Sandstein, Jade, Granit, Basalt (dunkel), erzeugt von `palettes/make_palette.py` aus `palettes/*.toml` (eingecheckt, das Ebuild braucht den Generator nicht). Helle Paletten: Fensterhintergrund `qGray ≥ 192`, sonst schalten GTK/Firefox auf dunkel. Eigene Gruppe `[Schiefer]` mit den CDE-Rollen Color1–8, `FrontPanel` und `DesktopColors` (KDE kopiert sie nicht nach kdeglobals – Leser öffnen die Schemadatei). |
-| `common/` | Farbkern: Motif-Formel für Licht/Schatten/Auswahl, exakt nach Motif 2.3.8 `lib/Xm/Color.c` (LGPL-2.1+), als `schiefercolors.h` (Deko, Qt-Stil, Dock) und `schiefercolors.py` (Plasma-Stil, Paletten); Test `test_colors.py`. GTK nähert die Formel mit festen `mix()`-Anteilen (`gtk/tools/retro_colors.py` misst die Abweichung), der Fensterwechsler hat eine geprüfte JS-Fassung (`kwin/tabbox/schiefer/contents/ui/motif.js`). |
-| `cursors/make_cursors.py` | Mauszeiger „Schiefer“: moderne Vektor-Fassung der X11-Kernzeiger (left_ptr, Taschenuhr, xterm-Balken …), Nenngröße 24 wie Breeze, kantengeglättet ohne Pixel-Vergrößerung; reines Python (eigener Rasterer): 41 Zeiger + 89 Aliase, XCursor 24–96 px und SVG für Wayland; `--preview bild.png` (braucht PIL) zeigt alle |
-| `kwin/tabbox/schiefer/` | Fensterwechsler (Alt+Tab) als schmale Motif-Liste; Testhilfe `kwin/test/tab6.sh` (Alt+Tab per libei in der Testsitzung) |
-| `wallpaper/plugin/` | Hintergrund-Plugin `org.kde.schiefer.backdrop`: Muster und Farbe je Arbeitsfläche (CDE), pixelgenau bei jeder Skalierung, wahlweise Überblenden; Farben schreibt `schiefer-config palette` |
-| `tools/schiefer-config` | Schalter und Paletten umschalten (installiert als `/usr/bin/schiefer-config`) |
-| `kdecoration/` | Fensterdekoration (eigener C++-Code, Plugin-ID `schiefer`) |
-| `kstyle/` | Qt-Widget-Stil, Fork von Breeze 6.7.6 (Schlüssel `Schiefer`) – Update siehe `UPSTREAM.md` |
-| `make_theme.py` | erzeugt das Icon-Theme `schiefer` aus breeze-icons (SVGs umgefärbt, Schärfe wie Breeze; `--dither`: 56-Farben-Palette + Schachbrett-Dithering als Vektor-Maske, siehe `dither.py`) |
-| `plasma/make_plasma_theme.py` | erzeugt den Plasma-Stil `schiefer` (SVG-Rahmenstücke) |
-| `gtk/Schiefer/` | GTK3/4-Theme: importiert Breeze-GTK, `retro.css` überschreibt das Zeichnen; abschaltbare Teile als `opt-*.css`, Liste in `optionen.txt` |
-| `wallpaper/` | Muster (`tiles/`, gewählt: Köper), Hintergrundpaket-Generator, `apply.sh` (= `schiefer-wallpaper`) |
-| `lookandfeel/` | globales Design „Schiefer“ (Farben, Plasma-Stil, Icons, Qt-Stil, Deko, Zeiger, Fensterwechsler, Bild-Hintergrund; nicht GTK und keine Plasma-Schalter – danach `schiefer-config standard`) |
-| `packaging/` | Ebuild-Vorlagen für `x11-themes/schiefer{,-kde,-icons,-themes,-dock,-backdrop}`: `-themes` = Farbschemata, Plasma-Stil, GTK, Zeiger, Fensterwechsler, Bild-Hintergrund; `-backdrop` = Hintergrund-Plugin; `schiefer` = Look-and-Feel, `schiefer-config`, Metapaket |
-| `dock/` | Plasma-Widgets im CDE/Motif-Stil: `org.kde.schiefer.drawer` (Starter mit Schublade, Uhr, Kalenderblatt, Ordner – zeigt den Inhalt eines Ordners, z. B. des Schreibtischs –, optional Systemabschnitt), `org.kde.schiefer.console` (Arbeitsflächen, Sperren, Startlampe, EXIT; Fensterknöpfe abschaltbar), `org.kde.schiefer.iconbox` (Fensterliste als Icon-Manager wie bei twm oder als Icon Box wie bei mwm; Zustand über das Relief, Fenster einer Anwendung gruppiert mit seitlicher Schublade, auf Wunsch Abschnitte je Arbeitsfläche; `SCHIEFER_DOCK_OPEN=<Programm>` klappt im Test eine Gruppe auf), `org.kde.schiefer.endcap` (rein dekorative Abschlussstücke links und rechts wie die Griffe am CDE-Frontpanel; `dock/add-endcaps.js` fügt sie in eine vorhandene Leiste ein), `org.kde.schiefer.tiles` (Systemabschnitt als Kacheln wie Window-Maker-Dockapps; braucht einen ausgeblendeten Plasma-Systray in derselben Leiste; die Kacheln messen ihre Lage im Leistenfenster und sitzen mit 3 px Rand mittig zwischen den sichtbaren Kanten, weil Plasmas Applet-Polster die Kante nicht kennt). `dock/layout.js` baut Dock unten, Icon Box links und Kacheln rechts oben, die beiden letzten im Modus „Fenstern ausweichen“ (entfernt vorhandene Leisten unten, links und rechts!) |
-| `greeter/` | Anmelden, Sperren, Startbild, Abmelden im Workstation-Stil (Rechnername groß, Emblem aus Schieferplatten, Siebensegment-Uhr wie im Dock). `kit/` = gemeinsamer Motif-Baukasten in reinem QtQuick (Bevel, MButton mit Mnemonik, MField mit I-Balken, MMenu mit Rauten, Panel mit/ohne Titelleiste, Header, Lamp); im Quellbaum per Symlink eingebunden, das Ebuild kopiert ihn. `sddm/schiefer/` = SDDM-Theme (Farben und `subtitle` in theme.conf; Kachel aus `make_backdrop.py`), `lockscreen/` = Sperrbildschirm (Schalter `sperrbildschirm`), Startbild und Abmelden liegen in `lookandfeel/…/contents/{splash,logout}`. Tests: `greeter/test-sddm.sh` (offscreen), `greeter/test-lock.sh out.png [dialog]`, `greeter/test-lnf.sh splash|logout out.png` (BR_WIDTH/BR_HEIGHT/BR_SCALE wie screenshot.sh) |
-| `tools/` | Test- und Paketwerkzeuge (siehe unten) |
-| `src/` | entpackte Upstream-Quellen zum Nachschlagen (Breeze, libplasma, kde-gtk-config …), nicht Teil des Pakets |
+| `kdecoration/` | window decoration (plugin ID `schiefer`) |
+| `kstyle/` | Qt widget style, fork of Breeze 6.7.6 (key `Schiefer`); updating: `UPSTREAM.md` |
+| `common/` | color core: the Motif formula for light, shadow and select colors from Motif 2.3.8 `lib/Xm/Color.c` (LGPL-2.1+), as C++ header and Python module |
+| `palettes/`, `colors/` | five palettes (Schiefer, Sandstein, Jade, Granit, Basalt) and the KDE color schemes generated from them |
+| `plasma/` | generator for the Plasma style `schiefer` |
+| `gtk/Schiefer/` | GTK 3/4 theme on top of Breeze GTK; optional parts are `opt-*.css`, listed in `options.txt` |
+| `make_theme.py` | generates the icon theme `schiefer` from breeze-icons |
+| `cursors/` | generator for the cursor theme `Schiefer` (vector versions of the X11 core cursors) |
+| `kwin/tabbox/` | window switcher (Alt+Tab) |
+| `wallpaper/` | tiled patterns, wallpaper package generator, `schiefer-wallpaper`, and the backdrop plugin `org.kde.schiefer.backdrop` with a pattern and color per virtual desktop |
+| `dock/` | Plasma widgets in the style of the CDE front panel: drawer, console, icon box, end pieces, status tiles |
+| `greeter/` | SDDM login, lock screen, and the shared Motif QML kit used by splash and logout |
+| `lookandfeel/` | global theme `Schiefer` including splash screen and logout dialog |
+| `tools/schiefer-config` | command line tool for options and palettes |
+| `packaging/` | ebuild templates for `x11-themes/schiefer{,-kde,-icons,-themes,-dock,-backdrop}` |
 
-## Schalter und Paletten: `schiefer-config`
+## Installation (Gentoo)
+
+The ebuilds live in the overlay [schiefer-overlay](https://github.com/ccharon/schiefer-overlay):
 
 ```bash
-schiefer-config                   # Liste: Schalter, Zustand, Vorgabe, Beschreibung
-schiefer-config raute aus         # Schalter setzen, wirkt sofort (soweit das Programm neu lädt)
-schiefer-config standard          # alle Schalter auf die Motif-Vorgabe (z. B. nach dem globalen Design)
-schiefer-config palette basalt    # Farbschema + Arbeitsflächenfarben (schiefer, sandstein, jade, granit, basalt)
+eselect repository add schiefer-overlay git https://github.com/ccharon/schiefer-overlay.git
+emaint sync -r schiefer-overlay
+emerge -av x11-themes/schiefer
 ```
 
-| Schalter | Vorgabe | wirkt auf | gespeichert in |
+Then select **System Settings > Global Theme > Schiefer**, choose the GTK theme under
+**Application Style > GTK Theme**, and run `schiefer-config defaults` once per user.
+
+| Package | Content |
+|---|---|
+| `schiefer-kde` | window decoration and Qt style |
+| `schiefer-icons` | icons, generated from the installed breeze-icons at build time |
+| `schiefer-themes` | color schemes, Plasma style, GTK theme, cursors, window switcher, image wallpaper, `schiefer-wallpaper` |
+| `schiefer-dock` | dock widgets |
+| `schiefer-backdrop` | backdrop plugin |
+| `schiefer` | global theme, lock screen, SDDM theme, `schiefer-config`; pulls in all of the above |
+
+Other distributions: each part builds with CMake or a Python generator; the ebuilds show the steps.
+
+## Configuration: `schiefer-config`
+
+```bash
+schiefer-config                   # list options with state and default
+schiefer-config diamond off       # set an option; takes effect immediately where possible
+schiefer-config defaults          # all options to the Motif defaults
+schiefer-config palette basalt    # color scheme and desktop colors
+```
+
+The command affects only the calling user. German command names (`liste`, `standard`, `an`, `aus`,
+`raute`, ...) are accepted as well.
+
+| Option | Default | Effect | Stored in |
 |---|---|---|---|
-| `raute` | an | Optionsfelder als Raute (Qt + GTK) | `schieferrc [Style] RadioDiamond`, GTK-Überlagerung |
-| `animationen` | aus | Breeze-Übergänge im Qt-Stil | `schieferrc [Style] AnimationsEnabled` |
-| `plasma-animationen` | an | KWin/Plasma-Animationen | `kdeglobals [KDE] AnimationDurationFactor` |
-| `doppelklick-schliessen` | an | Doppelklick auf Menüknopf schließt (Einfachklick öffnet das Menü dann nach der Doppelklickzeit) | `schieferrc [Decoration] DoubleClickClose` |
-| `eckgriffe` | an | Rahmenecken bis zur Kerbe ziehen diagonal | `schieferrc [Decoration] MotifCorners` |
-| `kopfleiste` | an | Motif-Kopfleiste für GTK-Programme mit CSD | GTK-Überlagerung |
-| `arbeitsbereichsmenue` | an | Rechtsklick auf Arbeitsfläche = Programmmenü | appletsrc `[ActionPlugins][0]` |
-| `fensterliste` | an | Mittelklick auf Arbeitsfläche = Fensterliste | appletsrc `[ActionPlugins][0]` |
-| `fensterwechsler` | an | Alt+Tab im Motif-Stil | `kwinrc [TabBox] LayoutName` |
-| `kicker` | an | Programmmenü mit Untermenüs statt Kickoff (gleiche Stelle, Symbol bleibt) | Leiste |
-| `muster-hintergrund` | an | Hintergrund-Plugin statt Bild | Arbeitsflächen |
-| `je-arbeitsflaeche` | an | eigenes Muster/eigene Farbe je Arbeitsfläche (aus: überall Muster `Pattern`, Farbe = erste Arbeitsflächenfarbe der Palette) | Plugin `PerDesktop` |
-| `ueberblenden` | aus | beim Wechsel überblenden statt sofort | Plugin `Crossfade` |
-| `mauszeiger` | an | Schiefer-Zeiger statt Breeze | `kcminputrc [Mouse] cursorTheme` |
-| `sperrbildschirm` | an | Schiefer-Sperrbildschirm: Kopie der Plasma-Shell in `~/.local/share/plasma/shells/org.kde.plasma.desktop` mit ersetztem `contents/lockscreen` (Plasma 6 lädt die Sperre nur aus dem Shell-Paket; Symlinks lehnt KPackage ab). Die Anmeldung frischt die Kopie nach Updates auf (`/etc/xdg/plasma-workspace/env/schiefer-sperrbildschirm.sh`) | Kopie + Marke `.schiefer-sperrbildschirm` |
-| `frontpanel-farbe` | an | Schiefer-Dock samt Leisten und Schubladen in der CDE-Frontpanel-Farbe der Palette (`[Schiefer] FrontPanel`) statt der Fensterfarbe; wirkt sofort | `schieferrc [Dock] FrontPanelColor` |
+| `diamond` | on | radio buttons as a sunken diamond (Qt and GTK) | `schieferrc [Style] RadioDiamond`, GTK overlay |
+| `animations` | off | Breeze transitions in the Qt style | `schieferrc [Style] AnimationsEnabled` |
+| `plasma-animations` | on | KWin and Plasma animations | `kdeglobals [KDE] AnimationDurationFactor` |
+| `double-click-close` | on | double click on the window menu button closes the window; a single click opens the menu after the double-click interval | `schieferrc [Decoration] DoubleClickClose` |
+| `corner-grips` | on | frame corners up to the notches resize diagonally | `schieferrc [Decoration] MotifCorners` |
+| `headerbar` | on | Motif header bar for GTK applications with client-side decorations | GTK overlay |
+| `desktop-menu` | on | right click on the desktop opens the application menu | appletsrc `[ActionPlugins][0]` |
+| `window-list` | on | middle click on the desktop shows the window list | appletsrc `[ActionPlugins][0]` |
+| `window-switcher` | on | Alt+Tab in Motif style | `kwinrc [TabBox] LayoutName` |
+| `kicker` | on | application menu with submenus (Kicker) instead of Kickoff | panel |
+| `pattern-backdrop` | on | backdrop plugin instead of an image wallpaper | desktops |
+| `per-desktop` | on | own pattern and color per virtual desktop | plugin `PerDesktop` |
+| `crossfade` | off | crossfade when switching desktops | plugin `Crossfade` |
+| `cursor` | on | Schiefer cursors instead of Breeze | `kcminputrc [Mouse] cursorTheme` |
+| `lockscreen` | on | Schiefer lock screen | copy of the Plasma shell in `~/.local/share/plasma/shells/` |
+| `frontpanel-color` | on | dock, its panels and drawers in the CDE front panel color of the palette | `schieferrc [Dock] FrontPanelColor` |
 
-GTK-Optionen arbeiten über eine Überlagerung `~/.local/share/themes/Schiefer/` (importiert per absolutem Pfad die
-installierten Teile ohne die abgeschalteten `opt-*.css`; sind alle Optionen auf Vorgabe, wird sie gelöscht).
-Plasma-Schalter brauchen eine laufende Plasma-Sitzung (`evaluateScript`). Ohne Plasma zeigt die Liste `?`.
+The SDDM theme reads `/usr/share/sddm/themes/schiefer/theme.conf`:
 
-## Neue Version ausrollen
+| Key | Type | Default | Effect |
+|---|---|---|---|
+| `hostName` | text | system host name | large name on the panel |
+| `subtitle` | text | `PRETTY_NAME` from `/etc/os-release` | line below the host name |
+| `fontSize` | points | system font x 1.25, at least 12 | text size |
+| `showClock` | bool | `true` | seven-segment clock |
+| `background`, `backgroundColor`, `dialogColor`, `fieldColor`, `activeColor`, `activeTextColor`, `textColor` | file, colors | Schiefer palette | appearance |
+
+## Development
 
 ```bash
-echo 0.5 > VERSION
-tools/install-overlay.sh          # packt dist/, dann per sudo: Overlay /var/db/repos/local, digest, root:root, 644/755
-sudo emerge -av x11-themes/schiefer
+python3 common/test_colors.py              # C++ and Python color core agree
+tools/screenshot.sh out.png dolphin kwrite # isolated KWin session with all parts from the source tree
+kstyle/render.sh out.png                   # Qt gallery offscreen
+greeter/test-sddm.sh out.png               # SDDM theme offscreen
+greeter/test-lock.sh out.png dialog        # lock screen in an isolated session
+tools/make-dist.sh                         # release tarball and ebuilds in dist/
 ```
-MacBook: `tools/make-dist.sh`, `dist/` hinüberkopieren, dort `dist/install-overlay.sh`.
-Nach Deko-Änderungen: `kwin_wayland --replace &`.
 
-## Testen ohne die laufende Sitzung anzufassen
+`tools/screenshot.sh` documents its environment variables (`BR_WIDTH`, `BR_SCALE`, `BR_DATA_DIRS`,
+`BR_SHELL_CMD`, ...) in its header. Build directories are `<part>/build` (`cmake -S <part> -B <part>/build -G Ninja`).
 
-- `tools/screenshot.sh out.png [programm …]` – eigene KWin-Sitzung mit eigenem D-Bus, Deko, Qt-Stil,
-  Farben, GTK-Theme und Plasma-Stil aus dem Projekt. Beispiele:
-  - `tools/screenshot.sh /tmp/a.png dolphin kwrite`
-  - `tools/screenshot.sh /tmp/a.png plasmashell` (+ `BR_SHELL_CMD="qdbus6 org.kde.plasmashell /PlasmaShell activateLauncherMenu"`)
-  - `tools/screenshot.sh /tmp/a.png "plasmawindowed org.kde.plasma.volume"`
-  - `tools/screenshot.sh /tmp/a.png "python3 $PWD/gtk/test/gallery3.py --popover"` (GTK4: `gallery4.py`)
-  - frisch erzeugte Icons prüfen: `python3 make_theme.py --out /tmp/ic && BR_ICON_DIR=/tmp/ic tools/screenshot.sh /tmp/a.png dolphin` (als Theme „schiefer-test“, das installierte bleibt unberührt)
-  - Dock: `BR_WIDTH=1920 BR_HEIGHT=1080 BR_DESKTOPS=4 BR_SHELL_CMD="qdbus6 org.kde.plasmashell /PlasmaShell evaluateScript \"\$(cat $PWD/dock/layout.js)\"" tools/screenshot.sh /tmp/a.png plasmashell`
-    (`SCHIEFER_DOCK_OPEN=<Schubladentitel>` öffnet eine Schublade, `SCHIEFER_DOCK_TRAY=<itemId>` z. B. `org.kde.plasma.volume` öffnet das Popup eines Systray-Eintrags, `=more` die Liste der Statuskacheln, `BR_LOG=datei` sammelt die Ausgaben)
-  - Varianten: `BR_GTK_THEME=Breeze`, `BR_COLORS=andere.colors`, `BR_PLASMA_THEME=default` (Plasma-Stil Breeze)
-  - zusätzliche Datenverzeichnisse: `BR_DATA_DIRS=$PWD/wallpaper/plugin/build/data:…` (Hintergrund-Plugin, Ordner mit
-    `color-schemes/` für die Paletten, `kwin-wayland/tabbox/schiefer` als Symlink, `icons/Schiefer` aus `make_cursors.py --out`)
-  - `schiefer-config` in der Testsitzung: `BR_SHELL_CMD="tools/schiefer-config standard"` (schreibt nur in die
-    Test-Konfiguration; `XDG_CONFIG_HOME`/`XDG_DATA_HOME` zeigen dort auf temporäre Ordner)
-  - Fensterwechsler: `B=/tmp/tb BR_DATA_DIRS=<Ordner mit kwin-wayland/tabbox/schiefer> BR_SHELL_CMD="B=/tmp/tb bash $PWD/kwin/test/tab6.sh" tools/screenshot.sh /tmp/a.png dolphin kwrite` (Bilder `/tmp/tb/tab1.png` …)
-  - Skalierung: `BR_SCALE=1.5 tools/screenshot.sh /tmp/a.png kwrite` (setzt die virtuelle Ausgabe per kscreen-doctor auf 1,5; BR_WIDTH/BR_HEIGHT bleiben logisch, das Bild wird größer)
-- `kstyle/render.sh out.png` – Qt-Galerie offscreen (`SCHIEFERRC=datei` für andere Schalter)
-- `python3 common/test_colors.py` – Farbkern gegen die Motif-Referenzwerte; `kdecoration/test/` – Deko-Tests mit Mock-Klassen
-- Bauen für Tests: `cmake -S kstyle -B kstyle/build -G Ninja -DCMAKE_INSTALL_PREFIX=/usr -DKDE_INSTALL_USE_QT_SYS_PATHS=ON`
-  (ebenso `kdecoration`, `dock` und `wallpaper/plugin`; die Dock-Applets landen in `dock/build/bin/plasma/applets`), danach Symlinks `kstyle/build/plugins/styles/schiefer6.so` und
-  `kdecoration/build/plugins/org.kde.kdecoration3/schiefer.so` auf `../../bin/…`.
-  Für `gtk/tools` und `plasma/tools` jeweils `cmake -S … -B …/build -G Ninja` (Hilfsprogramme `gtkcolors`, `svgbounds`).
+Releases: set `VERSION`, run `tools/make-dist.sh`, attach `dist/schiefer-<version>.tar.xz` to a GitHub release
+`v<version>`, and copy the ebuilds from `dist/overlay` into the overlay with a new Manifest.
 
-## Wissenswertes
+## Known limitations
 
-- Plasma 6.7 kann Bild-Hintergründe nicht kacheln – deshalb das eigene Hintergrund-Plugin (Shader, pixelgenau).
-  Das Bildpaket und `schiefer-wallpaper` bleiben für den Sperrbildschirm und als Rückfall.
-- Das Icon-Theme hat `FollowsColorScheme=true`: einfarbige (meist von Breeze geerbte) Symbole übernehmen die
-  Textfarbe des Schemas, sonst blieben sie in Basalt dunkel. Farbige Schiefer-Icons benennen ihren Stylesheet um
-  (`schiefer-feste-farben`), damit KIconLoader ihre gedämpften Farben nicht durch Schemafarben ersetzt.
-- Das Farbschema hat absichtlich keine `[Colors:Header]`-Gruppe: so übernehmen GTK-Kopfleisten (Firefox usw.)
-  die Titelleistenfarbe aus `[WM]`.
-- Firefox/Thunderbird zeichnen Leisten und Formulare selbst; sie übernehmen Farben und Hell/Dunkel,
-  keine Motif-Kanten (möglich wäre eine eigene `userChrome.css`).
-- GTK-Kopfleisten (`opt-kopfleiste.css`): Titel im erhabenen Feld, eckige erhabene Fensterknöpfe; die Kerben des
-  KWin-Rahmens kann CSS nicht nachbilden.
-- Plasma-Mausaktionen heißen teils ohne `org.kde.`-Präfix (`switchwindow`); unbekannte Namen verwirft Plasma still.
-- Leistenreihenfolge in Plasma 6 steht in `[General] AppletOrder` der Leiste; Plasma schreibt sie nach `addWidget`
-  verzögert neu – `schiefer-config kicker` setzt sie deshalb in einem zweiten Schritt.
-- Dock-Farben (`dock/common/schieferscheme.*`, `FrameTint.qml`): Bei `frontpanel-farbe` setzen die Applets
-  `Kirigami.Theme.backgroundColor` auf die Frontpanel-Farbe (Kinder erben sie). Den Leistenhintergrund zeichnet
-  aber die Shell (`Panel.qml`, `widgets/panel-background`); `FrameTint` sucht im Leisten- bzw. Popup-Fenster die
-  KSvg-Rahmen (`panel-background`, `dialogs/background`) und gibt ihrem Kirigami.Theme dieselbe Hintergrundfarbe –
-  so bleiben keine Lücken in der Fensterfarbe. Folge: Die ganze Leiste, in der ein Schiefer-Widget steckt, wird
-  frontpanelfarben, auch unter fremden Widgets darin. Hover-Tönung überall `Scheme.hoverColor(base)`: ein Drittel
-  des Wegs zur Motif-Lichtkante (hell wie dunkel ähnlich stark, auf Schiefer gleich dem früheren 15-%-Weiß).
+- Plasma 6 cannot tile image wallpapers; the backdrop plugin does it with a shader. The image wallpaper and
+  `schiefer-wallpaper` remain as a fallback.
+- GTK approximates the Motif formula with fixed fractions; `gtk/tools/retro_colors.py` reports the deviation
+  per palette. CSS cannot draw the notches of the KWin frame.
+- Firefox and Thunderbird draw their own toolbars and forms; they follow the colors but not the Motif edges.
+- The dock's system tray features rely on Plasma internals; see "Plasma internals used by the dock" in `UPSTREAM.md`.
+- The lock screen is a copy of the Plasma shell package, because Plasma 6 loads the lock screen only from the
+  shell package. A login script refreshes the copy after updates.
+- The splash screen always uses the Schiefer palette for its pattern.
 
-## Mögliche nächste Schritte
+## License
 
-
-- Qt-Stil auf Breeze 6.8 heben, sobald Plasma 6.8 kommt (`UPSTREAM.md`)
-- `userChrome.css` für Firefox/Thunderbird
-- Kalender und Zähler-Anzeigen im Plasma-Stil (noch Breeze)
-- alte Breeze-Retro-Reste auf dem Desktop: `tools/cleanup-breeze-retro.sh`
+GPL-2.0-or-later, except the color formula (LGPL-2.1-or-later, Motif) and the files taken from Breeze and
+KDecoration, which keep their SPDX headers. Generated icons are LGPL-3 like breeze-icons.

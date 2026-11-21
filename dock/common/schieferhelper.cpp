@@ -1,6 +1,6 @@
 /*
- * Schiefer – kleine Helfer für die Dock-Widgets
- * Starter-Teil nach dem Schnellstarter aus kdeplasma-addons (David Rosca, GPL-2.0-only OR GPL-3.0-only)
+ * Schiefer: small helpers for the dock widgets
+ * Launcher part after the Quicklaunch applet from kdeplasma-addons (David Rosca, GPL-2.0-only OR GPL-3.0-only)
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "schieferhelper.h"
@@ -29,7 +29,7 @@ SchieferHelper::SchieferHelper(QObject *parent)
 
 static QUrl resolve(const QUrl &url)
 {
-    // applications:org.kde.dolphin.desktop (aus dem Startmenü gezogen) → Datei
+    // applications:org.kde.dolphin.desktop (dragged from the launcher) -> file
     if (url.scheme() == QLatin1String("applications")) {
         if (KService::Ptr s = KService::serviceByStorageId(url.path())) {
             return QUrl::fromLocalFile(s->entryPath());
@@ -62,7 +62,7 @@ QVariantMap SchieferHelper::launcherData(const QUrl &rawUrl) const
     } else if (url.scheme() == QLatin1String("trash")) {
         name = KDesktopFile(QStringLiteral("trash.desktop")).readName();
         if (name.isEmpty() || name == QLatin1String("trash")) {
-            name = i18nc("@label Name des Papierkorbs im Dock", "Papierkorb");
+            name = i18nc("@label name of the trash in the dock", "Trash");
         }
         icon = QStringLiteral("user-trash");
     } else if (url.isValid()) {
@@ -89,10 +89,10 @@ void SchieferHelper::openUrl(const QUrl &url)
 
 void SchieferHelper::openFile(const QUrl &url)
 {
-    // Starter (Type=Application) wie Plasmas Ordneransicht starten: ApplicationLauncherJob prüft
-    // isAuthorizedDesktopFile() und fragt bei fremden Dateien ohne Ausführbar-Bit nach.
-    // Type=Link und alles andere geht an OpenUrlJob ohne setRunExecutables – ein Link auf ein
-    // Programm oder ein ausführbares Skript wird so nur geöffnet, nicht gestartet.
+    // Start launchers (Type=Application) like the Plasma folder view does: ApplicationLauncherJob checks
+    // isAuthorizedDesktopFile() and asks for foreign files without the executable bit.
+    // Type=Link and everything else goes to OpenUrlJob without setRunExecutables, so a link to a
+    // program or an executable script is only opened, never run.
     if (url.isLocalFile() && KDesktopFile::isDesktopFile(url.toLocalFile())) {
         const KDesktopFile f(url.toLocalFile());
         if (f.hasApplicationType()) {

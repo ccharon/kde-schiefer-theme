@@ -1,5 +1,5 @@
 /*
- * Kalenderblatt: Monat klein oben, Tag groß darunter
+ * Calendar page: month small at the top, day large below
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -16,8 +16,8 @@ Item {
         width: Math.round(parent.width * 0.78)
         height: Math.round(parent.height * 0.86)
 
-        // Papier ist immer hell (auch in dunklen Paletten) – Schrift deshalb nach der Motif-Vordergrundregel
-        // der Papierfarbe, nicht in der Textfarbe des Schemas
+        // The paper is always light (also in dark palettes), so the text follows the Motif foreground rule
+        // for the paper color instead of the scheme text color
         readonly property color paperColor: Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(1, 1, 1, 0.7))
         readonly property color inkColor: Scheme.motifColors(paperColor).foreground
 

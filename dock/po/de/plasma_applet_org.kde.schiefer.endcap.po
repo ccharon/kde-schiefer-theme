@@ -1,0 +1,21 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: schiefer\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+msgid "Side:"
+msgstr "Seite:"
+
+msgid "Left (button with bar)"
+msgstr "Links (Knopf mit Strich)"
+
+msgid "Right (button with square)"
+msgstr "Rechts (Knopf mit Quadrat)"
+
+msgctxt "@title"
+msgid "General"
+msgstr "Allgemein"

@@ -1,8 +1,8 @@
 /*
-    Schiefer-Muster: pixelgenau gekachelte Retro-Muster als Plasma-Hintergrund.
-    Wie bei CDE kann jede Arbeitsfläche ihr eigenes Muster und ihre eigene Farbe haben,
-    damit man sofort sieht, wo man ist. Plasma kennt keine Hintergründe je Arbeitsfläche,
-    darum verfolgt das Plugin selbst die aktuelle Arbeitsfläche (TaskManager.VirtualDesktopInfo).
+    Schiefer patterns: pixel-exact tiled retro patterns as a Plasma wallpaper.
+    As in CDE each desktop can have its own pattern and color,
+    so you see at once where you are. Plasma has no per-desktop wallpapers,
+    so the plugin tracks the current desktop itself (TaskManager.VirtualDesktopInfo).
 */
 import QtQuick
 import QtQuick.Window
@@ -22,8 +22,8 @@ WallpaperItem {
         ? Palette.pick(Palette.parseList(cfg.DesktopPatterns), desktopIndex, cfg.Pattern) : cfg.Pattern
     readonly property string wantedColor: cfg.PerDesktop
         ? Palette.pick(Palette.parseList(cfg.DesktopColors), desktopIndex, cfg.Color) : cfg.Color
-    // Musterpixel in Gerätepixeln; bei Skalierung ganzzahlig vergrößert (wie wallpaper/apply.sh),
-    // nie gestreckt: bei 1,5 werden aus einem Musterpixel 2×2 Gerätepixel
+    // pattern pixels in device pixels; integer magnification when scaled (like wallpaper/apply.sh),
+    // never stretched: at 1.5 one pattern pixel becomes 2x2 device pixels
     readonly property int pixelScale: cfg.PixelScale > 0 ? cfg.PixelScale
                                                          : Math.max(1, Math.round(front.devicePixelRatio))
 

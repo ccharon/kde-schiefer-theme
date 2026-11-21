@@ -1,16 +1,16 @@
 """
-„Wenig Farben“ mit Dithering – als Vektor, ohne Rastern.
+"Few colors" with dithering, as vectors without rasterizing.
 
-Jede Füllfarbe und jeder Verlauf wird auf eine kleine Palette gebracht. Liegt eine Farbe zwischen
-zwei Palettentönen, wird sie als Schachbrett aus beiden Tönen dargestellt. Das Schachbrett ist ein
-SVG-<pattern> in einer <mask>, ausgerichtet am Raster der Wurzel-viewBox (1 Feld = 1 Pixel bei
-Nenngröße). Formen, Kanten und Kantenglättung bleiben genau wie bei Breeze.
+Every fill color and gradient is mapped to a small palette. A color between two palette tones is
+drawn as a checkerboard of both tones. The checkerboard is an SVG <pattern> inside a <mask>,
+aligned to the grid of the root viewBox (1 cell = 1 pixel at nominal size). Shapes, edges and
+anti-aliasing stay exactly as in Breeze.
 
-Umsetzung pro Fläche E mit Verlauf/Farbe, die Mischtöne braucht:
-    <g mask=A> E (fill = Verlauf/Farbe Ton 1) </g>
-    <g mask=B> E' (fill = Verlauf/Farbe Ton 2) </g>
-A und B sind die beiden Hälften des Schachbretts; jedes Pixel gehört genau einer, deshalb bleiben
-auch halbtransparente Flächen richtig. Verläufe werden zu harten Stufen (gleiche offset-Werte).
+For each element E whose color or gradient needs mixed tones:
+    <g mask=A> E (fill = gradient/color tone 1) </g>
+    <g mask=B> E' (fill = gradient/color tone 2) </g>
+A and B are the two halves of the checkerboard. Every pixel belongs to exactly one, so
+semi-transparent areas stay correct. Gradients become hard steps (equal offset values).
 """
 import math, re
 from functools import lru_cache
@@ -26,7 +26,7 @@ NO_TOUCH = {Q(t) for t in ("defs", "clipPath", "mask", "pattern", "symbol", "mar
 NAMED = {"white": "ffffff", "black": "000000", "red": "ff0000", "none": None}
 
 
-# --- Farben --------------------------------------------------------------------------------
+# --- Colors ---------------------------------------------------------------------------------
 def srgb_lin(c):
     c = np.asarray(c, float) / 255.0
     return np.where(c > 0.04045, ((c + 0.055) / 1.055) ** 2.4, c / 12.92)
@@ -65,7 +65,7 @@ def hexc(rgb):
 
 
 class Quantizer:
-    """Palette + 50/50-Mischungen benachbarter Töne (Schachbrett, gemischt im Licht-linearen Raum)."""
+    """Palette plus 50/50 mixes of neighboring tones (checkerboard, mixed in linear light)."""
 
     def __init__(self, palette, sat=1.0, max_pair_de=38.0):
         self.pal = np.asarray(palette, float)
@@ -103,7 +103,7 @@ class Quantizer:
         return hexc(self.pal[((self.pal_lab - lab) ** 2).sum(-1).argmin()])
 
 
-# --- Stil-Hilfen ---------------------------------------------------------------------------
+# --- Style helpers ---------------------------------------------------------------------------
 def get_style(el):
     s = {}
     for part in (el.get("style") or "").split(";"):
@@ -137,7 +137,7 @@ def effective(el, name, default=None):
     return default
 
 
-# --- Transformationen ----------------------------------------------------------------------
+# --- Transforms ----------------------------------------------------------------------------
 def parse_transform(t):
     m = np.eye(3)
     if not t:
@@ -176,7 +176,7 @@ def ancestors_ctm(el, root):
     return m
 
 
-# --- Verläufe ------------------------------------------------------------------------------
+# --- Gradients ------------------------------------------------------------------------------
 def stop_props(st):
     c = prop(st, "stop-color") or "#000000"
     o = prop(st, "stop-opacity")
@@ -197,7 +197,7 @@ GRAD_ATTRS = ("x1", "y1", "x2", "y2", "cx", "cy", "r", "fx", "fy", "fr", "gradie
               "gradientTransform", "spreadMethod")
 
 def resolve_attrs(grad, ids):
-    """Geometrie-Attribute entlang der href-Kette (das eigene gewinnt)."""
+    """Geometry attributes along the href chain (the element's own win)."""
     out, g, seen = {}, grad, set()
     while g is not None and id(g) not in seen:
         seen.add(id(g))
@@ -207,11 +207,11 @@ def resolve_attrs(grad, ids):
         href = g.get(f"{{{XL}}}href") or g.get("href")
         g = ids.get(href[1:]) if href and href.startswith("#") else None
         if g is not None and g.tag != grad.tag:
-            g = None  # Stopps dürfen typübergreifend kommen, Geometrie nicht
+            g = None  # stops may come from another gradient type, geometry may not
     return out
 
 def sample_gradient(stops, n=96):
-    """Liste (t, rgb, alpha) gleichmäßig über 0..1, None bei currentColor u. ä."""
+    """List (t, rgb, alpha) evenly over 0..1, None for currentColor and similar."""
     pts = []
     last = 0.0
     for st in stops:
@@ -260,7 +260,7 @@ class Ditherer:
                 out[-1][1] = t
             else:
                 out.append([t, t, *key])
-        # Grenzen in die Mitte zwischen zwei Abtastpunkten
+        # boundaries halfway between two sample points
         for a, b in zip(out, out[1:]):
             m = (a[1] + b[0]) / 2
             a[1] = b[0] = m
@@ -282,7 +282,7 @@ class Ditherer:
             w = float(re.sub(r"[a-z%]+$", "", root.get("width", str(base))) or base)
             h = float(re.sub(r"[a-z%]+$", "", root.get("height", str(base))) or base)
             vb = [0, 0, w, h]
-        unit = vb[2] / base  # 1 Schachbrettfeld = 1 Pixel bei Nenngröße
+        unit = vb[2] / base  # 1 checkerboard cell = 1 pixel at nominal size
 
         ids = {e.get("id"): e for e in root.iter() if isinstance(e.tag, str) and e.get("id")}
         grads = {k: v for k, v in ids.items() if v.tag in (Q("linearGradient"), Q("radialGradient"))}
@@ -294,7 +294,7 @@ class Ditherer:
             counter[0] += 1
             return f"sd{p}{counter[0]}"
 
-        # Schachbrett-Muster (Wurzelkoordinaten)
+        # checkerboard pattern (root coordinates)
         def checker(cells):
             pid = new_id("p")
             p = etree.SubElement(defs, Q("pattern"), id=pid, patternUnits="userSpaceOnUse",
@@ -407,5 +407,5 @@ class Ditherer:
         if not len(defs):
             root.remove(defs)
         text = etree.tostring(root, encoding="unicode")
-        # übrige Farbangaben (Verläufe außerhalb, flood-color, CSS-Klassen) auf reine Palettentöne
+        # remaining color values (gradients elsewhere, flood-color, CSS classes) to plain palette tones
         return recolor_fallback(text)

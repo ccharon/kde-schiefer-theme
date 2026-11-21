@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Vergleicht die festen GTK-Näherungen (retro.css: retro_light/_dark/_select/_title_*) je Palette
-mit der exakten Motif-Formel (common/schiefercolors.py), wie sie Qt-Stil und Deko rechnen.
+"""Compares the fixed GTK approximations (retro.css: retro_light/_dark/_select/_title_*) per palette
+with the exact Motif formula (common/schiefercolors.py) as used by the Qt style and the decoration.
 
     python3 gtk/tools/retro_colors.py [colors/*.colors]
 
-Ausgabe: größte Abweichung je Kanal in 8-bit-Stufen. Die Anteile liest das Skript aus
-gtk/Schiefer/gtk-3.0/retro.css, damit Änderungen dort sofort geprüft werden.
+Output: largest deviation per channel in 8-bit steps. The fractions are read from
+gtk/Schiefer/gtk-3.0/retro.css, so changes there are checked right away.
 """
 import configparser
 import glob
@@ -54,14 +54,14 @@ def main():
             d = diff(exact, approx)
             worst = max(worst, d)
             out.append(f"{var} {d}")
-        # Knöpfe: GTK nimmt die Kanten von der Fensterfarbe, Qt von der Knopffarbe
+        # Buttons: GTK takes the edges from the window color, Qt from the button color
         btn = sc.parse(cp["Colors:Button"]["BackgroundNormal"])
         win = sc.parse(cp["Colors:Window"]["BackgroundNormal"])
         d = max(diff(sc.motif_colors(btn)["top"], gtk_mix(win, *factor("retro_light"))),
                 diff(sc.motif_colors(btn)["bottom"], gtk_mix(win, *factor("retro_dark"))))
         out.append(f"Knopfkanten {d}")
         print(f"{os.path.basename(f):<26} " + ", ".join(out))
-    print(f"größte Abweichung: {worst} Stufen (von 255)")
+    print(f"largest deviation: {worst} steps (of 255)")
 
 
 if __name__ == "__main__":

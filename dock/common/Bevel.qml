@@ -1,6 +1,6 @@
 /*
- * Schiefer – Motif-Kante: Licht oben links, Schatten unten rechts, Gehrung an den Ecken.
- * Farben wie im Qt-Stil: Licht und Schatten nach der Motif-Formel (Scheme.motifColors).
+ * Schiefer: Motif bevel; light top left, shadow bottom right, mitered corners.
+ * Colors as in the Qt style: light and shadow from the Motif formula (Scheme.motifColors).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -14,9 +14,9 @@ Item {
     property color base: Kirigami.Theme.backgroundColor
     property color fill: base
     property bool filled: true
-    property bool outline: false            // dunkle 1-px-Außenlinie wie bei Default-Knöpfen
+    property bool outline: false            // dark 1 px outline as on default buttons
 
-    // Kantenfarben nach der Motif-Formel (common/schiefercolors.h), abhängig von der Grundfarbe
+    // edge colors from the Motif formula (common/schiefercolors.h), depending on the base color
     readonly property var motif: Scheme.motifColors(base)
     readonly property color lightColor: motif.top
     readonly property color darkColor: motif.bottom
@@ -48,10 +48,10 @@ Item {
             readonly property int o: bevel.off + index
             readonly property int w: bevel.width - 2 * bevel.off
             readonly property int h: bevel.height - 2 * bevel.off
-            // oben, links (Lichtkante; Diagonalpixel gehören ihr)
+            // top, left (light edge; the diagonal pixels belong to it)
             Rectangle { x: o; y: o; width: w - 2 * index; height: 1; color: bevel.topLeft }
             Rectangle { x: o; y: o; width: 1; height: h - 2 * index; color: bevel.topLeft }
-            // unten, rechts (Schattenkante)
+            // bottom, right (shadow edge)
             Rectangle { x: o + 1; y: bevel.height - 1 - o; width: w - 2 * index - 1; height: 1; color: bevel.bottomRight }
             Rectangle { x: bevel.width - 1 - o; y: o + 1; width: 1; height: h - 2 * index - 1; color: bevel.bottomRight }
         }

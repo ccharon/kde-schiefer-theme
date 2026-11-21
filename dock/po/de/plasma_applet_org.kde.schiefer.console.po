@@ -1,0 +1,100 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: schiefer\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+msgid "Rows:"
+msgstr "Zeilen:"
+
+msgid "Desktop button width (grid units):"
+msgstr "Breite Arbeitsflächen-Knopf (Rastereinheiten):"
+
+msgid "Window button width (grid units):"
+msgstr "Breite Fensterknopf (Rastereinheiten):"
+
+msgid "Minimum window columns:"
+msgstr "Fensterspalten mindestens:"
+
+msgid "Minimum window button width (grid units):"
+msgstr "Fensterknopf mindestens (Rastereinheiten):"
+
+msgid "Maximum window columns:"
+msgstr "Fensterspalten höchstens:"
+
+msgid "as many as fit"
+msgstr "so viele, wie passen"
+
+msgid "Windows:"
+msgstr "Fenster:"
+
+msgid "Show window buttons (otherwise use the icon box)"
+msgstr "Fensterknöpfe zeigen (sonst Icon Box nutzen)"
+
+msgid "Only from the current desktop"
+msgstr "Nur von der aktuellen Arbeitsfläche"
+
+msgid "Buttons:"
+msgstr "Knöpfe:"
+
+msgid "Lock"
+msgstr "Sperren"
+
+msgid "Launch lamp and EXIT"
+msgstr "Startlampe und EXIT"
+
+msgid "Colors:"
+msgstr "Farben:"
+
+msgid "Take from the color scheme"
+msgstr "Aus dem Farbschema übernehmen"
+
+msgid "Custom desktop colors:"
+msgstr "Eigene Farben der Arbeitsflächen:"
+
+msgid "Restore"
+msgstr "Wiederherstellen"
+
+msgid "Minimize"
+msgstr "Minimieren"
+
+msgid "Unmaximize"
+msgstr "Maximieren aufheben"
+
+msgid "Maximize"
+msgstr "Maximieren"
+
+msgid "New Window"
+msgstr "Neues Fenster"
+
+msgid "Close"
+msgstr "Schließen"
+
+msgctxt "@title"
+msgid "General"
+msgstr "Allgemein"
+
+msgid "Lock Screen"
+msgstr "Bildschirm sperren"
+
+msgid "%1 more window"
+msgid_plural "%1 more windows"
+msgstr[0] "%1 weiteres Fenster"
+msgstr[1] "%1 weitere Fenster"
+
+msgid "Leave…"
+msgstr "Beenden …"
+
+msgid "Sleep, hibernate, restart, shut down or log out"
+msgstr "Bereitschaft, Ruhezustand, Neu starten, Herunterfahren oder Abmelden"
+
+msgctxt "@action:button label of the logout button in the front panel"
+msgid "EXIT"
+msgstr "EXIT"
+
+msgctxt "@label name of the trash in the dock"
+msgid "Trash"
+msgstr "Papierkorb"

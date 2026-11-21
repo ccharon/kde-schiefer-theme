@@ -1,15 +1,15 @@
-// Schiefer-Dock: Beispiel-Frontpanel anlegen (Plasma-Skript für evaluateScript)
-// Entfernt vorhandene Leisten unten, links und rechts und baut dort neu auf:
-// Dock unten, Icon Box links, Statuskacheln rechts oben.
+// Schiefer dock: create a sample front panel (Plasma script for evaluateScript)
+// Removes existing panels at the bottom, left and right and rebuilds them:
+// dock at the bottom, icon box on the left, status tiles at the top right.
 function app(id) { return "applications:" + id + ".desktop"; }
 function exists(id) { return applicationExists(id + ".desktop"); }
 function pick() { for (var i = 0; i < arguments.length; ++i) if (exists(arguments[i])) return app(arguments[i]); return ""; }
 function only() { var r = []; for (var i = 0; i < arguments.length; ++i) if (exists(arguments[i])) r.push(app(arguments[i])); return r; }
 
-// Einstellungen aller Widgets der Typen in keepTypes merken, damit ein erneuter Aufbau sie nicht
-// verwirft: je Typ alle Instanzen in Reihenfolge (neue Widgets desselben Typs bekommen sie der Reihe
-// nach zurück). Schubladen werden stattdessen über ihren Titel (bei leerem Titel über die Ansicht
-// „face“) zugeordnet; gibt es keine passende alte Schublade, gelten die Vorgaben dieses Skripts.
+// Remember the settings of all widgets of the types in keepTypes so a rebuild keeps them:
+// per type all instances in order (new widgets of the same type get them back in order).
+// Drawers are matched by their title instead (by the "face" view for an empty title);
+// without a matching old drawer this script's defaults apply.
 var kept = {};
 var keptDrawers = [];
 var DRAWER = "org.kde.schiefer.drawer";
@@ -38,7 +38,7 @@ function restore(w) {
     if (q && q.length) apply(w, q.shift());
     return w;
 }
-// alte Schublade zu Titel/Ansicht suchen und aus der Liste nehmen; liefert null, wenn keine passt
+// find the old drawer for title/view and remove it from the list; null if none matches
 function takeDrawer(face, title) {
     for (var i = 0; i < keptDrawers.length; ++i) {
         var c = keptDrawers[i];
@@ -59,7 +59,7 @@ panel.alignment = "center";
 panel.lengthMode = "fit";
 panel.hiding = "none";
 
-// rein dekorative Abschlussstücke links und rechts wie beim CDE-Frontpanel
+// purely decorative end pieces on the left and right as on the CDE front panel
 function endcap(side) {
     var w = panel.addWidget("org.kde.schiefer.endcap");
     w.currentConfigGroup = ["General"];
@@ -82,7 +82,7 @@ endcap("left");
 drawer("clock", pick("org.kde.kclock"), only("org.kde.kclock"), "Uhr");
 drawer("date", pick("org.kde.merkuro.calendar", "org.kde.korganizer"), only("org.kde.merkuro.calendar", "org.kde.korganizer", "org.kde.kcalc"), "Kalender");
 drawer("launcher", pick("org.kde.dolphin"), only("org.kde.krusader", "org.kde.kfind", "org.kde.ark", "org.kde.filelight"), "Dateien");
-// Ordner-Schublade: Inhalt des Schreibtischs
+// folder drawer: contents of the desktop folder
 var desk = drawer("folder", "", [], "");
 if (!desk.readConfig("folderUrl")) desk.writeConfig("folderUrl", "file://" + encodeURI(userDataPath("desktop")));
 drawer("launcher", pick("org.kde.kate", "org.kde.kwrite"), only("org.kde.kwrite", "org.kde.okular", "org.kde.kcharselect", "org.kde.kdiff3"), "Texte");
@@ -95,22 +95,22 @@ drawer("launcher", pick("systemsettings", "kdesystemsettings"), only("org.kde.ki
 drawer("launcher", "trash:/", [], "Papierkorb");
 endcap("right");
 
-// Icon Box links: alle Fenster als Motif-Symbole; weicht Fenstern aus und fährt am Rand heraus
+// icon box on the left: all windows as Motif icons; dodges windows and slides out at the edge
 var box = new Panel;
 box.location = "left";
 box.height = Math.round(gridUnit * 13);
 box.floating = false;
 box.alignment = "left";
-// „custom“ statt „fit“: Bei „fit“ wird eine Leiste nie kürzer als ihre Dicke (panelview.cpp),
-// die Icon Box soll aber bei wenigen Fenstern ganz zusammenschrumpfen
+// "custom" instead of "fit": with "fit" a panel never gets shorter than its thickness (panelview.cpp),
+// but the icon box should shrink completely with few windows
 box.lengthMode = "custom";
 box.maximumLength = screenGeometry(box.screen).height;
 box.minimumLength = Math.round(gridUnit * 3);
 box.hiding = "dodgewindows";
 restore(box.addWidget("org.kde.schiefer.iconbox"));
 
-// Statuskacheln rechts oben (Dockapps wie bei Window Maker); der Plasma-Systray steckt
-// ausgeblendet in derselben Leiste und beherbergt die Einträge
+// status tiles at the top right (dockapps as in Window Maker); the Plasma system tray sits
+// hidden in the same panel and hosts the entries
 var tiles = new Panel;
 tiles.location = "right";
 tiles.height = Math.round(gridUnit * 3.4);   // 61 px bei 18 px Rastereinheit

@@ -1,19 +1,21 @@
-# Lokales Paket – erzeugt von ~/claude/schiefer/tools/make-dist.sh
+# Copyright 2026 Schiefer authors
+# Distributed under the terms of the GNU General Public License v2
 EAPI=8
 
 PYTHON_COMPAT=( python3_{11..14} )
 inherit python-any-r1
 
-DESCRIPTION="Schiefer: Farbschemata, Plasma-Stil, GTK-Theme, Mauszeiger, Fensterwechsler und Hintergrund im Motif/CDE-Stil"
-SRC_URI="schiefer-${PV}.tar.xz"
+DESCRIPTION="Schiefer: color schemes, Plasma style, GTK theme, cursors, window switcher and wallpaper in Motif/CDE style"
+SRC_URI="https://github.com/ccharon/kde-schiefer-theme/releases/download/v${PV}/schiefer-${PV}.tar.xz"
+HOMEPAGE="https://github.com/ccharon/kde-schiefer-theme"
 S="${WORKDIR}/schiefer-${PV}"
 
 LICENSE="GPL-2+ LGPL-2+"
 SLOT="0"
 KEYWORDS="amd64 arm64"
-RESTRICT="fetch mirror test"
+RESTRICT="test"
 
-# Das GTK-Theme importiert Breeze-GTK und überschreibt nur das Zeichnen
+# The GTK theme imports Breeze GTK and only overrides the drawing
 RDEPEND="kde-plasma/breeze-gtk"
 BDEPEND="
 	${PYTHON_DEPS}
@@ -24,20 +26,16 @@ python_check_deps() {
 	python_has_version "dev-python/pillow[${PYTHON_USEDEP}]"
 }
 
-pkg_nofetch() {
-	einfo "Den Quelltarball ${A} erzeugt und kopiert ~/claude/schiefer/tools/install-overlay.sh."
-}
-
 src_compile() {
 	"${EPYTHON}" plasma/make_plasma_theme.py "${WORKDIR}/plasma/schiefer" || die
 	rm -f "${WORKDIR}/plasma/schiefer/.schiefer-generated" || die
 	"${EPYTHON}" wallpaper/make_wallpaper_package.py "${WORKDIR}/wallpaper/Schiefer" || die
-	# Mauszeiger (reines Python): XCursor 24–96 px + SVG für Wayland, --check prüft Vollständigkeit
+	# cursors (pure Python): XCursor 24-96 px + SVG for Wayland; --check verifies the result
 	"${EPYTHON}" cursors/make_cursors.py --out "${WORKDIR}/cursors" --check || die
 }
 
 src_install() {
-	# Paletten Schiefer, Sandstein, Jade, Granit, Basalt (umschalten: schiefer-config palette <Name>)
+	# palettes Schiefer, Sandstein, Jade, Granit, Basalt (switch with: schiefer-config palette <name>)
 	insinto /usr/share/color-schemes
 	doins colors/*.colors
 
@@ -50,14 +48,14 @@ src_install() {
 	insinto /usr/share/icons
 	doins -r "${WORKDIR}/cursors/Schiefer"
 
-	# Fensterwechsler (Alt+Tab) für KWin
+	# window switcher (Alt+Tab) for KWin
 	insinto /usr/share/kwin-wayland/tabbox
 	doins -r kwin/tabbox/schiefer
 
 	insinto /usr/share/wallpapers
 	doins -r "${WORKDIR}/wallpaper/Schiefer"
 
-	# Muster und Skript für pixelgenaue Hintergründe in jeder Auflösung
+	# patterns and a script for pixel-exact wallpapers at any resolution
 	insinto /usr/share/schiefer/wallpaper
 	doins -r wallpaper/tiles
 	exeinto /usr/share/schiefer/wallpaper
@@ -66,9 +64,9 @@ src_install() {
 }
 
 pkg_postinst() {
-	elog "GTK-Theme aktivieren: Systemeinstellungen › Anwendungsstil › GTK-Design › Schiefer"
-	elog "Mauszeiger: Systemeinstellungen › Mauszeiger › Schiefer"
-	elog "Fensterwechsler: Systemeinstellungen › Fensterverwaltung › Fensterwechsel › Schiefer"
-	elog "Bild-Hintergrund pixelgenau für jede Auflösung: schiefer-wallpaper [muster]"
-	elog "(Muster je Arbeitsfläche: Paket x11-themes/schiefer-backdrop)"
+	elog "GTK theme: System Settings > Application Style > GTK Theme > Schiefer"
+	elog "Cursors: System Settings > Cursors > Schiefer"
+	elog "Window switcher: System Settings > Window Management > Task Switcher > Schiefer"
+	elog "Pixel-exact image wallpaper for any resolution: schiefer-wallpaper [pattern]"
+	elog "(pattern per virtual desktop: package x11-themes/schiefer-backdrop)"
 }

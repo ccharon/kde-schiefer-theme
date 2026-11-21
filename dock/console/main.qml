@@ -1,6 +1,6 @@
 /*
- * Schiefer-Konsole: Mittelteil des Frontpanels.
- *   [Schloss]  [Arbeitsflächen 2×n]  │  ([Fensterknöpfe 2×m])  [Lampe / EXIT]
+ * Schiefer console: center part of the front panel.
+ *   [lock]  [desktops 2xn]  |  ([window buttons 2xm])  [lamp / EXIT]
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -19,7 +19,7 @@ PlasmoidItem {
 
     readonly property var cfg: Plasmoid.configuration
     readonly property int rows: Math.max(1, cfg.rows)
-    readonly property int sp: 2                                   // Fuge zwischen Knöpfen
+    readonly property int sp: 2                                   // gap between buttons
     readonly property int margin: Kirigami.Units.smallSpacing
     readonly property int rowHeight: Math.floor((height - 2 * margin - (rows - 1) * sp) / rows)
 
@@ -28,8 +28,8 @@ PlasmoidItem {
     readonly property int desktopWidth: Math.round(cfg.desktopButtonWidth * Kirigami.Units.gridUnit)
 
     readonly property int taskCount: tasksModel.count
-    // Fensterbereich wächst mit jedem Fenster um eine Spalte, solange das Panel Platz hat;
-    // danach werden die Knöpfe schmaler, unter der Mindestbreite kommt „+N weitere“.
+    // The window area grows by one column per window while the panel has room;
+    // then the buttons get narrower, and below the minimum width "+N more" appears.
     readonly property int taskWidth: Math.round(cfg.taskButtonWidth * Kirigami.Units.gridUnit)
     readonly property int minTaskWidth: Math.min(taskWidth, Math.round(cfg.minTaskButtonWidth * Kirigami.Units.gridUnit))
     readonly property int minColumns: Math.max(1, cfg.minTaskColumns)
@@ -51,8 +51,8 @@ PlasmoidItem {
 
     preferredRepresentation: fullRepresentation
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
-    // Schalter frontpanel-farbe: Flächen in der CDE-Frontpanel-Farbe statt der Fensterfarbe;
-    // Kinder erben sie über Kirigami.Theme, FrameTint färbt den Leistenhintergrund mit
+    // option frontpanel-color: surfaces in the CDE front panel color instead of the window color;
+    // children inherit it through Kirigami.Theme, FrameTint also tints the panel background
     Kirigami.Theme.inherit: !Scheme.usePanelColor
     Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
     FrameTint {}
@@ -94,7 +94,7 @@ PlasmoidItem {
         return list.length ? list[i % list.length] : Kirigami.Theme.backgroundColor;
     }
 
-    // geätzte senkrechte Linie (Motif-Separator)
+    // etched vertical line (Motif separator)
     component Etch: Item {
         implicitWidth: 2
         Layout.fillHeight: true
@@ -136,7 +136,7 @@ PlasmoidItem {
                 Layout.fillWidth: true
                 Layout.preferredHeight: root.rowHeight
                 flat: true
-                tip: i18n("Bildschirm sperren")
+                tip: i18n("Lock Screen")
                 onClicked: helper.lockScreen()
                 Kirigami.Icon {
                     anchors.centerIn: parent
@@ -148,7 +148,7 @@ PlasmoidItem {
             Item { Layout.fillHeight: true }
         }
 
-        // ---------- Arbeitsflächen ----------
+        // ---------- Desktops ----------
         Item {
             Layout.fillHeight: true
             Layout.preferredWidth: root.desktopColumns * root.desktopWidth + (root.desktopColumns - 1) * root.sp
@@ -160,7 +160,7 @@ PlasmoidItem {
                     readonly property string desktopId: desktopInfo.desktopIds[index] ?? ""
                     readonly property bool current: desktopId === desktopInfo.currentDesktop
                     readonly property color color: root.desktopColor(index)
-                    // zeilenweise wie KWin: 1 2 / 3 4
+                    // row by row like KWin: 1 2 / 3 4
                     x: (index % root.desktopColumns) * (root.desktopWidth + root.sp)
                     y: Math.floor(index / root.desktopColumns) * (root.rowHeight + root.sp)
                     width: root.desktopWidth
@@ -200,7 +200,7 @@ PlasmoidItem {
                     }
                 }
             }
-            // Mausrad wechselt die Arbeitsfläche
+            // the mouse wheel switches desktops
             WheelHandler {
                 onWheel: event => {
                     const ids = desktopInfo.desktopIds;
@@ -213,8 +213,8 @@ PlasmoidItem {
 
         Etch { visible: root.cfg.showTasks }
 
-        // ---------- Fensterknöpfe (abschaltbar; sonst übernimmt die Icon Box) ----------
-        // Unsichtbar bleiben die Knöpfe bestehen, damit die Startlampe weiter mitzählt.
+        // ---------- Window buttons (optional; the icon box takes over otherwise) ----------
+        // Hidden buttons still exist so the launch lamp keeps counting.
         Item {
             id: taskArea
             visible: root.cfg.showTasks
@@ -224,7 +224,7 @@ PlasmoidItem {
             Layout.minimumWidth: root.taskMinimum
             Layout.maximumWidth: root.taskPreferred
 
-            // leere, flach versenkte Mulden für freie Plätze
+            // empty, flat sunken wells for free slots
             Repeater {
                 model: root.taskColumns * root.rows
                 delegate: Bevel {
@@ -256,7 +256,7 @@ PlasmoidItem {
                 }
             }
 
-            // „+N“: weitere Fenster in einer Liste
+            // "+N": more windows in a list
             Item {
                 id: moreButton
                 visible: root.overflow
@@ -275,21 +275,21 @@ PlasmoidItem {
                     }
                     PlasmaComponents3.Label {
                         text: root.columnWidth < Kirigami.Units.gridUnit * 8 ? "+" + (root.taskCount - root.shownTasks)
-                            : i18np("%1 weiteres Fenster", "%1 weitere Fenster", root.taskCount - root.shownTasks)
+                            : i18np("%1 more window", "%1 more windows", root.taskCount - root.shownTasks)
                     }
                 }
                 MouseArea { id: moreMouse; anchors.fill: parent; onClicked: overflowPopup.visible = !overflowPopup.visible }
             }
         }
 
-        // ---------- rechts: Lampe und EXIT ----------
+        // ---------- right: lamp and EXIT ----------
         ColumnLayout {
             visible: root.cfg.showExitButton
             Layout.fillHeight: true
             Layout.preferredWidth: root.sideWidth
             spacing: root.sp
 
-            // Startlampe: leuchtet, solange ein Programm startet
+            // launch lamp: lit while an application is starting
             Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: root.rowHeight
@@ -315,15 +315,15 @@ PlasmoidItem {
             PanelButton {
                 Layout.fillWidth: true
                 Layout.preferredHeight: root.rowHeight
-                // wie in CDE: Sitzung beenden; heute heißt das meist Ausschalten oder Bereitschaft,
-                // deshalb der KDE-Dialog mit allen Möglichkeiten
-                tip: i18n("Beenden …")
-                subTip: i18n("Bereitschaft, Ruhezustand, Neu starten, Herunterfahren oder Abmelden")
+                // as in CDE: end the session; today that usually means power off or sleep,
+                // so this opens the KDE dialog with all choices
+                tip: i18n("Leave…")
+                subTip: i18n("Sleep, hibernate, restart, shut down or log out")
                 onClicked: helper.powerPrompt()
                 PlasmaComponents3.Label {
                     anchors.centerIn: parent
                     anchors.verticalCenterOffset: parent.pressed ? 1 : 0
-                    text: i18nc("Beschriftung des Abmeldeknopfs im Frontpanel", "EXIT")
+                    text: i18nc("@action:button label of the logout button in the front panel", "EXIT")
                     font.pixelSize: Math.max(9, Math.round(root.rowHeight * 0.38))
                     font.letterSpacing: 1
                 }
@@ -344,7 +344,7 @@ PlasmoidItem {
         mainItem: Column {
             spacing: root.sp
             width: root.taskWidth + Kirigami.Units.gridUnit * 4
-            // Popup wie CDE-Schubladen in der Frontpanel-Farbe (Schalter frontpanel-farbe)
+            // popup in the front panel color like CDE drawers (option frontpanel-color)
             Kirigami.Theme.inherit: !Scheme.usePanelColor
             Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
             FrameTint {}

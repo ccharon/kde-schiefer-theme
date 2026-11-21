@@ -1,6 +1,6 @@
 /*
- * Schiefer – Fensterdekoration im Motif/CDE-Stil.
- * Struktur angelehnt an die Breeze-Dekoration (KDE, GPL-2.0-only OR GPL-3.0-only).
+ * Schiefer: window decoration in Motif/CDE style.
+ * Structure follows the Breeze decoration (KDE, GPL-2.0-only OR GPL-3.0-only).
  *
  * SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
  */
@@ -36,29 +36,29 @@ using KDecoration3::DecorationButtonType;
 
 namespace
 {
-// Geometrie nach CDE/dtwm vermessen (logische Pixel, bei Skalierung 1 = Gerätepixel):
-// Rahmen 5 px = 2 px äußere Lichtkante + 2 px Fläche + 1 px innere (versenkte) Kante.
-// Bei Skalierung ≠ 1 wird jede Kante auf ganze Gerätepixel gerundet (siehe Decoration::devicePixels).
+// Geometry measured from CDE/dtwm (logical pixels; at scale 1 equal to device pixels):
+// frame 5 px = 2 px outer bevel + 2 px surface + 1 px inner (sunken) edge.
+// At other scales every edge is rounded to whole device pixels (see Decoration::devicePixels).
 constexpr qreal FrameWidth = 5;
 constexpr qreal OuterBevel = 2;
 constexpr qreal InnerBevel = 1;
-constexpr qreal ButtonBevel = 1;  // Titelknöpfe und Titelfeld
+constexpr qreal ButtonBevel = 1;  // title buttons and title field
 constexpr qreal MinTitleHeight = 20;
 
-// Rechteck in Gerätepixeln (ganzzahlig) → logische Koordinaten
+// rectangle in (integer) device pixels -> logical coordinates
 QRectF fromDevice(qreal x, qreal y, qreal w, qreal h, qreal scale)
 {
     return QRectF(x / scale, y / scale, w / scale, h / scale);
 }
 
-// Lichtkante: oben/links hell, unten/rechts dunkel (vertauscht = versenkt).
-// width = Anzahl Gerätepixel; je Ring ein Gerätepixel, Ecken diagonal geteilt.
+// Bevel: light top/left, dark bottom/right (swapped = sunken).
+// width = number of device pixels; one device pixel per ring, corners split diagonally.
 void bevel(QPainter *p, const QRectF &r, QColor hi, QColor lo, int width, qreal scale, bool sunken = false)
 {
     if (sunken) {
         std::swap(hi, lo);
     }
-    // Rechteck auf das Gerätepixelraster legen und dort rechnen
+    // snap the rectangle to the device pixel grid and compute there
     const qreal x0 = std::round(r.left() * scale), y0 = std::round(r.top() * scale);
     const qreal w0 = std::round(r.right() * scale) - x0, h0 = std::round(r.bottom() * scale) - y0;
     for (int i = 0; i < width; ++i) {
@@ -78,7 +78,7 @@ void bevel(QPainter *p, const QRectF &r, QColor hi, QColor lo, int width, qreal 
 //________________________________________________________________ ColorCache
 std::shared_ptr<ColorCache> ColorCache::instance()
 {
-    // lebt, solange eine Dekoration ihn hält
+    // lives as long as a decoration holds it
     static std::weak_ptr<ColorCache> s_instance;
     auto cache = s_instance.lock();
     if (!cache) {
@@ -91,7 +91,7 @@ std::shared_ptr<ColorCache> ColorCache::instance()
 ColorCache::ColorCache()
 {
     read();
-    // Farbschema-Wechsel kommt über KGlobalSettings
+    // color scheme changes arrive through KGlobalSettings
     QDBusConnection::sessionBus().connect(QString(),
                                           QStringLiteral("/KGlobalSettings"),
                                           QStringLiteral("org.kde.KGlobalSettings"),
@@ -104,7 +104,7 @@ void ColorCache::notifyChange(int type, int arg)
 {
     Q_UNUSED(arg)
     // KGlobalSettings::ChangeType: PaletteChanged = 0, StyleChanged = 2, SettingsChanged = 3;
-    // Schrift, Icons, Cursor usw. betreffen die Titelleistenfarben nicht
+    // fonts, icons, cursors etc. do not affect the title bar colors
     if (type != 0 && type != 2 && type != 3) {
         return;
     }
@@ -114,7 +114,7 @@ void ColorCache::notifyChange(int type, int arg)
 
 void ColorCache::read()
 {
-    // [WM] aus dem aktiven Farbschema (kdeglobals)
+    // [WM] from the active color scheme (kdeglobals)
     auto config = KSharedConfig::openConfig(QStringLiteral("kdeglobals"));
     config->reparseConfiguration();
     const KConfigGroup wm(config, QStringLiteral("WM"));
@@ -152,7 +152,7 @@ void DecorationConfig::watch(const std::shared_ptr<KDecoration3::DecorationSetti
 
 void DecorationConfig::read()
 {
-    // die Werte werden erst beim Klicken/Zeigen abgefragt – kein Neuzeichnen nötig
+    // the values are only read on click or hover, so no repaint is needed
     auto config = KSharedConfig::openConfig(QStringLiteral("schieferrc"), KConfig::NoGlobals);
     config->reparseConfiguration();
     const KConfigGroup group(config, QStringLiteral("Decoration"));
@@ -212,7 +212,7 @@ bool Decoration::init()
 
 void Decoration::readColors()
 {
-    // [WM] aus dem geteilten Cache; Rückfall auf die Dekorationsfarben von KWin
+    // [WM] from the shared cache; falls back to the KWin decoration colors
     const auto w = window();
     auto pick = [](const QColor &c, const QColor &fallback) {
         return c.isValid() ? c : fallback;
@@ -265,7 +265,7 @@ QColor Decoration::faceColor() const
     return window()->isActive() ? m_activeBg : m_inactiveBg;
 }
 
-// Licht- und Schattenkante nach der Motif-Formel (common/schiefercolors.h)
+// light and shadow edges from the Motif formula (common/schiefercolors.h)
 QColor Decoration::lightColor() const
 {
     return SchieferColors::topShadow(faceColor());
@@ -307,7 +307,7 @@ void Decoration::recalculateBorders()
     const auto edges = window()->adjacentScreenEdges();
     const qreal side = b;
     const qreal bottom = window()->isShaded() ? 0 : b;
-    // KDE-Einstellung „Keine Seitenränder“: unten trotzdem schmal lassen
+    // KDE setting "No side borders": keep a narrow bottom border anyway
     const bool noSides = !isMaximized() && settings()->borderSize() == KDecoration3::BorderSize::NoSides;
     setBorders(QMarginsF((edges & Qt::LeftEdge) ? 0 : side,
                          b + titleHeight(),
@@ -316,7 +316,7 @@ void Decoration::recalculateBorders()
     setBorderRadius(KDecoration3::BorderRadius());
     setBorderOutline(KDecoration3::BorderOutline());
     setOpaque(isMaximized());
-    // ohne Ränder trotzdem an den Seiten greifbar machen
+    // keep the sides grabbable even without borders
     const qreal ext = (side == 0 && !isMaximized()) ? 4 : 0;
     setResizeOnlyBorders(QMarginsF(ext, 0, ext, ext));
     updateLayout();
@@ -345,11 +345,11 @@ void Decoration::updateLayout()
     update();
 }
 
-// Motif-Eckgriffe (mwm/dtwm): die Ecken des Rahmens reichen entlang jeder Kante bis zu den Kerben,
-// also Rahmen + Titelhöhe vom Außenrand; dort ändert ein Zug die Größe diagonal.
-// KDecoration3 bestimmt den Abschnitt selbst (Decoration::Private::updateSectionUnderMouse, Ecklänge
-// 2 * largeSpacing, nicht beeinflussbar) – deshalb wird die Zeigerposition vorher auf einen
-// Stellvertreterpunkt gelegt, den KDecoration3 eindeutig als den gewünschten Abschnitt erkennt.
+// Motif corner grips (mwm/dtwm): the frame corners extend along each edge up to the notches,
+// that is frame + title height from the outer border; dragging there resizes diagonally.
+// KDecoration3 determines the section itself (Decoration::Private::updateSectionUnderMouse, corner
+// length 2 * largeSpacing, not configurable). So the pointer position is first moved to a
+// proxy point that KDecoration3 unambiguously maps to the wanted section.
 Qt::WindowFrameSection Decoration::motifSection(const QPointF &pos) const
 {
     const qreal b = frameWidth();
@@ -363,12 +363,12 @@ Qt::WindowFrameSection Decoration::motifSection(const QPointF &pos) const
     }
     const bool inLeft = p.x() < borderLeft();
     const bool inRight = p.x() >= sz.width() - borderRight();
-    const bool inTop = p.y() < b; // Rahmen über der Titelzeile
+    const bool inTop = p.y() < b; // frame above the title row
     const bool inBottom = borderBottom() > 0 && p.y() >= sz.height() - borderBottom();
     if (!inLeft && !inRight && !inTop && !inBottom) {
-        return Qt::NoSection; // Titelzeilenhöhe neben den Knöpfen, außerhalb usw.
+        return Qt::NoSection; // title row height next to the buttons, outside etc.
     }
-    // Kerben wie in paint(): Rahmen gedanklich über randlose Seiten hinaus verlängert
+    // notches as in paint(): the frame is treated as extending beyond borderless sides
     const qreal reach = b + titleHeight();
     const qreal frameLeft = leftInset() - b;
     const qreal frameRight = sz.width() - rightInset() + b;
@@ -391,7 +391,7 @@ Qt::WindowFrameSection Decoration::motifSection(const QPointF &pos) const
     if (south && east) {
         return Qt::BottomRightSection;
     }
-    // keine Ecke: gerade Kante – auch dort, wo KDecoration3 schon eine Ecke sähe
+    // no corner: straight edge, also where KDecoration3 would already see a corner
     if (inLeft) {
         return Qt::LeftSection;
     }
@@ -414,7 +414,7 @@ QPointF Decoration::motifRemap(const QPointF &p) const
         return QPointF(0, bt);
     case Qt::BottomRightSection:
         return QPointF(r, bt);
-    // Kantenmitten: dort liegt nie eine Ecke von KDecoration3 (außer bei winzigen Fenstern) und kein Knopf
+    // edge centers: never a KDecoration3 corner there (except for tiny windows) and never a button
     case Qt::LeftSection:
         return QPointF(0, std::floor((titleBar().bottom() + sz.height()) / 2));
     case Qt::RightSection:
@@ -454,7 +454,7 @@ void Decoration::hoverMoveEvent(QHoverEvent *event)
 
 void Decoration::mouseReleaseEvent(QMouseEvent *event)
 {
-    // KDecoration3 bestimmt den Abschnitt nach dem Loslassen neu (wenn kein Knopf gedrückt war)
+    // KDecoration3 recomputes the section after release (if no button was pressed)
     const QPointF p = motifRemap(event->position());
     if (p == event->position()) {
         KDecoration3::Decoration::mouseReleaseEvent(event);
@@ -473,14 +473,14 @@ void Decoration::paint(QPainter *painter, const QRectF &repaintRegion)
     const qreal top = b + t;
     const qreal s = scale();
     const QColor face = faceColor(), hi = lightColor(), lo = darkColor();
-    // Kantenstärken in Gerätepixeln (bei Skalierung 1: außen 2, innen 1, Knöpfe/Kerben 1)
+    // edge widths in device pixels (at scale 1: outer 2, inner 1, buttons/notches 1)
     const int outerPx = devicePixels(OuterBevel), innerPx = devicePixels(InnerBevel), buttonPx = devicePixels(ButtonBevel);
 
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
     painter->setClipRect(full, Qt::IntersectClip);
 
-    // Rahmenflächen (nicht über den Fensterinhalt malen)
+    // frame areas (never paint over the window content)
     painter->fillRect(QRectF(0, 0, full.width(), top), face);
     if (!window()->isShaded()) {
         painter->fillRect(QRectF(0, top, borderLeft(), full.height() - top), face);
@@ -489,28 +489,28 @@ void Decoration::paint(QPainter *painter, const QRectF &repaintRegion)
     }
 
     if (std::round(b * s) >= outerPx + innerPx) {
-        // Seiten ohne Rand (am Bildschirmrand): Rahmen gedanklich über den Rand hinaus verlängern,
-        // der Ausschnitt schneidet Seitenkanten und -kerben dort ab
+        // sides without a border (at the screen edge): treat the frame as extending beyond the border;
+        // the clip cuts off side edges and notches there
         const QRectF frame = full.adjusted(leftInset() - b, 0, b - rightInset(), 0);
 
-        // außen 2 px erhaben (Ecken diagonal geteilt), innen 1 px versenkt
+        // outside 2 px raised (corners split diagonally), inside 1 px sunken
         bevel(painter, frame, hi, lo, outerPx, s);
         const qreal in = b - innerPx / s;
         bevel(painter, frame.adjusted(in, in, -in, -in), hi, lo, innerPx, s, true);
 
-        // Motif-Eckkerben bei Rahmen + Titelhöhe: verlängern die Fugen der Titelleiste
-        // (rechte Kante des ersten linken Knopfs, linke Kante des letzten rechten Knopfs,
-        // Unterkante der Titelleiste) durch den Rahmen; unten gespiegelt.
-        // Die äußerste Pixelreihe bleibt durchgehend. Alles in Gerätepixeln gerechnet.
+        // Motif corner notches at frame + title height: they continue the joints of the title bar
+        // (right edge of the first left button, left edge of the last right button,
+        // bottom edge of the title bar) through the frame; mirrored at the bottom.
+        // The outermost pixel row stays continuous. Everything is computed in device pixels.
         auto dev = [s](qreal logical) {
             return std::round(logical * s);
         };
         const qreal X0 = dev(frame.left()), Y0 = dev(frame.top());
         const qreal W = dev(frame.right()) - X0, H = dev(frame.bottom()) - Y0;
         const qreal B = dev(b), C = dev(top); // = b + t
-        const qreal skip = devicePixels(1); // durchgehende äußerste Reihe
+        const qreal skip = devicePixels(1); // continuous outermost row
         const qreal len = B - skip;
-        // Fuge an Position pos: dunkel davor, hell danach (je buttonPx breit)
+        // joint at position pos: dark before, light after (each buttonPx wide)
         auto vnotch = [&](qreal pos, qreal y0) {
             painter->fillRect(fromDevice(X0 + pos - buttonPx, Y0 + y0, buttonPx, len, s), lo);
             painter->fillRect(fromDevice(X0 + pos, Y0 + y0, buttonPx, len, s), hi);
@@ -564,12 +564,12 @@ Button::Button(DecorationButtonType type, Decoration *decoration, QObject *paren
     });
 
     if (type == DecorationButtonType::Menu) {
-        // Schalter DoubleClickClose: KDecoration3 öffnet das Fenstermenü sofort beim Loslassen (clicked);
-        // dann schnappt sich das Menü (KWin PopupInputFilter) den zweiten Klick und ein Doppelklick
-        // käme nie an. Deshalb die eingebaute Verbindung clicked → requestShowWindowMenu ersetzen.
-        // Motifs Drücken-Ziehen-Loslassen (Eintrag beim Loslassen wählen) gibt es nicht: KDecoration3
-        // öffnet das Menü erst nach dem Loslassen; ein Öffnen beim Drücken hülfe nicht, weil KWin den
-        // Zeiger während des gedrückten Knopfs bei der Dekoration lässt (implizite Zeigerbindung).
+        // Option DoubleClickClose: KDecoration3 opens the window menu right on release (clicked);
+        // the menu (KWin PopupInputFilter) then takes the second click and a double click never
+        // arrives. So the built-in connection clicked -> requestShowWindowMenu is replaced.
+        // Motif press-drag-release (choose the item on release) is not possible: KDecoration3
+        // opens the menu only after release, and opening on press would not help because KWin keeps
+        // the pointer with the decoration while the button is held (implicit pointer grab).
         disconnect(this, &KDecoration3::DecorationButton::clicked, decoration, nullptr);
         connect(this, &KDecoration3::DecorationButton::clicked, this, &Button::menuClicked, Qt::QueuedConnection);
         m_menuTimer = new QTimer(this);
@@ -588,7 +588,7 @@ void Button::menuClicked(Qt::MouseButton button)
     if (!d) {
         return;
     }
-    // KWins eigene Einstellung (CloseOnDoubleClickOnMenu: Menü nur bei langem Druck) hat Vorrang
+    // KWin's own setting (CloseOnDoubleClickOnMenu: menu only on long press) takes precedence
     const bool ours = d->config().doubleClickClose && !d->settings()->isCloseOnDoubleClickOnMenu();
     if (ours && button == Qt::LeftButton) {
         m_menuTimer->start(QGuiApplication::styleHints()->mouseDoubleClickInterval());
@@ -599,7 +599,7 @@ void Button::menuClicked(Qt::MouseButton button)
 
 void Button::mousePressEvent(QMouseEvent *event)
 {
-    // zweiter Klick innerhalb der Doppelklickzeit: Fenster schließen statt Menü
+    // second click within the double-click interval: close the window instead of opening the menu
     if (m_menuTimer && m_menuTimer->isActive() && event->button() == Qt::LeftButton && contains(event->position())) {
         m_menuTimer->stop();
         event->setAccepted(true);
@@ -685,18 +685,18 @@ void Button::paint(QPainter *painter, const QRectF &repaintRegion)
     painter->fillRect(g, face);
     bevel(painter, g, hi, lo, bevelPx, scale, sunken);
 
-    // Längen auf ganze Gerätepixel (bei Skalierung 1: ganze Pixel wie bisher)
+    // lengths in whole device pixels (whole pixels at scale 1)
     auto snap = [d](qreal v) {
         return d->snap(v);
     };
     auto floorSnap = [scale](qreal v) {
         return std::floor(v * scale) / scale;
     };
-    // auf dem Gerätepixelraster im Knopf zentriertes Rechteck
+    // rectangle centered in the button on the device pixel grid
     auto centered = [&](qreal w, qreal h) {
         return QRectF(g.left() + floorSnap((g.width() - w) / 2), g.top() + floorSnap((g.height() - h) / 2), w, h);
     };
-    // kleines erhabenes/versenktes Kästchen
+    // small raised or sunken box
     auto box = [&](const QRectF &r, bool in) {
         const QRectF rr = KDecoration3::snapToPixelGrid(r, scale);
         painter->fillRect(rr, face);
@@ -705,7 +705,7 @@ void Button::paint(QPainter *painter, const QRectF &repaintRegion)
 
     switch (type()) {
     case DecorationButtonType::Menu: {
-        // Motif: flacher Querbalken
+        // Motif: flat horizontal bar
         box(centered(snap(s * 0.6), std::max<qreal>(snap(3), snap(s * 0.2))), isPressed());
         break;
     }

@@ -1,5 +1,5 @@
 /*
- * Motif-Kante: Licht oben links, Schatten unten rechts, Gehrung an den Ecken (Motif-Formel).
+ * Motif bevel: light top left, shadow bottom right, mitered corners (Motif formula).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick

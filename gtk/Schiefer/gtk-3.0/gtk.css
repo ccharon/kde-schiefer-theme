@@ -1,8 +1,8 @@
-/* Schiefer für GTK3: Breeze-GTK (Abstände, Größen, Verhalten) + Motif-Zeichnung aus retro.css
- * + abschaltbare Optionen (opt-*.css; Liste und Beschreibung: ../optionen.txt).
- * Reihenfolge: Breeze, retro.css, dann die Optionen. Eine Option abzuschalten heißt, ihre @import-Zeile wegzulassen
- * (schiefer-config erzeugt dazu eine Überlagerung des Themes, die nur die gewählten Dateien importiert). */
+/* Schiefer for GTK3: Breeze GTK (spacing, sizes, behavior) plus Motif drawing from retro.css
+ * plus optional parts (opt-*.css; list and descriptions: ../options.txt).
+ * Order: Breeze, retro.css, then the options. Disabling an option means leaving out its @import line
+ * (schiefer-config generates a theme overlay that imports only the selected files). */
 @import url("file:///usr/share/themes/Breeze/gtk-3.0/gtk.css");
 @import url("retro.css");
-@import url("opt-kopfleiste.css");
-@import url("opt-raute.css");
+@import url("opt-headerbar.css");
+@import url("opt-diamond.css");

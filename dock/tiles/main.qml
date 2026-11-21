@@ -1,8 +1,8 @@
 /*
- * Schiefer-Statuskacheln: die Einträge des Plasma-Systemabschnitts als quadratische
- * Motif-Kacheln wie die Dockapps von Window Maker. Aktive Einträge bekommen eine Kachel,
- * die übrigen liegen in einer Liste hinter der Pfeilkachel.
- * Der Plasma-Systray muss im selben Panel stecken; die Brücke blendet ihn aus.
+ * Schiefer status tiles: the Plasma system tray entries as square
+ * Motif tiles like the Window Maker dockapps. Active entries get a tile,
+ * the others sit in a list behind the arrow tile.
+ * The Plasma system tray must be in the same panel; the bridge hides it.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -21,11 +21,11 @@ PlasmoidItem {
 
     readonly property bool vertical: Plasmoid.formFactor !== PlasmaCore.Types.Horizontal
     readonly property int sp: 2
-    // Rand zwischen Kachelgruppe und sichtbarer Leistenkante, ringsum gleich
+    // margin between the tile group and the visible panel edge, equal on all sides
     readonly property int gap: fit.gap
 
-    // Lage im Leistenfenster (PanelFit): die Kacheln sitzen mittig zwischen den sichtbaren
-    // Kanten, die gemeldete Länge ist um Plasmas überschüssiges Polster gekürzt
+    // position in the panel window (PanelFit): the tiles sit centered between the visible
+    // edges, and the reported length is reduced by the extra Plasma padding
     PanelFit {
         id: fit
         target: root
@@ -34,28 +34,28 @@ PlasmoidItem {
     readonly property bool alone: fit.alone
     readonly property int thickness: fit.thickness
     readonly property int tile: Math.max(Kirigami.Units.iconSizes.small + 8, thickness - 2 * gap)
-    // Abstand der Kachelgruppe zur oberen linken Ecke des Applets
-    // längs: ab Leistenanfang, oder mit anderen Applets in der Leiste mittig im eigenen Platz
+    // offset of the tile group from the top left corner of the applet
+    // along: from the panel start, or centered in its own space when other applets share the panel
     readonly property int offsetAlong: alone ? (vertical ? fit.innerY : fit.innerX)
                                              : Math.floor(((vertical ? height : width) - contentLength) / 2)
     readonly property int offsetX: vertical ? fit.edgeL + Math.floor((thickness - tile) / 2) - fit.winPos.x : offsetAlong
     readonly property int offsetY: vertical ? offsetAlong : fit.edgeT + Math.floor((thickness - tile) / 2) - fit.winPos.y
 
     readonly property int iconMargin: Math.round(tile * (1 - Plasmoid.configuration.iconScale / 100) / 2)
-    // höchstens maxTiles Kacheln (0 = alle aktiven), der Rest kommt in die Liste hinter dem Pfeil
+    // at most maxTiles tiles (0 = all active); the rest goes into the list behind the arrow
     readonly property int maxTiles: Plasmoid.configuration.maxTiles
     readonly property int shownTiles: maxTiles > 0 ? Math.min(maxTiles, trayActive.count) : trayActive.count
     readonly property int overflowCount: trayActive.count - shownTiles + trayPassive.count
     readonly property int tileCount: shownTiles + (moreTile.visible ? 1 : 0)
     readonly property int contentLength: Math.max(1, tileCount) * (tile + sp) - sp
-    // gewünschte Fensterlänge: Kante, Rand, Kacheln, Rand, Kante – abzüglich Plasmas Polster
+    // wanted window length: edge, margin, tiles, margin, edge, minus the Plasma padding
     readonly property int length: alone ? fit.lengthFor(contentLength)
                                         : contentLength
 
     preferredRepresentation: fullRepresentation
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
-    // Schalter frontpanel-farbe: Flächen in der CDE-Frontpanel-Farbe statt der Fensterfarbe;
-    // Kinder erben sie über Kirigami.Theme, FrameTint färbt den Leistenhintergrund mit
+    // option frontpanel-color: surfaces in the CDE front panel color instead of the window color;
+    // children inherit it through Kirigami.Theme, FrameTint also tints the panel background
     Kirigami.Theme.inherit: !Scheme.usePanelColor
     Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
     FrameTint {}
@@ -91,7 +91,7 @@ PlasmoidItem {
             sourceModel.data(sourceModel.index(sourceRow, 0, sourceParent), filterRole) === PlasmaCore.Types.PassiveStatus
     }
 
-    // nur für tools/screenshot.sh: SCHIEFER_DOCK_TRAY=more öffnet die Liste
+    // only for tools/screenshot.sh: SCHIEFER_DOCK_TRAY=more opens the list
     Timer {
         interval: 2500
         running: tray.testItem === "more"
@@ -100,7 +100,7 @@ PlasmoidItem {
 
     Plasmoid.contextualActions: [
         PlasmaCore.Action {
-            text: i18n("Systemabschnitt einrichten …")
+            text: i18n("Configure System Tray…")
             icon.name: "configure"
             onTriggered: tray.configureTray()
         }
@@ -141,7 +141,7 @@ PlasmoidItem {
             }
         }
 
-        // Pfeilkachel: weitere Einträge
+        // arrow tile: more entries
         Item {
             id: moreTile
             visible: root.overflowCount > 0 || !tray.available
@@ -156,7 +156,7 @@ PlasmoidItem {
                 width: Math.round(root.tile * 0.36) | 1
                 height: Math.round(root.tile * 0.2)
                 sunken: listPopup.visible
-                // zeigt vom Rand weg ins Bild
+                // points away from the edge into the screen
                 up: Plasmoid.location !== PlasmaCore.Types.TopEdge
                 rotation: Plasmoid.location === PlasmaCore.Types.LeftEdge ? 90
                         : Plasmoid.location === PlasmaCore.Types.RightEdge ? -90 : 0
@@ -168,15 +168,15 @@ PlasmoidItem {
             }
             PlasmaCore.ToolTipArea {
                 anchors.fill: parent
-                mainText: tray.available ? i18np("%1 weiterer Eintrag", "%1 weitere Einträge", root.overflowCount)
-                                         : i18n("Kein Systemabschnitt im selben Panel")
+                mainText: tray.available ? i18np("%1 more entry", "%1 more entries", root.overflowCount)
+                                         : i18n("No system tray in the same panel")
                 location: Plasmoid.location
                 active: !listPopup.visible
             }
         }
     }
 
-    // ---------- Liste der übrigen Einträge ----------
+    // ---------- List of the remaining entries ----------
     PlasmaCore.Dialog {
         id: listPopup
         type: PlasmaCore.Dialog.PopupMenu
@@ -192,7 +192,7 @@ PlasmoidItem {
             height: implicitHeight
             spacing: 2
             Keys.onEscapePressed: listPopup.visible = false
-            // Popup wie CDE-Schubladen in der Frontpanel-Farbe (Schalter frontpanel-farbe)
+            // popup in the front panel color like CDE drawers (option frontpanel-color)
             Kirigami.Theme.inherit: !Scheme.usePanelColor
             Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
             FrameTint {}
@@ -212,7 +212,7 @@ PlasmoidItem {
                     sunken: row.sunken || (rowMouse.pressed && rowMouse.containsMouse)
                     base: rowMouse.containsMouse ? Scheme.hoverColor(Kirigami.Theme.backgroundColor) : Kirigami.Theme.backgroundColor
                 }
-                // Symbolfach links; Einträge legen dort ihr TrayItemIcon ab (iconSlot)
+                // icon slot on the left; entries put their TrayItemIcon there (iconSlot)
                 readonly property alias iconSlot: slot
                 Item {
                     id: slot
@@ -252,12 +252,12 @@ PlasmoidItem {
                 }
             }
 
-            // aktive Einträge, die keine Kachel mehr bekommen haben, dann die übrigen
+            // active entries that got no tile, then the others
             Component {
                 id: listEntry
                 ListRow {
                         id: entry
-                        // vom umgebenden Loader (Delegat des Repeaters)
+                        // from the enclosing Loader (repeater delegate)
                         readonly property var model: parent?.model ?? null
                         readonly property int index: parent?.index ?? -1
                         text: model?.displayText ?? ""
@@ -303,7 +303,7 @@ PlasmoidItem {
             }
             ListRow {
                 iconSource: "configure"
-                text: i18n("Systemabschnitt einrichten …")
+                text: i18n("Configure System Tray…")
                 onLabelWidth: w => list.maxLabel = Math.max(list.maxLabel, w)
                 onClicked: {
                     listPopup.visible = false;

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Erzeugt das Plasma-Theme „Schiefer“ (Motif/CDE-Kanten) als SVG-Rahmenstücke.
+"""Generates the "Schiefer" Plasma theme (Motif/CDE edges) as SVG frame pieces.
 
-    python3 make_plasma_theme.py [zielordner]     (Standard: ./schiefer)
+    python3 make_plasma_theme.py [target]     (default: ./schiefer)
 
-Prinzip: Jeder Rahmen (FrameSvg-Präfix) wird als kleines Pixelbild beschrieben
-(Rand c Pixel, Mitte 4 Pixel) und in die neun Stücke topleft … bottomright zerlegt.
-Farben laufen über die Plasma-Farbklassen (ColorScheme-*), das Theme folgt also
-dem eingestellten Farbschema. Abstände (hint-*-margin) sind die von Breeze.
+Each frame (FrameSvg prefix) is described as a small pixel image (border c pixels, center
+4 pixels) and cut into the nine pieces topleft ... bottomright. Colors use the Plasma color
+classes (ColorScheme-*), so the theme follows the active color scheme. Margins
+(hint-*-margin) are the ones from Breeze.
 """
 import json
 import os
@@ -17,20 +17,20 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEST = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "schiefer"))
 
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "common"))
-import schiefercolors  # noqa: E402  (Motif-Farbformel, gemeinsam mit Qt-Stil, Deko und Paletten)
+import schiefercolors  # noqa: E402  (Motif color formula, shared with Qt style, decoration and palettes)
 
-# Kantenfarben nach Motif: oben = mix(Fläche, weiß, f_oben), unten = mix(Fläche, schwarz, f_unten),
-# Auswahl (Rinnen, gedrückt) = mix(Fläche, schwarz, 0,15). SVG kann nicht rechnen: die Farbe kommt
-# zur Laufzeit aus den ColorScheme-Klassen, die Deckkraft der weißen/schwarzen Schicht ist fest.
-# Die Anteile hängen bei Motif von der Helligkeit der Fläche ab; sie gelten hier exakt für das
-# Hauptfenster der Palette „Schiefer“ (190,194,211: 57 % / 45 %). Für die übrigen hellen Paletten
-# (Helligkeit 72–79 %) weicht das um höchstens ±1 %-Punkt ab; bei „Basalt“ (31 %) wären es
-# 53 % / 54 %, die Kanten sind dort also etwas heller als im Qt-Stil.
+# Edge colors after Motif: top = mix(surface, white, f_top), bottom = mix(surface, black, f_bottom),
+# select (grooves, pressed) = mix(surface, black, 0.15). SVG cannot compute, so the color comes from
+# the ColorScheme classes at runtime and the opacity of the white or black layer is fixed.
+# In Motif the fractions depend on the surface brightness. Here they are exact for the main window
+# of the "Schiefer" palette (190,194,211: 57 % / 45 %). The other light palettes (brightness
+# 72-79 %) differ by at most 1 percentage point; for Basalt (31 %) the exact values would be
+# 53 % / 54 %, so its edges are a little lighter than in the Qt style.
 REF_BG = (190, 194, 211)
 _TS, _BS, _SEL = schiefercolors.factors(REF_BG)
 LIGHT = ("#ffffff", _TS)
 DARK = ("#000000", _BS)
-SELECT = ("#000000", _SEL)   # Motif-Auswahlfarbe: Rinnen, gedrückte Knöpfe (im mittleren Zweig exakt)
+SELECT = ("#000000", _SEL)   # Motif select color: grooves, pressed buttons (exact in the medium branch)
 OUTLINE = ("#000000", 0.62)
 
 BG = "ColorScheme-Background"
@@ -49,11 +49,11 @@ STYLE = """<style type="text/css" id="current-color-scheme">
 .ColorScheme-Text { color:#000000; }
 </style>"""
 
-MID = 4  # Breite der Mittelstücke
+MID = 4  # width of the center pieces
 
 
 # ---------------------------------------------------------------- Pixelmodell
-# Ein Pixel ist eine Liste von Schichten: ("class", Klassenname, Deckkraft) oder ("rgb", Farbe, Deckkraft)
+# A pixel is a list of layers: ("class", class name, opacity) or ("rgb", color, opacity)
 
 def cls(name, op=1.0):
     return ("class", name, op)
@@ -64,7 +64,7 @@ def rgb(spec):
 
 
 def bevel_side(x, y, W, H, d):
-    """Motif-Bevel wie Helper::renderBevel: True = Lichtkante, False = Schattenkante."""
+    """Motif bevel like Helper::renderBevel: True = light edge, False = shadow edge."""
     if y == d and x <= W - 1 - d:
         return True
     if x == d and y <= H - 1 - d:
@@ -73,7 +73,7 @@ def bevel_side(x, y, W, H, d):
 
 
 def make_frame(c, pixel):
-    """pixel(x, y, W, H, depth) -> Schichtenliste; liefert Rasterbild der Größe (2c+MID)²."""
+    """pixel(x, y, W, H, depth) -> layer list; returns a raster image of size (2c+MID)^2."""
     W = H = 2 * c + MID
     img = [[None] * W for _ in range(H)]
     for y in range(H):
@@ -85,13 +85,13 @@ def make_frame(c, pixel):
 
 def bevel_pixel(width, edge=BG, fill=BG, sunken=False, fill_layers=(), outline=False, open_side=None,
                 inner_ring=None):
-    """Erzeugt eine Pixelfunktion für einen Bevel-Rahmen.
-       outline: 1 px dunkle Außenlinie vor dem Bevel; open_side: 'bottom'/'top'/… für Reiter;
-       inner_ring: (Tiefe, Schicht) – z. B. Fokuslinie."""
+    """Returns a pixel function for a bevel frame.
+       outline: 1 px dark outline outside the bevel; open_side: 'bottom'/'top'/... for tabs;
+       inner_ring: (depth, layer), for example a focus line."""
     off = 1 if outline else 0
 
     def px(x, y, W, H, d):
-        # offene Seite: so tun, als ginge das Rechteck dort weiter
+        # open side: act as if the rectangle continued there
         xx, yy, WW, HH = x, y, W, H
         if open_side == "bottom":
             HH = H + 16
@@ -133,7 +133,7 @@ def fill_pixel(layers):
 
 
 def etched_line_pixel(where, inset):
-    """Geätzte Doppellinie an einer Kante (für Kopf-/Fußzeilen), endet `inset` Pixel vor den Rändern."""
+    """Etched double line along one edge (headers and footers), ending `inset` pixels before the borders."""
     def px(x, y, W, H, d):
         if where == "bottom":
             if x < inset or x > W - 1 - inset:
@@ -153,7 +153,7 @@ def etched_line_pixel(where, inset):
     return px
 
 
-# ---------------------------------------------------------------- SVG-Ausgabe
+# ---------------------------------------------------------------- SVG output
 
 class Sheet:
     def __init__(self):
@@ -172,10 +172,10 @@ class Sheet:
         return out
 
     def _piece(self, eid, img, x0, y0, x1, y1, ox, oy):
-        """Bildausschnitt [x0,x1)×[y0,y1) als Gruppe mit id an Position (ox, oy)."""
+        """Image region [x0,x1)x[y0,y1) as a group with id at position (ox, oy)."""
         body = [f'<rect x="{ox}" y="{oy}" width="{x1 - x0}" height="{y1 - y0}" fill="#000000" fill-opacity="0"/>']
-        # waagrechte Läufe je Zeile, dann gleiche Läufe senkrecht zusammenfassen – sonst entstehen
-        # beim Strecken halbtransparente Nahtstellen zwischen 1-px-Rechtecken
+        # Horizontal runs per row, then merge equal runs vertically. Single 1 px rectangles
+        # leave semi-transparent seams when stretched.
         runs = []
         for y in range(y0, y1):
             x = x0
@@ -200,7 +200,7 @@ class Sheet:
         self.parts.append(f'<g id="{eid}">' + "".join(body) + "</g>")
 
     def frame(self, prefix, c, pixel, margins=None, stretch=True):
-        """Neun Stücke eines Rahmens; margins = (links, oben, rechts, unten) oder None."""
+        """Nine pieces of a frame; margins = (left, top, right, bottom) or None."""
         img = make_frame(c, pixel)
         p = (prefix + "-") if prefix else ""
         n = 2 * c + MID
@@ -231,14 +231,14 @@ class Sheet:
         self.y += 3 * cell + 8
 
     def element(self, eid, w, h, pixel_fn):
-        """Einzelnes Element (kein Rahmen), pixel_fn(x, y, w, h) -> Schichten."""
+        """Single element (no frame), pixel_fn(x, y, w, h) -> layers."""
         img = [[pixel_fn(x, y, w, h) for x in range(w)] for y in range(h)]
         self._piece(eid, img, 0, 0, w, h, 0, self.y)
         self.width = max(self.width, w + 4)
         self.y += h + 6
 
     def raw(self, eid, w, h, inner):
-        """Freies SVG-Element (Koordinaten 0..w/0..h), z. B. für Kreise."""
+        """Free SVG element (coordinates 0..w/0..h), for example circles."""
         self.parts.append(f'<g id="{eid}" transform="translate(0,{self.y})">'
                           f'<rect x="0" y="0" width="{w}" height="{h}" fill="#000000" fill-opacity="0"/>{inner}</g>')
         self.width = max(self.width, w + 4)
@@ -253,13 +253,13 @@ class Sheet:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as f:
             f.write(f'<svg xmlns="http://www.w3.org/2000/svg" width="{self.width + 40}" height="{self.y + 10}">\n')
-            f.write("<!-- Schiefer – erzeugt von make_plasma_theme.py, nicht von Hand bearbeiten -->\n")
+            f.write("<!-- Schiefer: generated by make_plasma_theme.py, do not edit -->\n")
             f.write(STYLE + "\n")
             f.write("\n".join(self.parts))
             f.write("\n</svg>\n")
 
 
-# ---------------------------------------------------------------- Theme-Dateien
+# ---------------------------------------------------------------- Theme files
 
 def raised(width=2, **kw):
     return bevel_pixel(width, **kw)
@@ -282,17 +282,17 @@ def popup_background(margins):
 def build(dest):
     files = {}
 
-    # Leiste: erhabene Fläche (CDE-Frontpanel)
+    # Panel: raised surface (CDE front panel)
     s = Sheet()
     s.frame("", 2, raised(2), (4, 4, 4, 4))
     files["widgets/panel-background"] = s
 
-    # Popups, Menüs, Plasmoid-Hintergründe
+    # Popups, menus, plasmoid backgrounds
     files["dialogs/background"] = popup_background((6, 6, 6, 6))
     files["widgets/background"] = popup_background((14, 14, 14, 14))
     files["widgets/translucentbackground"] = popup_background((14, 14, 14, 14))
 
-    # Tooltip: schlicht mit dunkler Außenlinie (Farbe = Tooltip-Farbgruppe)
+    # Tooltip: plain with a dark outline (color = tooltip color group)
     s = Sheet()
     s.frame("", 1, bevel_pixel(0, outline=True), (4, 4, 4, 4))
     files["widgets/tooltip"] = s
@@ -313,7 +313,7 @@ def build(dest):
     s.frame("progress", 2, lambda x, y, W, H, d: [] if d < 2 else [cls(HL, 0.45)], m)
     files["widgets/tasks"] = s
 
-    # Knöpfe: Fokus = Motif-Highlight-Ring außerhalb des Knopfs
+    # Buttons: focus = Motif highlight ring outside the button
     s = Sheet()
     s.frame("normal", 2, raised(2, edge=BG, fill=BUTTON), (6, 6, 6, 6))
     s.frame("pressed", 2, sunken(2, edge=BG, fill=BUTTON, fill_layers=[PRESS_TINT]), (6, 6, 6, 6))
@@ -324,7 +324,7 @@ def build(dest):
     s.frame("toolbutton-focus", 2, ring_pixel(0, cls(HL)), (2, 2, 2, 2))
     files["widgets/button"] = s
 
-    # Eingabefelder: versenkt, Fokus als Innenlinie
+    # Input fields: sunken, focus as an inner line
     s = Sheet()
     s.frame("base", 2, sunken(2, edge=BG, fill=VIEW), (6, 6, 6, 6))
     s.frame("hover", 3, empty_pixel, (0.001, 0.001, 0.001, 0.001))
@@ -332,14 +332,14 @@ def build(dest):
     s.marker("hint-focus-over-base")
     files["widgets/lineedit"] = s
 
-    # Rahmen
+    # Frames
     s = Sheet()
     s.frame("plain", 2, lambda x, y, W, H, d: [cls(BG)], (6, 6, 6, 6))
     s.frame("raised", 2, raised(2), (6, 6, 6, 8))
     s.frame("sunken", 2, sunken(2), (6, 6, 6, 6))
     files["widgets/frame"] = s
 
-    # Listeneinträge in Popups (Kickoff, Systemabschnitt …): Hover erhaben wie Qt-Menüs
+    # List items in popups (Kickoff, system tray ...): raised on hover like Qt menus
     s = Sheet()
     s.frame("normal", 2, empty_pixel, (6, 6, 6, 6))
     s.frame("hover", 2, raised(2), (6, 6, 6, 6))
@@ -361,7 +361,7 @@ def build(dest):
     s.frame("pressed", 2, sunken(2), (8, 8, 8, 8))
     files["widgets/menubaritem"] = s
 
-    # Kopf- und Fußzeilen der Popups: nur eine geätzte Linie, endet vor dem Popup-Bevel
+    # Popup headers and footers: only an etched line, ending before the popup bevel
     s = Sheet()
     s.frame("header", 6, etched_line_pixel("bottom", 3), None)
     s.frame("footer", 6, etched_line_pixel("top", 3), None)
@@ -370,7 +370,7 @@ def build(dest):
         s.parts.append(f'<rect id="{n}" x="{200 + i * 20}" y="0" width="{w}" height="{h}" fill="#000000" fill-opacity="0"/>')
     files["widgets/plasmoidheading"] = s
 
-    # Reiter: drei erhabene Kanten
+    # Tabs: three raised edges
     s = Sheet()
     s.frame("north-active-tab", 2, raised(2, open_side="bottom"), (6, 10, 6, 10))
     s.frame("south-active-tab", 2, raised(2, open_side="top"), (6, 10, 6, 10))
@@ -378,7 +378,7 @@ def build(dest):
     s.frame("east-active-tab", 2, raised(2, open_side="left"), (8, 6, 4, 6))
     files["widgets/tabbar"] = s
 
-    # Rollbalken: versenkte Rinne, erhabener Schieber
+    # Scroll bar: sunken groove, raised slider
     s = Sheet()
     trough = sunken(2, fill=BG, fill_layers=[rgb(SELECT)])
     s.frame("background-vertical", 2, trough, None)
@@ -391,7 +391,7 @@ def build(dest):
     s.parts.append('<rect id="hint-scrollbar-size" x="320" y="0" width="14" height="14" fill="#000000" fill-opacity="0"/>')
     files["widgets/scrollbar"] = s
 
-    # Schieberegler: versenkte Rinne, Füllung, erhabener Daumen mit Mittelrille
+    # Slider: sunken groove, fill, raised handle with a center groove
     s = Sheet()
     s.frame("groove", 4, sunken(2, fill=BG, fill_layers=[rgb(SELECT)]), None)
     s.frame("groove-highlight", 4, sunken(2, fill=HL), None)
@@ -422,7 +422,7 @@ def build(dest):
     s.marker("hint-handle-size", 20, 20)
     files["widgets/slider"] = s
 
-    # Radioknopf: versenkter Kreis (wie Qt-Stil), Punkt in Hervorhebungsfarbe
+    # Radio button: sunken circle (like the Qt style), dot in the highlight color
     import math
 
     def arc(cx, cy, r, a0, a1, color, op, width=2):
@@ -443,10 +443,10 @@ def build(dest):
     s.marker("hint-size", 16, 16)
     files["widgets/radiobutton"] = s
 
-    # Schalter: versenkte Rinne (aus: grau, an: Hervorhebung), erhabener viereckiger Schieber
+    # Switch: sunken groove (off: gray, on: highlight), raised square handle
     s = Sheet()
     def bar(prefix, fill_layers):
-        img = make_frame(6, sunken(2, fill=BG, fill_layers=fill_layers))   # 16 px hoch wie der Schieber
+        img = make_frame(6, sunken(2, fill=BG, fill_layers=fill_layers))   # 16 px high like the handle
         n = len(img)
         s._piece(prefix + "-left", img, 0, 0, 6, n, 0, s.y)
         s._piece(prefix + "-center", img, 6, 0, 6 + MID, n, 10, s.y)
@@ -478,14 +478,14 @@ def build(dest):
     s.element("vertical-line", 2, 16, lambda x, y, w, h: [rgb(DARK)] if x == 0 else [rgb(LIGHT)])
     files["widgets/line"] = s
 
-    # ---- schreiben
+    # ---- write
     if os.path.isdir(dest) and os.path.exists(os.path.join(dest, ".schiefer-generated")):
         shutil.rmtree(dest)
     os.makedirs(dest, exist_ok=True)
     open(os.path.join(dest, ".schiefer-generated"), "w").close()
     for rel, sheet in files.items():
         sheet.save(os.path.join(dest, rel + ".svg"))
-    # Transparenz-Varianten: dieselben undurchsichtigen Dateien, damit nichts auf Breeze zurückfällt
+    # Translucent variants: the same opaque files, so nothing falls back to Breeze
     for variant in ("solid", "translucent", "opaque"):
         for rel in ("dialogs/background", "widgets/panel-background", "widgets/tooltip",
                     "widgets/background"):
@@ -496,7 +496,7 @@ def build(dest):
         "KPlugin": {
             "Authors": [{"Name": "Schiefer"}],
             "Category": "",
-            "Description": "Motif/CDE-artige Kanten auf Basis der Breeze-Abstände",
+            "Description": "Motif/CDE-like edges based on the Breeze spacing",
             "Description[de]": "Motif/CDE-artige Kanten auf Basis der Breeze-Abstände",
             "EnabledByDefault": True,
             "Id": "schiefer",

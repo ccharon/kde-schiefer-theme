@@ -7,19 +7,19 @@
     <entry name="onlyCurrentDesktop" type="Bool"><default>true</default></entry>
     <!-- opening | app | lastActivated -->
     <entry name="sortMode" type="String"><default>opening</default></entry>
-    <!-- auch offene Fenster zeigen; aus = nur minimierte Fenster -->
+    <!-- also show open windows; off = minimized windows only -->
     <entry name="showNormalWindows" type="Bool"><default>true</default></entry>
     <!-- list (Icon-Manager) | icons (mwm) -->
     <entry name="display" type="String"><default>list</default></entry>
-    <!-- Fenster einer Anwendung zu einer Gruppe mit seitlicher Schublade zusammenfassen -->
+    <!-- combine the windows of one application into a group with a side drawer -->
     <entry name="groupWindows" type="Bool"><default>true</default></entry>
-    <!-- Farben der Arbeitsflächen aus [Schiefer] DesktopColors des aktiven Farbschemas; aus (oder nichts gefunden) = Liste unten -->
+    <!-- desktop colors from [Schiefer] DesktopColors of the active color scheme; off (or nothing found) = list below -->
     <entry name="desktopColorsFromScheme" type="Bool"><default>true</default></entry>
     <entry name="desktopColors" type="StringList">
       <default>#8fa3bf,#bba78e,#7fa39a,#b48f96,#a8a47e,#9c90b5,#8faf8f,#c09c7c</default>
     </entry>
     <entry name="showTitle" type="Bool"><default>true</default></entry>
-    <!-- Spalten (senkrecht) bzw. Zeilen (waagerecht) -->
+    <!-- columns (vertical) or rows (horizontal) -->
     <entry name="columns" type="Int"><default>1</default><min>1</min><max>4</max></entry>
   </group>
 </kcfg>

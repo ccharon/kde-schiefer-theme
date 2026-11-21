@@ -1,4 +1,4 @@
-// eikey FD HOLD_SECONDS TABS : Alt halten, TABS mal Tab druecken, HOLD_SECONDS halten, dann loslassen
+// eikey FD HOLD_SECONDS TABS: hold Alt, press Tab TABS times, hold HOLD_SECONDS, then release
 #include <libei.h>
 #include <stdio.h>
 #include <stdlib.h>

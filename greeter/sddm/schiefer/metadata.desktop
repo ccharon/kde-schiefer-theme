@@ -1,11 +1,11 @@
 [SddmGreeterTheme]
 Name=Schiefer
-Description=Anmeldung im Stil klassischer Unix-Workstations
+Description=Login in the style of classic Unix workstations
 Author=Schiefer
 Copyright=GPL-2.0-or-later
 License=GPL-2.0-or-later
 Type=sddm-theme
-Version=0.6
+Version=0.7
 Website=
 Screenshot=preview.png
 MainScript=Main.qml

@@ -1,7 +1,7 @@
-// Test der Schiefer-Dekoration (gebautes Plugin kdecoration/build/bin/schiefer.so) mit den
-// Mock-Klassen aus den kdecoration-6.7.6-Autotests: echte KDecoration3-Bibliothek, kein KWin.
-// Prüft: Motif-Eckgriffe (sectionUnderMouse, wie KWin sie liest) und Doppelklick auf den Menüknopf.
-// Bauen/Starten: siehe CMakeLists.txt; anderes Plugin: SCHIEFER_DECO_PLUGIN=/pfad/schiefer.so
+// Test of the Schiefer decoration (built plugin kdecoration/build/bin/schiefer.so) with the
+// mock classes from the kdecoration 6.7.6 autotests: real KDecoration3 library, no KWin.
+// Checks Motif corner grips (sectionUnderMouse as KWin reads it) and double click on the menu button.
+// Build and run: see CMakeLists.txt; other plugin: SCHIEFER_DECO_PLUGIN=/path/schiefer.so
 // SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
 #include "mockbridge.h"
 #include "mocksettings.h"
@@ -49,11 +49,11 @@ struct Fixture {
         win = bridge.lastCreatedWindow();
         win->setWidth(400);
         win->setHeight(300);
-        // Reihenfolge wie KWin (decorations/decorationbridge.cpp: create, setSettings, init)
+        // same order as KWin (decorations/decorationbridge.cpp: create, setSettings, init)
         deco->create();
         deco->setSettings(settings);
         deco->init();
-        deco->apply(deco->nextState()); // KWin übernimmt die Ränder mit dem nächsten Fensterzustand
+        deco->apply(deco->nextState()); // KWin applies the borders with the next window state
     }
     ~Fixture()
     {
@@ -98,9 +98,9 @@ private Q_SLOTS:
 void DecoTest::corners_data()
 {
     QTest::addColumn<int>("largeSpacing");
-    // KDecoration3-Ecke = 2 * largeSpacing: kleiner (8) und größer (60) als die Kerbe (b + t)
-    QTest::newRow("Ecke kleiner als Kerbe") << 4;
-    QTest::newRow("Ecke größer als Kerbe") << 30;
+    // KDecoration3 corner = 2 * largeSpacing: smaller (8) and larger (60) than the notch (b + t)
+    QTest::newRow("corner smaller than notch") << 4;
+    QTest::newRow("corner larger than notch") << 30;
 }
 
 void DecoTest::corners()
@@ -108,38 +108,38 @@ void DecoTest::corners()
     QFETCH(int, largeSpacing);
     Fixture f(largeSpacing);
     const qreal b = f.deco->borderLeft();
-    const qreal C = f.deco->borderTop(); // = Rahmen + Titelhöhe = Lage der Kerben
+    const qreal C = f.deco->borderTop(); // = frame + title height = position of the notches
     const qreal W = f.deco->size().width(), H = f.deco->size().height();
-    qInfo() << "Rahmen" << b << "Kerbe bei" << C << "Größe" << W << H << "KDecoration3-Ecke" << 2 * largeSpacing;
+    qInfo() << "frame" << b << "notch at" << C << "size" << W << H << "KDecoration3 corner" << 2 * largeSpacing;
     QVERIFY(b > 0 && C > b);
     struct P {
         qreal x, y;
         Qt::WindowFrameSection s;
     };
     const QList<P> pts = {
-        // obere Kante
+        // top edge
         {0, 0, Qt::TopLeftSection}, {C - 1, 0, Qt::TopLeftSection}, {C, 0, Qt::TopSection}, {C - 1, b - 1, Qt::TopLeftSection},
         {W - C, 0, Qt::TopRightSection}, {W - C - 1, 0, Qt::TopSection}, {W - 1, b - 1, Qt::TopRightSection},
-        // linke Kante
+        // left edge
         {0, C - 1, Qt::TopLeftSection}, {b - 1, C - 1, Qt::TopLeftSection}, {0, C, Qt::LeftSection}, {0, H - C - 1, Qt::LeftSection},
         {0, H - C, Qt::BottomLeftSection}, {b - 1, H - 1, Qt::BottomLeftSection},
-        // rechte Kante
+        // right edge
         {W - 1, C - 1, Qt::TopRightSection}, {W - b, C, Qt::RightSection}, {W - 1, H - C, Qt::BottomRightSection}, {W - 1, H - C - 1, Qt::RightSection},
-        // untere Kante
+        // bottom edge
         {C - 1, H - 1, Qt::BottomLeftSection}, {C, H - 1, Qt::BottomSection}, {W - C - 1, H - 1, Qt::BottomSection}, {W - C, H - b, Qt::BottomRightSection},
-        // Titelzeile bleibt Titelzeile
+        // the title row stays the title row
         {W / 2, b + 2, Qt::TitleBarArea},
     };
     for (const auto &p : pts) {
-        // jeweils von der Fenstermitte aus (frischer Zustand) und zweimal (Zustand bleibt)
+        // each from the window center (fresh state) and twice (state persists)
         f.at(W / 2, H / 2);
         const auto got = f.at(p.x, p.y);
         if (got != p.s) {
-            qWarning() << "bei" << p.x << p.y << "erwartet" << p.s << "bekommen" << got;
+            qWarning() << "at" << p.x << p.y << "expected" << p.s << "got" << got;
         }
         QCOMPARE(got, p.s);
     }
-    // Loslassen außerhalb eines Knopfs: KDecoration3 bestimmt den Abschnitt neu – Motif-Ecke bleibt
+    // release outside a button: KDecoration3 recomputes the section; the Motif corner must persist
     f.at(C - 1, 0);
     f.mouse(QEvent::MouseButtonRelease, QPointF(C - 1, 0));
     QCOMPARE(f.deco->sectionUnderMouse(), Qt::TopLeftSection);
@@ -151,10 +151,10 @@ void DecoTest::cornersOff()
     Fixture f(4);
     const qreal C = f.deco->borderTop();
     const qreal b = f.deco->borderLeft();
-    // KDecoration3 allein: Ecke 2 * 4 = 8 px ab Rahmen -> bei C - 1 schon obere Kante
+    // KDecoration3 alone: corner 2 * 4 = 8 px from the frame -> already the top edge at C - 1
     QCOMPARE(f.at(C - 1, 0), Qt::TopSection);
     QCOMPARE(f.at(b + 7, 0), Qt::TopLeftSection);
-    // Schalter zur Laufzeit an: reconfigured (wie qdbus6 org.kde.KWin /KWin reconfigure)
+    // option on at runtime: reconfigured (like qdbus6 org.kde.KWin /KWin reconfigure)
     writeRc(QStringLiteral("[Decoration]\nMotifCorners=true\n"));
     Q_EMIT f.settings->reconfigured();
     f.at(200, 150);
@@ -176,7 +176,7 @@ void DecoTest::menuSingleClickDelayed()
     QCOMPARE(f.at(p.x(), p.y()), Qt::TitleBarArea);
     f.click(p);
     QTest::qWait(50);
-    QCOMPARE(menu.count(), 0); // noch nicht: wartet auf einen möglichen zweiten Klick
+    QCOMPARE(menu.count(), 0); // not yet: waits for a possible second click
     QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50);
     QCOMPARE(menu.count(), 1);
     QCOMPARE(close.count(), 0);
@@ -216,7 +216,7 @@ void DecoTest::menuDoubleClickOff()
     f.at(p.x(), p.y());
     f.click(p);
     QTest::qWait(20);
-    QCOMPARE(menu.count(), 1); // sofort wie bei KDecoration3
+    QCOMPARE(menu.count(), 1); // immediately, as in KDecoration3
     f.click(p);
     QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50);
     QCOMPARE(menu.count(), 2);
@@ -225,10 +225,10 @@ void DecoTest::menuDoubleClickOff()
 
 void DecoTest::menuKWinSettingWins()
 {
-    // KWin-Einstellung CloseOnDoubleClickOnMenu: KDecoration3 übernimmt (Menü nur bei langem Druck)
+    // KWin setting CloseOnDoubleClickOnMenu: KDecoration3 takes over (menu only on long press)
     Fixture f(4);
     f.ms->setCloseOnDoubleClickOnMenu(true);
-    QTest::qWait(10); // Einstellung kommt per QueuedConnection beim Knopf an
+    QTest::qWait(10); // the setting reaches the button through a QueuedConnection
     QSignalSpy menu(f.win, &MockWindow::menuRequested), close(f.win, &MockWindow::closeRequested);
     const QPointF p = menuButtonCenter(f);
     f.at(p.x(), p.y());

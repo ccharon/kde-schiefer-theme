@@ -1,4 +1,4 @@
-// Startlampe wie über EXIT am Dock: versenkte Fassung, blinkt während etwas läuft
+// launch lamp like the one above EXIT on the dock: sunken socket, blinks while something runs
 import QtQuick
 
 Bevel {

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(schiefer-style VERSION 0.1)
-# Fork des Breeze-Widget-Stils (kde-plasma/breeze 6.7.6) – Zeichenroutinen im Motif/CDE-Stil.
+# Fork of the Breeze widget style (kde-plasma/breeze 6.7.6) with Motif/CDE drawing routines.
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,7 +24,7 @@ set(HAVE_QTDBUS ON)
 configure_file(config-breeze.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-breeze.h)
 
 include_directories(animations debug common ${CMAKE_CURRENT_BINARY_DIR})
-# Schiefer: gemeinsamer Farbkern (Motif-Formel), nur Header
+# Schiefer: shared color core (Motif formula), header only
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
 
 set(SRCS
@@ -88,8 +88,8 @@ endif()
 install(TARGETS schiefer6 DESTINATION ${KDE_INSTALL_QTPLUGINDIR}/styles/)
 install(FILES schiefer.themerc DESTINATION ${KDE_INSTALL_DATADIR}/kstyle/themes)
 
-# Test-Galerie (wird nicht installiert; im Ebuild abgeschaltet)
-option(BUILD_GALLERY "Testgalerie für render.sh bauen" ON)
+# Test gallery (not installed; disabled in the ebuild)
+option(BUILD_GALLERY "Build the test gallery for render.sh" ON)
 if(BUILD_GALLERY)
     add_executable(retrogallery test/gallery.cpp)
     target_link_libraries(retrogallery Qt6::Widgets)

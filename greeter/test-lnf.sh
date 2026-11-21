@@ -1,8 +1,8 @@
 #!/bin/bash
-# Startbild bzw. Abmeldedialog isoliert fotografieren (eigene KWin-Sitzung):
-#   greeter/test-lnf.sh splash out.png        ksplashqml --test (Stufen laufen im Testmodus von selbst)
+# Captures the splash screen or the logout dialog in isolation (own KWin session):
+#   greeter/test-lnf.sh splash out.png        ksplashqml --test (stages advance by themselves in test mode)
 #   greeter/test-lnf.sh logout out.png        ksmserver-logout-greeter --windowed
-# Das Design-Paket wird dereferenziert kopiert (KPackage lehnt Symlinks aus dem Paket hinaus ab).
+# The global theme package is copied with symlinks resolved (KPackage rejects symlinks leaving the package).
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WAS="$1"; OUT="$(realpath -m "$2")"

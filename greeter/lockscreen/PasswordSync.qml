@@ -1,4 +1,4 @@
-// Passwort zwischen den Bildschirmen abgleichen (wie in der Plasma-Shell)
+// keep the password in sync between screens (as in the Plasma shell)
 pragma Singleton
 import QtQuick
 QtObject { property string password }

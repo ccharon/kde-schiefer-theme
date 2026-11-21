@@ -1,7 +1,7 @@
 /*
- Schiefer: Fensterwechsler im Motif-Stil (Vorbild: KWin "compact").
- Schlichte erhabene Tafel mit 2-px-Kanten, aktiver Eintrag als versenktes Feld,
- keine Animationen, keine Unschärfe, keine Transparenz.
+ Schiefer: window switcher in Motif style (modeled on KWin "compact").
+ Plain raised panel with 2 px edges, active item as a sunken field,
+ no animations, no blur, no transparency.
  SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -15,21 +15,21 @@ KWin.TabBoxSwitcher {
     id: tabBox
     currentIndex: listView.currentIndex
 
-    // ---- Farben -----------------------------------------------------------
-    // Kanten und versenkte Fläche nach der Motif-Formel (motif.js = common/schiefercolors.py),
-    // also dieselben Töne wie Fensterdeko, Qt-Stil und Dock
+    // ---- Colors -----------------------------------------------------------
+    // Edges and sunken surface from the Motif formula (motif.js = common/schiefercolors.py),
+    // so the same tones as the window decoration, Qt style and dock
     readonly property color base: panel.Kirigami.Theme.backgroundColor
     readonly property var motif: Motif.colors(base)
-    readonly property color light: motif.top          // Kante oben/links
-    readonly property color dark: motif.bottom        // Kante unten/rechts
-    readonly property color sunkenFill: motif.select  // Fläche des versenkten Felds (Motif: Auswahlfarbe)
+    readonly property color light: motif.top          // edge top/left
+    readonly property color dark: motif.bottom        // edge bottom/right
+    readonly property color sunkenFill: motif.select  // surface of the sunken field (Motif: select color)
     readonly property int edge: 2
 
     function itemCaption(caption, minimized) {
         return minimized ? "(" + caption + ")" : caption;
     }
 
-    // Erhabene (raised=true) bzw. versenkte Kante um ein Rechteck
+    // raised (raised=true) or sunken edge around a rectangle
     component Bevel: Item {
         property bool raised: true
         property color fill: tabBox.base
@@ -72,7 +72,7 @@ KWin.TabBoxSwitcher {
 
         mainItem: Item {
             id: panel
-            Kirigami.Theme.colorSet: Kirigami.Theme.Window   // sonst View (heller)
+            Kirigami.Theme.colorSet: Kirigami.Theme.Window   // View otherwise (lighter)
             Kirigami.Theme.inherit: false
             readonly property int pad: tabBox.edge + Kirigami.Units.smallSpacing
             readonly property int rowHeight: Math.max(Kirigami.Units.iconSizes.smallMedium,
@@ -97,7 +97,7 @@ KWin.TabBoxSwitcher {
                 highlightResizeDuration: 0
                 boundsBehavior: Flickable.StopAtBounds
 
-                // aktiver Eintrag: versenktes Feld
+                // active item: sunken field
                 highlight: Bevel {
                     width: listView.width
                     raised: false

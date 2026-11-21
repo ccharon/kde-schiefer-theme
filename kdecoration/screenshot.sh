@@ -1,6 +1,6 @@
 #!/bin/bash
-# Isoliertes Bildschirmfoto (eigener D-Bus): dbus-run-session -- ./screenshot.sh build/plugins out.png ../colors/Schiefer.colors
-# $1 = Plugin-Dir, $2 = Ausgabe-PNG, $3 = colors-Datei
+# Isolated screenshot (own D-Bus): dbus-run-session -- ./screenshot.sh build/plugins out.png ../colors/Schiefer.colors
+# $1 = plugin dir, $2 = output PNG, $3 = colors file
 CFG=$(mktemp -d)
 cp ~/.config/kdeglobals $CFG/kdeglobals
 python3 -I - "$3" "$CFG/kdeglobals" <<'PY'

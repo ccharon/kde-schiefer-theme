@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Prüft, dass schiefercolors.h (C++) und schiefercolors.py dieselben Motif-Farben liefern.
+"""Checks that schiefercolors.h (C++) and schiefercolors.py produce the same Motif colors.
 
-    python3 common/test_colors.py [anzahl]      (Standard: 300 Farben, darunter Grenzfälle)
+    python3 common/test_colors.py [count]      (default: 300 colors including edge cases)
 
-Baut dafür ein kleines Qt-Programm in einem Wegwerf-Ordner (braucht g++ und pkg-config Qt6Gui).
+Builds a small Qt program in a throwaway directory (needs g++ and pkg-config Qt6Gui).
 """
 import os
 import random
@@ -34,7 +34,7 @@ int main()
 def samples(n):
     rnd = random.Random(1987)
     cols = [(0, 0, 0), (255, 255, 255), (190, 194, 211), (112, 130, 170), (214, 218, 230), (128, 128, 128)]
-    # Graustufen über alle Zweige und rund um die Schwellen (20 %, 70 %, 93 %)
+    # gray levels across all branches and around the thresholds (20 %, 70 %, 93 %)
     cols += [(v, v, v) for v in range(0, 256, 5)]
     cols += [(v, v, v) for v in (50, 51, 52, 178, 179, 180, 237, 238, 239)]
     while len(cols) < n:
@@ -63,9 +63,9 @@ def main():
         models[m["model"]] = models.get(m["model"], 0) + 1
         if py != line.strip():
             bad += 1
-            print("ABWEICHUNG", c, "py:", py, "c++:", line)
-    print(f"{len(cols)} Farben geprüft ({', '.join(f'{k}: {v}' for k, v in sorted(models.items()))}), "
-          f"{bad} Abweichungen")
+            print("MISMATCH", c, "py:", py, "c++:", line)
+    print(f"{len(cols)} colors checked ({', '.join(f'{k}: {v}' for k, v in sorted(models.items()))}), "
+          f"{bad} mismatches")
     return 1 if bad else 0
 
 

@@ -1,6 +1,6 @@
 /*
- * Schiefer – Inhalt eines Ordners für die Ordner-Schublade
- * (KDirModel, Ordner zuerst und natürlich sortiert wie in Dolphin)
+ * Schiefer: folder contents for the folder drawer
+ * (KDirModel, folders first and naturally sorted as in Dolphin)
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
@@ -20,7 +20,7 @@ class SchieferFolder : public KDirSortFilterProxyModel
 
     Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
-    // Name und Symbol des Ordners selbst (z. B. „Schreibtisch“, user-desktop)
+    // name and icon of the folder itself (for example "Desktop", user-desktop)
     Q_PROPERTY(QString folderName READ folderName NOTIFY urlChanged)
     Q_PROPERTY(QString folderIcon READ folderIcon NOTIFY urlChanged)
 
@@ -49,7 +49,7 @@ Q_SIGNALS:
     void countChanged();
 
 private:
-    // Name, Symbol und Beschreibung eines Starters (.desktop), einmal gelesen
+    // name, icon and description of a launcher (.desktop), read once
     struct DesktopInfo {
         QString name;
         QString icon;
@@ -59,6 +59,6 @@ private:
 
     KDirModel *m_dirModel;
     QUrl m_url;
-    // gelöscht, sobald sich die Quelle ändert (Datei bearbeitet, entfernt, neu gelistet)
+    // cleared as soon as the source changes (file edited, removed, relisted)
     mutable QHash<QUrl, DesktopInfo> m_desktopCache;
 };

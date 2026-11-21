@@ -1,6 +1,6 @@
 #!/bin/bash
-# Erzeugt das Plasma-Theme neu, kopiert es nach ~/.local/share und aktiviert es.
-#   ./install.sh          Zurück zu Breeze: plasma-apply-desktoptheme default
+# Regenerates the Plasma theme, copies it to ~/.local/share and activates it.
+#   ./install.sh          Back to Breeze: plasma-apply-desktoptheme default
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 python3 "$HERE/make_plasma_theme.py" >/dev/null

@@ -1,0 +1,117 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: schiefer\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+msgid "Display:"
+msgstr "Darstellung:"
+
+msgid "List (icon manager like twm)"
+msgstr "Liste (Icon-Manager wie twm)"
+
+msgid "Icons (icon box like mwm)"
+msgstr "Symbole (Icon Box wie mwm)"
+
+msgid "Windows:"
+msgstr "Fenster:"
+
+msgid "Only from the current desktop"
+msgstr "Nur von der aktuellen Arbeitsfläche"
+
+msgid "Also show open windows (otherwise only minimized ones)"
+msgstr "Auch offene Fenster zeigen (sonst nur minimierte)"
+
+msgid "Group windows of an application"
+msgstr "Fenster einer Anwendung gruppieren"
+
+msgid "Order:"
+msgstr "Reihenfolge:"
+
+msgid "As opened"
+msgstr "Wie geöffnet"
+
+msgid "By application"
+msgstr "Nach Programm"
+
+msgid "Most recently used first"
+msgstr "Zuletzt benutzt zuerst"
+
+msgid "Columns:"
+msgstr "Spalten:"
+
+msgid "Colors:"
+msgstr "Farben:"
+
+msgid "Take from the color scheme"
+msgstr "Aus dem Farbschema übernehmen"
+
+msgid "Custom desktop colors:"
+msgstr "Eigene Farben der Arbeitsflächen:"
+
+msgid "Header:"
+msgstr "Kopfzeile:"
+
+msgid "Show \"Windows\""
+msgstr "„Fenster“ anzeigen"
+
+msgid "A click raises or restores a window; a click on the active window minimizes it. A click on a group opens its windows to the side. Middle click minimizes, right click opens the window menu. To keep windows clear of the box, set the panel to \"Dodge Windows\"."
+msgstr "Klick holt ein Fenster nach vorn oder stellt es wieder her, ein Klick auf das aktive Fenster minimiert es. Ein Klick auf eine Gruppe klappt ihre Fenster seitlich auf. Mittelklick minimiert, Rechtsklick öffnet das Fenstermenü. Damit die Box Fenstern ausweicht, die Leiste auf „Fenstern ausweichen“ stellen."
+
+msgid "%1 window"
+msgid_plural "%1 windows"
+msgstr[0] "%1 Fenster"
+msgstr[1] "%1 Fenster"
+
+msgid "minimized"
+msgstr "minimiert"
+
+msgctxt "@title"
+msgid "General"
+msgstr "Allgemein"
+
+msgid "Windows"
+msgstr "Fenster"
+
+msgid "No windows"
+msgstr "Keine Fenster"
+
+msgid "Restore All"
+msgstr "Alle wiederherstellen"
+
+msgid "Minimize All"
+msgstr "Alle minimieren"
+
+msgid "Restore"
+msgstr "Wiederherstellen"
+
+msgid "Minimize"
+msgstr "Minimieren"
+
+msgid "Unmaximize"
+msgstr "Maximieren aufheben"
+
+msgid "Maximize"
+msgstr "Maximieren"
+
+msgid "Only on This Desktop"
+msgstr "Nur auf dieser Arbeitsfläche"
+
+msgid "On All Desktops"
+msgstr "Auf allen Arbeitsflächen"
+
+msgid "New Window"
+msgstr "Neues Fenster"
+
+msgid "Close All"
+msgstr "Alle schließen"
+
+msgid "Close"
+msgstr "Schließen"
+
+msgctxt "@label name of the trash in the dock"
+msgid "Trash"
+msgstr "Papierkorb"

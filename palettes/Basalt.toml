@@ -1,8 +1,9 @@
-# Basalt – dunkel (qGray(Fenster) < 192: GTK und Firefox schalten bewusst auf dunkel)
-# Alle Flächen bleiben über 20 % Motif-Helligkeit (mittlerer Zweig der Formel).
+# Basalt: dark (qGray(window) < 192, so GTK and Firefox switch to dark on purpose).
+# All surfaces stay above 20 % Motif brightness (medium branch of the formula).
 id = "SchieferBasalt"
 name = "Schiefer Basalt"
-comment = "dunkles Motif/CDE-Farbschema"
+name_de = "Schiefer Basalt"
+comment = "dark Motif/CDE color scheme"
 variant = "dark"
 
 [cde]

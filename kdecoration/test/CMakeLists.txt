@@ -1,8 +1,8 @@
-# Eigenständiger Test der Dekoration (nicht Teil des Pakets):
+# Standalone test of the decoration (not part of the package):
 #   cmake -S kdecoration/test -B kdecoration/test/build -G Ninja && cmake --build kdecoration/test/build
-#   kdecoration/test/build/decotest          (prüft kdecoration/build/bin/schiefer.so)
-# mock*.cpp/h: aus kdecoration-6.7.6/autotests (LGPL), Includes auf installierte Header umgestellt,
-# MockSettings mit Menüknopf links und Schließen rechts.
+#   kdecoration/test/build/decotest          (tests kdecoration/build/bin/schiefer.so)
+# mock*.cpp/h: from kdecoration-6.7.6/autotests (LGPL), includes switched to the installed headers,
+# MockSettings with the menu button on the left and close on the right.
 cmake_minimum_required(VERSION 3.16)
 project(schiefer-decotest)
 set(CMAKE_CXX_STANDARD 20)

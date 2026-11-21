@@ -1,8 +1,8 @@
 /*
- * Schiefer-Abschluss: rein dekoratives End-Stück des Docks wie die Griffe am linken und
- * rechten Rand des CDE-Frontpanels. Oben ein erhabener Knopf in Höhe der Laschenreihe
- * (links mit Strich, rechts mit kleinem Quadrat), darunter eine geriffelte Griffleiste.
- * Maße wie bei der Schublade (Laschenhöhe, Abstände), damit es dazugehört.
+ * Schiefer end piece: purely decorative end of the dock like the handles on the left and
+ * right edge of the CDE front panel. At the top a raised button at the height of the tab row
+ * (left with a bar, right with a small square), below it a ribbed grip.
+ * Sizes match the drawer (tab height, spacing).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -28,8 +28,8 @@ PlasmoidItem {
 
     preferredRepresentation: fullRepresentation
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
-    // Schalter frontpanel-farbe: Flächen in der CDE-Frontpanel-Farbe statt der Fensterfarbe;
-    // Kinder erben sie über Kirigami.Theme, FrameTint färbt den Leistenhintergrund mit
+    // option frontpanel-color: surfaces in the CDE front panel color instead of the window color;
+    // children inherit it through Kirigami.Theme, FrameTint also tints the panel background
     Kirigami.Theme.inherit: !Scheme.usePanelColor
     Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
     FrameTint {}
@@ -41,7 +41,7 @@ PlasmoidItem {
     Layout.minimumHeight: vertical ? thickness : -1
     Layout.maximumHeight: vertical ? thickness : -1
 
-    // Knopf in der Laschenreihe (oben bzw. bei senkrechter Leiste links)
+    // button in the tab row (top, or left on a vertical panel)
     Item {
         id: knob
         x: 0; y: 0
@@ -54,7 +54,7 @@ PlasmoidItem {
             anchors.topMargin: root.vertical ? 1 : 0
             anchors.bottomMargin: root.vertical ? 1 : 0
         }
-        // links: eingravierter Strich, rechts: kleines erhabenes Quadrat
+        // left: engraved bar, right: small raised square
         Bevel {
             anchors.centerIn: parent
             readonly property int len: Math.max(4, Math.round(Math.min(knob.width, knob.height) * (root.rightSide ? 0.36 : 0.5)))
@@ -65,7 +65,7 @@ PlasmoidItem {
         }
     }
 
-    // geriffelte Griffleiste in einer flachen Mulde
+    // ribbed grip in a flat well
     Bevel {
         id: well
         anchors {
@@ -91,7 +91,7 @@ PlasmoidItem {
             const ctx = getContext("2d");
             ctx.reset();
             const w = Math.floor(width), h = Math.floor(height);
-            // Rillen: dunkle Linie mit heller Linie darunter, dazwischen eine Zeile Grund
+            // grooves: dark line with a light line below, one row of background between them
             for (let p = 0; p + 1 < (root.vertical ? w : h); p += 3) {
                 ctx.fillStyle = root.darkColor;
                 root.vertical ? ctx.fillRect(p, 0, 1, h) : ctx.fillRect(0, p, w, 1);

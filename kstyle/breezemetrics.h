@@ -124,7 +124,7 @@ struct Metrics {
     static constexpr int Slider_TickMarginWidth = 2;
     static constexpr int Slider_GrooveThickness = 8; // Schiefer
     static constexpr int Slider_ControlThickness = 20;
-    static constexpr int Slider_RetroThumbLength = Slider_ControlThickness + 10; // Schiefer: länglicher Motif-Daumen
+    static constexpr int Slider_RetroThumbLength = Slider_ControlThickness + 10; // Schiefer: oblong Motif handle
 
     // tabbar
     static constexpr int TabBar_TabMarginHeight = 4;

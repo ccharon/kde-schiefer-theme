@@ -1,6 +1,6 @@
 /*
- * Ein Abschnitt der Icon Box: die Fenster einer Arbeitsfläche (eigenes TasksModel),
- * auf Wunsch mit Überschrift in der Farbe der Arbeitsfläche.
+ * One section of the icon box: the windows of one desktop (own TasksModel),
+ * optionally with a heading in the desktop color.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -43,7 +43,7 @@ Column {
         filterNotMinimized: !section.box.cfg.showNormalWindows
     }
 
-    // Überschrift wie ein Arbeitsflächen-Knopf der Konsole
+    // heading like a desktop button of the console
     Item {
         visible: section.showHeader
         width: section.width

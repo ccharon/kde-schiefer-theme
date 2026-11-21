@@ -1,6 +1,6 @@
 /*
- * Dialogtafel wie ein Motif-Fenster: erhabener Rahmen mit Fuge; mit title zusätzlich eine
- * Titelleiste in der Aktivrahmenfarbe (wie die Schiefer-Fensterdeko). Inhalt als Kinder.
+ * Dialog panel like a Motif window: raised frame with a joint; with title also a
+ * title bar in the active frame color (like the Schiefer decoration). Content as children.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -11,7 +11,7 @@ Item {
     property string title
     property int padding: pal.u
     default property alias content: inner.data
-    readonly property int frame: 6                     // Rahmen: 2 erhaben + 2 Fläche + 2 versenkt
+    readonly property int frame: 6                     // frame: 2 raised + 2 surface + 2 sunken
     readonly property int titleH: title !== "" ? Math.round(pal.u * 1.6) : 0
     implicitWidth: inner.childrenRect.width + 2 * (frame + padding)
     implicitHeight: inner.childrenRect.height + 2 * (frame + padding) + titleH
@@ -37,7 +37,7 @@ Item {
             color: p.pal.activeText
         }
     }
-    // Arbeitsfläche
+    // work area
     Bevel {
         x: p.frame; y: p.frame + p.titleH
         width: p.width - 2 * p.frame; height: p.height - 2 * p.frame - p.titleH

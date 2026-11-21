@@ -174,32 +174,32 @@ public:
     void renderFocusRect(QPainter *, const QRectF &, const QBrush &, const QColor &outline = QColor(), Sides = {}) const;
 
     //* focus line
-    // Schiefer: bounds = Bereich, den der Aufrufer neu zeichnet; der Rahmen wird hineingeklemmt
+    // Schiefer: bounds = area the caller repaints; the frame is clamped into it
     void renderFocusLine(QPainter *, const QRectF &, const QColor &, const QRect &bounds = QRect()) const;
 
     //* generic frame
     void renderFrame(QPainter *, const QRectF &, const QColor &color, const QColor &outline = QColor()) const;
 
-    //*@name Schiefer: Motif/CDE-Grundbausteine
+    //*@name Schiefer: Motif/CDE building blocks
     //@{
-    //* helle Lichtkante zu einer Grundfarbe (Motif: top shadow)
+    //* light edge for a base color (Motif: top shadow)
     QColor bevelLight(const QColor &base) const;
-    //* dunkle Schattenkante zu einer Grundfarbe (Motif: bottom shadow)
+    //* dark edge for a base color (Motif: bottom shadow)
     QColor bevelDark(const QColor &base) const;
-    //* Schiefer: Motif-Auswahlfarbe (select color) – gedrückte Knöpfe, Rinnen, gesetzte Kästchen
+    //* Schiefer: Motif select color for pressed buttons, grooves and checked boxes
     QColor bevelSelect(const QColor &base) const;
-    //* Lichtkante: oben/links hell, unten/rechts dunkel (versenkt: umgekehrt); Ecken diagonal geteilt
+    //* bevel: light top/left, dark bottom/right (sunken: reversed); corners split diagonally
     void renderBevel(QPainter *, const QRectF &, const QColor &base, bool sunken, int width = 2) const;
-    //* erhabene/versenkte Fläche: füllen + Lichtkante; inset = um so viele Linienbreiten nach innen
-    //* (in Gerätepixeln gerechnet, damit z. B. der Ring des Standardknopfs bei 150 % gleich breit bleibt)
+    //* raised/sunken panel: fill plus bevel; inset = number of line widths to move inward
+    //* (in device pixels, so the default button ring keeps its width at 150 %)
     void renderBevelPanel(QPainter *, const QRectF &, const QColor &fill, const QColor &base, bool sunken, int width = 2, int inset = 0) const;
-    //* Ätzlinie (Gruppenrahmen): dunkel+hell doppelt
+    //* etched line (group box frame): dark and light, doubled
     void renderEtchedFrame(QPainter *, const QRectF &, const QColor &base) const;
-    //* Motif-Schiebereglerdaumen mit Mittelrille
+    //* Motif option menu indicator, dial and slider handle with a center groove
     void renderOptionMenuIndicator(QPainter *, const QRectF &, const QColor &base, bool enabled) const;
     void renderRetroDial(QPainter *, const QRectF &, const QPalette &, qreal angle, bool hasFocus, bool enabled) const;
     void renderRetroSliderThumb(QPainter *, const QRectF &, const QColor &, bool horizontal) const;
-    //* versenktes Eingabe-/Ansichtsfeld (Base-Füllung, 2 px Kante, Fokus als dunkler Innenring)
+    //* sunken entry or view field (Base fill, 2 px edge, focus as a dark inner ring)
     void renderSunkenField(QPainter *, const QRectF &, const QPalette &, bool hasFocus, bool fill = true) const;
     //@}
 
@@ -234,7 +234,7 @@ public:
     void renderTabWidgetFrame(QPainter *, const QRectF &, const QColor &color, const QColor &outline, Corners) const;
 
     //* separator
-    // Schiefer: QColor = Fläche (z. B. palette.window()), Kanten nach dem Farbkern
+    // Schiefer: QColor = surface (for example palette.window()), edges from the color core
     void renderSeparator(QPainter *, const QRectF &, const QColor &base, bool vertical = false) const;
 
     //* checkbox
@@ -278,7 +278,7 @@ public:
                            qreal animation = AnimationData::OpacityInvalid,
                            qreal hoverAnimation = AnimationData::OpacityInvalid) const;
 
-    //* Schiefer: versenkte Motif-Raute (Optionsfeld), Füllung fill, Kanten aus base
+    //* Schiefer: sunken Motif diamond (radio button), filled with fill, edges from base
     void renderRadioDiamond(QPainter *, const QRectF &, const QColor &fill, const QColor &base) const;
 
     //* slider groove

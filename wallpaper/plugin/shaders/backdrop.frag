@@ -1,6 +1,6 @@
-// Schiefer-Muster: Index-Kachel geräteexakt kacheln und einfärben.
-// Jeder Gerätepixel p liest den Kachelpunkt floor(p / pixelScale) mod tileSize (Texelmitte,
-// kein Filtern) und setzt die Farbe der Palettenstufe – keine Zwischentöne, keine Unschärfe.
+// Schiefer patterns: tile the index tile device-exact and color it.
+// Each device pixel p reads the tile point floor(p / pixelScale) mod tileSize (texel center,
+// no filtering) and takes the color of that palette level: no intermediate tones, no blur.
 #version 440
 
 layout(location = 0) in vec2 qt_TexCoord0;
@@ -9,9 +9,9 @@ layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
-    vec2 deviceSize;   // Größe des Elements in Gerätepixeln
-    vec2 tileSize;     // Kachelgröße in Texeln
-    float pixelScale;  // ganzzahlige Vergrößerung (HiDPI)
+    vec2 deviceSize;   // size of the item in device pixels
+    vec2 tileSize;     // tile size in texels
+    float pixelScale;  // integer magnification (HiDPI)
     vec4 c0;
     vec4 c1;
     vec4 c2;

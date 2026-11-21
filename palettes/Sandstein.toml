@@ -1,11 +1,12 @@
-# Sandstein – warm, sandig (angelehnt an die erdigen CDE-Paletten)
+# Sandstone: warm, sandy (after the earthy CDE palettes)
 id = "SchieferSandstein"
-name = "Schiefer Sandstein"
-comment = "warmes, sandiges Motif/CDE-Farbschema"
+name = "Schiefer Sandstone"
+name_de = "Schiefer Sandstein"
+comment = "warm, sandy Motif/CDE color scheme"
 variant = "light"
 
 [cde]
-1 = "#965e44"   # Terrakotta
+1 = "#965e44"   # terracotta
 2 = "#c2b7a2"
 3 = "#b88a6a"
 4 = "#9aa47a"

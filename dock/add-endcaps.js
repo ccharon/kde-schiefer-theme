@@ -1,5 +1,5 @@
-// Schiefer-Dock: Abschlussstücke links und rechts in die vorhandene Leiste unten einfügen,
-// ohne die Leiste neu aufzubauen (Einstellungen der Schubladen bleiben erhalten)
+// Schiefer dock: add end pieces on the left and right of the existing bottom panel
+// without rebuilding the panel (the drawer settings are kept)
 panels().forEach(function (p) {
     if (p.location !== "bottom" || p.widgets("org.kde.schiefer.endcap").length) return;
     if (!p.widgets("org.kde.schiefer.drawer").length) return;

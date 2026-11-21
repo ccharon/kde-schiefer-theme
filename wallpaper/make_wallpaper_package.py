@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Erzeugt ein Plasma-Hintergrundpaket „Schiefer“ (Köper-Muster) mit Bildern in gängigen Auflösungen.
+"""Generates a Plasma wallpaper package "Schiefer" (twill pattern) with images in common resolutions.
 
-    python3 make_wallpaper_package.py ZIELORDNER [muster]
+    python3 make_wallpaper_package.py TARGET [pattern]
 
-Plasma 6 kann nicht kacheln und lädt Bilder immer auf Bildschirmgröße skaliert. Ein Paket mit
-contents/images/BxH.png lässt Plasma die passende Auflösung wählen – bei exakter Größe pixelgenau.
-Für ungewöhnliche Auflösungen gibt es schiefer-wallpaper (apply.sh).
+Plasma 6 cannot tile and always loads images scaled to the screen size. A package with
+contents/images/WxH.png lets Plasma pick the matching resolution, pixel-exact at the exact size.
+For unusual resolutions use schiefer-wallpaper (apply.sh).
 """
 import json
 import os
@@ -16,7 +16,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SIZES = ["1280x800", "1366x768", "1440x900", "1600x900", "1680x1050", "1920x1080", "1920x1200",
          "2560x1080", "2560x1440", "2560x1600", "2880x1800", "3440x1440", "3840x1600", "3840x2160",
          "5120x1440", "5120x2160", "5120x2880",
-         # Apple-Geräte (Asahi): MacBook Air M1/M2/M3 13"/15", MacBook Pro 14"/16"
+         # Apple devices (Asahi): MacBook Air M1/M2/M3 13"/15", MacBook Pro 14"/16"
          "2560x1600", "2560x1664", "2880x1864", "3024x1964", "3456x2234"]
 SIZES = sorted(set(SIZES), key=lambda s: tuple(map(int, s.split("x"))))
 
@@ -37,7 +37,8 @@ def main():
         if size == "1920x1080":
             im.crop((0, 0, 400, 250)).save(os.path.join(dest, "contents", "screenshot.png"))
     meta = {"KPlugin": {"Authors": [{"Name": "Schiefer"}], "Id": "Schiefer", "License": "GPL-2.0-or-later",
-                        "Name": "Schiefer (Köper)", "Description": "Ruhiges Webmuster im Schiefer-Blau"}}
+                        "Name": "Schiefer (Twill)", "Name[de]": "Schiefer (Köper)",
+                        "Description": "Calm weave pattern in slate blue", "Description[de]": "Ruhiges Webmuster in Schieferblau"}}
     with open(os.path.join(dest, "metadata.json"), "w") as f:
         json.dump(meta, f, indent=4, ensure_ascii=False)
     print(dest)

@@ -5,6 +5,6 @@ plasma_add_applet(org.kde.schiefer.drawer
     GENERATE_APPLET_CLASS
 )
 target_link_libraries(org.kde.schiefer.drawer PRIVATE Qt6::Quick KF6::KirigamiPlatform Qt6::DBus KF6::KIOWidgets KF6::KIOFileWidgets KF6::KIOGui KF6::Service KF6::ConfigCore KF6::Notifications Plasma::Plasma Plasma::PlasmaQuick)
-# C++-Texte (i18n) in derselben Übersetzungsdomäne wie die QML-Texte des Applets
+# C++ strings (i18n) in the same translation domain as the applet's QML strings
 target_link_libraries(org.kde.schiefer.drawer PRIVATE KF6::I18n)
 target_compile_definitions(org.kde.schiefer.drawer PRIVATE TRANSLATION_DOMAIN="plasma_applet_org.kde.schiefer.drawer")

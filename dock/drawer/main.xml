@@ -9,9 +9,9 @@
     <entry name="mainUrl" type="String"><default></default></entry>
     <entry name="drawerUrls" type="StringList"><default></default></entry>
     <entry name="title" type="String"><default></default></entry>
-    <!-- nur bei face=folder: Ordner, dessen Inhalt die Schublade zeigt -->
+    <!-- face=folder only: folder whose content the drawer shows -->
     <entry name="folderUrl" type="String"><default></default></entry>
-    <!-- nur bei face=system: den Plasma-Systray im selben Panel ausblenden -->
+    <!-- face=system only: hide the Plasma system tray in the same panel -->
     <entry name="hideTray" type="Bool"><default>true</default></entry>
   </group>
 </kcfg>

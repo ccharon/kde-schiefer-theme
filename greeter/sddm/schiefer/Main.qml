@@ -1,10 +1,10 @@
 /*
- * Schiefer – Anmeldung (SDDM) im Stil klassischer Unix-Workstations:
- * Muster-Hintergrund, Dialogtafel mit Rechnername, Benutzer als Optionsmenü (Liste aus SDDM
- * oder „Anderer Benutzer …“ zum Eintippen), darunter das Passwort. Vorbelegt ist der zuletzt
- * angemeldete Benutzer (SDDM merkt ihn sich, RememberLastUser), bei nur einem Benutzer dieser;
- * „Neu beginnen“ fragt nach dem Namen.
- * Optionen: Sitzung, Tastaturbelegung, Bereitschaft, Neu starten, Herunterfahren.
+ * Schiefer login (SDDM) in the style of classic Unix workstations:
+ * pattern backdrop, dialog panel with the host name, the user as an option menu (list from SDDM
+ * or "Other User..." to type a name), the password below. The last logged-in user is
+ * preselected (SDDM remembers it, RememberLastUser), or the only user if there is one;
+ * "Start Over" asks for the name.
+ * Options: session, keyboard layout, sleep, restart, shut down.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -36,7 +36,7 @@ Item {
     readonly property string host: (config.hostName && config.hostName !== "") ? config.hostName : (sddm.hostName || sysHost)
     property string sysHost: ""
 
-    // Betriebssystem aus KCoreAddons, falls vorhanden (SDDM soll ohne KDE-Module nicht scheitern)
+    // operating system from KCoreAddons if present (SDDM must not fail without KDE modules)
     property string osName: ""
     Component.onCompleted: {
         try {
@@ -56,7 +56,7 @@ Item {
 
     Timer { interval: 1000; running: true; repeat: true; onTriggered: root.now = new Date() }
 
-    // Echtnamen und Sitzungsnamen einsammeln
+    // collect real names and session names
     property var realNames: ({})
     property var users: []
     Instantiator {
@@ -122,12 +122,12 @@ Item {
         function onLoginSucceeded() { root.message = ""; }
     }
 
-    // Muster-Hintergrund wie die Arbeitsfläche (Köper), pixelgenau gekachelt
+    // pattern backdrop like the desktop (twill), tiled pixel-exact
     Rectangle { anchors.fill: parent; color: config.backgroundColor || "#8fa3bf" }
     Image {
         anchors.fill: parent
         source: config.background ? Qt.resolvedUrl(config.background) : ""
-        onStatusChanged: if (status === Image.Error) console.warn("Schiefer: Hintergrund fehlt:", source)
+        onStatusChanged: if (status === Image.Error) console.warn("Schiefer: backdrop missing:", source)
         fillMode: Image.Tile
         smooth: false
         visible: status === Image.Ready
@@ -155,7 +155,7 @@ Item {
             }
             Etch { base: pal.bg; Layout.fillWidth: true }
 
-            // Benutzer und Passwort als beschriftetes Raster (wie dtlogin, aber mit Auswahl)
+            // user and password as a labeled grid (like dtlogin, but with a choice)
             GridLayout {
                 Layout.alignment: Qt.AlignHCenter
                 columns: 2
@@ -212,7 +212,7 @@ Item {
                     KeyNavigation.tab: okButton
                 }
             }
-            // Meldungszeile: Fehler, Feststelltaste, Anmeldung läuft
+            // message line: errors, Caps Lock, login in progress
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredHeight: pal.u
@@ -244,7 +244,7 @@ Item {
         }
     }
 
-    // Unten: Sitzung und Tastaturbelegung als schlichte Statuszeile auf dem Muster
+    // bottom: session and keyboard layout as a plain status line on the pattern
     Bevel {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: dialog.bottom
@@ -305,7 +305,7 @@ Item {
         onClosed: root.focusField()
     }
 
-    // Alt+Buchstabe löst den Knopf mit dieser Mnemonik aus (Motif zeigt sie immer)
+    // Alt+letter triggers the button with this mnemonic (Motif always shows them)
     Keys.onPressed: e => {
         if (!(e.modifiers & Qt.AltModifier) || menu.visible) return;
         const c = e.text.toLowerCase() || String.fromCharCode(e.key).toLowerCase();

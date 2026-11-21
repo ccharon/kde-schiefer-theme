@@ -1,0 +1,74 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: schiefer\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+msgid "Desktops:"
+msgstr "Arbeitsflächen:"
+
+msgid "Separate backdrop for each desktop"
+msgstr "Jede Arbeitsfläche mit eigenem Hintergrund"
+
+msgid "Pattern:"
+msgstr "Muster:"
+
+msgid "Color:"
+msgstr "Farbe:"
+
+msgid "Base color of the pattern"
+msgstr "Grundton des Musters"
+
+msgid "Slate blue"
+msgstr "Schieferblau"
+
+msgid "Pattern and color:"
+msgstr "Muster und Farbe:"
+
+msgid "Desktop %1"
+msgstr "Arbeitsfläche %1"
+
+msgid "Base color for %1"
+msgstr "Grundton für %1"
+
+msgid "Color list:"
+msgstr "Farbliste:"
+
+msgid "Dock colors (default)"
+msgstr "Farben des Docks (Vorgabe)"
+
+msgid "Switching:"
+msgstr "Wechsel:"
+
+msgid "Crossfade briefly instead of switching instantly"
+msgstr "Kurz überblenden statt sofort umschalten"
+
+msgid "Pattern pixels:"
+msgstr "Musterpixel:"
+
+msgid "Automatic (integer multiple of the scale)"
+msgstr "Automatisch (ganzzahlig zur Skalierung)"
+
+msgid "Twill"
+msgstr "Köper"
+
+msgid "Linen"
+msgstr "Leinen"
+
+msgid "Diamonds"
+msgstr "Rauten"
+
+msgid "Granite"
+msgstr "Granit"
+
+msgid "Waves"
+msgstr "Wellen"
+
+msgid "Paving"
+msgstr "Pflaster"
+
+msgid "Solid"
+msgstr "Einfarbig"

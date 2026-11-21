@@ -1,19 +1,19 @@
 .pragma library
-// Muster und Farbabstufung des Schiefer-Hintergrunds.
+// Patterns and color levels of the Schiefer backdrop.
 
-// Schlüssel = Dateiname in contents/patterns (Index-Kacheln aus make_index_tiles.py)
+// key = file name in contents/patterns (index tiles from make_index_tiles.py); keys are stored in user configs
 const PATTERNS = [
-    { key: "koeper",   name: "Köper" },
-    { key: "leinen",   name: "Leinen" },
-    { key: "rauten",   name: "Rauten" },
-    { key: "granit",   name: "Granit" },
-    { key: "wellen",   name: "Wellen" },
-    { key: "pflaster", name: "Pflaster" },
-    { key: "flach",    name: "Einfarbig" },
+    { key: "koeper",   name: "Twill" },
+    { key: "leinen",   name: "Linen" },
+    { key: "rauten",   name: "Diamonds" },
+    { key: "granit",   name: "Granite" },
+    { key: "wellen",   name: "Waves" },
+    { key: "pflaster", name: "Paving" },
+    { key: "flach",    name: "Solid" },
 ];
 
-// Abstand der sechs Palettenstufen zum Grundton (Stufe 2), aus RAMP in make_patterns.py;
-// mit dem Grundton #68799b entsteht genau die ursprüngliche Schieferblau-Palette.
+// Offsets of the six palette levels from the base color (level 2), from RAMP in make_patterns.py;
+// with the base color #68799b this gives exactly the original slate blue palette.
 const RAMP_DELTA = [[-20, -23, -27], [-10, -11, -13], [0, 0, 0], [10, 11, 11], [22, 22, 21], [36, 35, 33]];
 
 function indexOf(key) {
@@ -22,18 +22,18 @@ function indexOf(key) {
     return -1;
 }
 
-// "a, b,c" oder ["a","b"] -> ["a","b","c"]
+// "a, b,c" or ["a","b"] -> ["a","b","c"]
 function parseList(v) {
     const a = Array.isArray(v) ? v : String(v ?? "").split(",");
     return a.map(s => String(s).trim()).filter(s => s.length > 0);
 }
 
-// Eintrag i einer Liste, kürzere Listen wiederholen sich
+// entry i of a list; shorter lists repeat
 function pick(list, i, fallback) {
     return list.length ? list[i % list.length] : fallback;
 }
 
-// Liste so verlängern, dass Eintrag i existiert (mit den bisher wirksamen Werten), dann setzen
+// extend the list so entry i exists (with the values in effect so far), then set it
 function setAt(str, i, value, fallback) {
     const a = parseList(str);
     const n = a.length;
@@ -44,8 +44,8 @@ function setAt(str, i, value, fallback) {
     return out.join(",");
 }
 
-// Grundton -> sechs Stufen. Läuft eine Stufe aus 0..255, wird der ganze Kanal verschoben,
-// damit das Relief erhalten bleibt (sehr helle/dunkle Farben werden dafür leicht angepasst).
+// base color -> six levels. If a level leaves 0..255, the whole channel is shifted to keep
+// the relief (very light or dark colors are adjusted slightly for this).
 function ramp(c) {
     const base = [Math.round(c.r * 255), Math.round(c.g * 255), Math.round(c.b * 255)];
     const shift = [0, 1, 2].map(k => {
@@ -57,7 +57,7 @@ function ramp(c) {
                                        (base[2] + d[2] + shift[2]) / 255, 1));
 }
 
-// Farbe aus Text, ungültig -> fallback
+// color from text; invalid -> fallback
 function toColor(s, fallback) {
     try {
         const c = Qt.color(String(s ?? "").trim());

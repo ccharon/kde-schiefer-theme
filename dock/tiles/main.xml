@@ -4,11 +4,11 @@
       xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
   <kcfgfile name=""/>
   <group name="General">
-    <!-- den Plasma-Systray im selben Panel ausblenden (er beherbergt die Einträge) -->
+    <!-- hide the Plasma system tray in the same panel (it hosts the entries) -->
     <entry name="hideTray" type="Bool"><default>true</default></entry>
-    <!-- höchstens so viele Kacheln, der Rest kommt in die Liste hinter dem Pfeil (0 = alle aktiven) -->
+    <!-- at most this many tiles; the rest goes into the list behind the arrow (0 = all active) -->
     <entry name="maxTiles" type="Int"><default>0</default><min>0</min><max>30</max></entry>
-    <!-- Bildanteil an der Kachel in Prozent -->
+    <!-- image share of the tile in percent -->
     <entry name="iconScale" type="Int"><default>60</default><min>30</min><max>90</max></entry>
   </group>
 </kcfg>

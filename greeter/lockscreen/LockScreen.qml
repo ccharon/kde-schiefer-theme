@@ -1,5 +1,5 @@
 /*
- * Schiefer – Sperrbildschirm. Die Eigenschaften und Signale hier erwartet kscreenlocker.
+ * Schiefer lock screen. kscreenlocker expects the properties and signals defined here.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick

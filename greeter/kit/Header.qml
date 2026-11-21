@@ -1,6 +1,6 @@
 /*
- * Kopf aller Schiefer-Bildschirme: Emblem, Begrüßung, Rechnername groß, Betriebssystem;
- * rechts wahlweise die Siebensegment-Uhr mit Datum.
+ * Header of all Schiefer screens: emblem, greeting, large host name, operating system;
+ * optionally the seven-segment clock with the date on the right.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick

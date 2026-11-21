@@ -1,5 +1,5 @@
 /*
- * Schiefer – Inhalt eines Ordners für die Ordner-Schublade
+ * Schiefer: folder contents for the folder drawer
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "schieferfolder.h"
@@ -29,7 +29,7 @@ SchieferFolder::SchieferFolder(QObject *parent)
     connect(this, &QAbstractItemModel::rowsInserted, this, &SchieferFolder::countChanged);
     connect(this, &QAbstractItemModel::rowsRemoved, this, &SchieferFolder::countChanged);
     connect(this, &QAbstractItemModel::modelReset, this, &SchieferFolder::countChanged);
-    // KDirModel meldet geänderte Dateien per dataChanged, gelöschte per rowsRemoved
+    // KDirModel reports changed files through dataChanged and deleted ones through rowsRemoved
     const auto dropCache = [this]() {
         m_desktopCache.clear();
     };
@@ -38,7 +38,7 @@ SchieferFolder::SchieferFolder(QObject *parent)
     connect(m_dirModel, &QAbstractItemModel::modelReset, this, dropCache);
 }
 
-// „~“, „~/…“, „~name/…“ und relative Pfade (relativ zum persönlichen Ordner) in eine URL wandeln
+// turn "~", "~/...", "~name/..." and relative paths (relative to the home folder) into a URL
 static QUrl urlFromUserPath(const QString &input)
 {
     QString path = input;
@@ -50,7 +50,7 @@ static QUrl urlFromUserPath(const QString &input)
         if (const passwd *pw = getpwnam(user.toLocal8Bit().constData()); pw && pw->pw_dir) {
             path = QFile::decodeName(pw->pw_dir) + (slash < 0 ? QString() : path.mid(slash));
         } else {
-            // unbekannter Benutzer: als gewöhnlichen (relativen) Namen behandeln
+            // unknown user: treat as an ordinary (relative) name
             path = QDir::home().filePath(path);
         }
     } else if (QDir::isRelativePath(path)) {
@@ -67,7 +67,7 @@ QUrl SchieferFolder::url() const
 void SchieferFolder::setUrl(const QUrl &rawUrl)
 {
     QUrl url = rawUrl;
-    // „~/…“ und nackte Pfade zulassen (QUrl hat den Text dann unverändert als Pfad)
+    // allow "~/..." and bare paths (QUrl then keeps the text unchanged as the path)
     if (url.scheme().isEmpty() && !url.isEmpty()) {
         url = urlFromUserPath(url.path());
     }
@@ -98,11 +98,11 @@ QString SchieferFolder::folderName() const
     if (m_url.isLocalFile()) {
         const QString path = QDir::cleanPath(m_url.toLocalFile());
         if (path == QDir::cleanPath(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation))) {
-            // Name des Schreibtischs wie in Dolphins Orte-Leiste
+            // name of the desktop folder as in the Dolphin places panel
             return QDir(path).dirName();
         }
         if (path == QDir::homePath()) {
-            return i18nc("@label Name des persönlichen Ordners (~)", "Persönlicher Ordner");
+            return i18nc("@label name of the home folder (~)", "Home Folder");
         }
     }
     const QString name = m_url.fileName();
@@ -134,7 +134,7 @@ const SchieferFolder::DesktopInfo &SchieferFolder::desktopInfo(const KFileItem &
     if (it == m_desktopCache.constEnd()) {
         const KDesktopFile f(item.localPath());
         const QString generic = f.readGenericName();
-        // Starter: Beschreibung statt „Desktop-Datei“
+        // launchers: description instead of "desktop file"
         it = m_desktopCache.insert(item.url(), {f.readName(), f.readIcon(), generic.isEmpty() ? f.readComment() : generic});
     }
     return it.value();
@@ -149,7 +149,7 @@ QVariant SchieferFolder::data(const QModelIndex &index, int role) const
     if (item.isNull()) {
         return {};
     }
-    // Starter (.desktop) mit ihrem eigentlichen Namen und Symbol
+    // launchers (.desktop) with their actual name and icon
     const bool desktopFile = item.isDesktopFile();
     switch (role) {
     case NameRole:

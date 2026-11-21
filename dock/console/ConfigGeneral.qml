@@ -1,4 +1,4 @@
-// Schiefer-Konsole – Einstellungen
+// Schiefer console: settings
 // SPDX-License-Identifier: GPL-2.0-or-later
 import QtQuick
 import QtQuick.Layouts
@@ -22,24 +22,24 @@ KCM.SimpleKCM {
     property var cfg_desktopColorsDefault
 
     Kirigami.FormLayout {
-        QQC2.SpinBox { id: rows; Kirigami.FormData.label: i18n("Zeilen:"); from: 1; to: 4 }
-        QQC2.SpinBox { id: deskWidth; Kirigami.FormData.label: i18n("Breite Arbeitsflächen-Knopf (Rastereinheiten):"); from: 3; to: 20 }
-        QQC2.SpinBox { id: taskWidth; Kirigami.FormData.label: i18n("Breite Fensterknopf (Rastereinheiten):"); from: 4; to: 30 }
-        QQC2.SpinBox { id: minCols; Kirigami.FormData.label: i18n("Fensterspalten mindestens:"); from: 0; to: 12 }
-        QQC2.SpinBox { id: minTaskWidth; Kirigami.FormData.label: i18n("Fensterknopf mindestens (Rastereinheiten):"); from: 2; to: 30 }
+        QQC2.SpinBox { id: rows; Kirigami.FormData.label: i18n("Rows:"); from: 1; to: 4 }
+        QQC2.SpinBox { id: deskWidth; Kirigami.FormData.label: i18n("Desktop button width (grid units):"); from: 3; to: 20 }
+        QQC2.SpinBox { id: taskWidth; Kirigami.FormData.label: i18n("Window button width (grid units):"); from: 4; to: 30 }
+        QQC2.SpinBox { id: minCols; Kirigami.FormData.label: i18n("Minimum window columns:"); from: 0; to: 12 }
+        QQC2.SpinBox { id: minTaskWidth; Kirigami.FormData.label: i18n("Minimum window button width (grid units):"); from: 2; to: 30 }
         QQC2.SpinBox {
             id: maxCols
-            Kirigami.FormData.label: i18n("Fensterspalten höchstens:")
+            Kirigami.FormData.label: i18n("Maximum window columns:")
             from: 0; to: 40
-            textFromValue: v => v === 0 ? i18n("so viele, wie passen") : String(v)
+            textFromValue: v => v === 0 ? i18n("as many as fit") : String(v)
         }
-        QQC2.CheckBox { id: showTasks; Kirigami.FormData.label: i18n("Fenster:"); text: i18n("Fensterknöpfe zeigen (sonst Icon Box nutzen)") }
-        QQC2.CheckBox { id: onlyCurrent; enabled: showTasks.checked; text: i18n("Nur von der aktuellen Arbeitsfläche") }
-        QQC2.CheckBox { id: lock; Kirigami.FormData.label: i18n("Knöpfe:"); text: i18n("Sperren") }
-        QQC2.CheckBox { id: exit; text: i18n("Startlampe und EXIT") }
-        QQC2.CheckBox { id: fromScheme; Kirigami.FormData.label: i18n("Farben:"); text: i18n("Aus dem Farbschema übernehmen") }
+        QQC2.CheckBox { id: showTasks; Kirigami.FormData.label: i18n("Windows:"); text: i18n("Show window buttons (otherwise use the icon box)") }
+        QQC2.CheckBox { id: onlyCurrent; enabled: showTasks.checked; text: i18n("Only from the current desktop") }
+        QQC2.CheckBox { id: lock; Kirigami.FormData.label: i18n("Buttons:"); text: i18n("Lock") }
+        QQC2.CheckBox { id: exit; text: i18n("Launch lamp and EXIT") }
+        QQC2.CheckBox { id: fromScheme; Kirigami.FormData.label: i18n("Colors:"); text: i18n("Take from the color scheme") }
         QQC2.TextField {
-            Kirigami.FormData.label: i18n("Eigene Farben der Arbeitsflächen:")
+            Kirigami.FormData.label: i18n("Custom desktop colors:")
             Layout.preferredWidth: Kirigami.Units.gridUnit * 22
             text: (cfg_desktopColors || []).join(", ")
             onEditingFinished: cfg_desktopColors = text.split(",").map(s => s.trim()).filter(s => s.length)

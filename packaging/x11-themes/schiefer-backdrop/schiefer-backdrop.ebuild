@@ -1,20 +1,24 @@
-# Lokales Paket – erzeugt von ~/claude/schiefer/tools/make-dist.sh
+# Copyright 2026 Schiefer authors
+# Distributed under the terms of the GNU General Public License v2
 EAPI=8
 
 inherit cmake
 
-DESCRIPTION="Schiefer-Muster: Plasma-Hintergrund mit Muster und Farbe je Arbeitsfläche (CDE)"
-SRC_URI="schiefer-${PV}.tar.xz"
+DESCRIPTION="Schiefer Patterns: Plasma wallpaper with a pattern and color per virtual desktop (CDE)"
+SRC_URI="https://github.com/ccharon/kde-schiefer-theme/releases/download/v${PV}/schiefer-${PV}.tar.xz"
+HOMEPAGE="https://github.com/ccharon/kde-schiefer-theme"
 S="${WORKDIR}/schiefer-${PV}/wallpaper/plugin"
 
 LICENSE="GPL-2+"
 SLOT="0"
 KEYWORDS="amd64 arm64"
-# Quelltarball liegt nur lokal vor (tools/install-overlay.sh legt ihn in DISTDIR)
-RESTRICT="fetch mirror test"
+RESTRICT="test"
 
-# reines QML-Paket mit einem Shader (qsb beim Bauen); libplasma nur für die CMake-Makros
-DEPEND="kde-plasma/libplasma:6"
+# QML package with one shader (compiled by qsb at build time); libplasma only for the CMake macros
+DEPEND="
+	kde-frameworks/ki18n:6
+	kde-plasma/libplasma:6
+"
 RDEPEND="
 	dev-qt/qtdeclarative:6
 	kde-frameworks/kdeclarative:6
@@ -24,11 +28,8 @@ RDEPEND="
 BDEPEND="
 	dev-qt/qtshadertools:6
 	kde-frameworks/extra-cmake-modules:0
+	sys-devel/gettext
 "
-
-pkg_nofetch() {
-	einfo "Den Quelltarball ${A} erzeugt und kopiert ~/claude/schiefer/tools/install-overlay.sh."
-}
 
 src_configure() {
 	local mycmakeargs=( -DKDE_INSTALL_USE_QT_SYS_PATHS=ON -DBUILD_TESTING=OFF )
@@ -36,7 +37,7 @@ src_configure() {
 }
 
 pkg_postinst() {
-	elog "Hintergrund einstellen: Rechtsklick auf die Arbeitsfläche › Arbeitsfläche einrichten ›"
-	elog "Hintergrundart „Schiefer-Muster“ – oder: schiefer-config muster-hintergrund an"
-	elog "Nach Installation oder Update: systemctl --user restart plasma-plasmashell"
+	elog "Select it: right click on the desktop > Desktop and Wallpaper > Wallpaper type \"Schiefer Patterns\","
+	elog "or run: schiefer-config pattern-backdrop on"
+	elog "After installing or updating: systemctl --user restart plasma-plasmashell"
 }

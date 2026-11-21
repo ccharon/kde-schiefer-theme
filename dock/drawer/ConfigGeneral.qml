@@ -1,4 +1,4 @@
-// Schiefer-Schublade – Einstellungen
+// Schiefer drawer: settings
 // SPDX-License-Identifier: GPL-2.0-or-later
 import QtQuick
 import QtQuick.Layouts
@@ -16,30 +16,30 @@ KCM.SimpleKCM {
     Kirigami.FormLayout {
         QQC2.ComboBox {
             id: face
-            Kirigami.FormData.label: i18n("Im Panel zeigen:")
+            Kirigami.FormData.label: i18n("Show in the panel:")
             textRole: "text"
             valueRole: "value"
             model: [
-                { text: i18n("Symbol des Hauptprogramms"), value: "launcher" },
-                { text: i18n("Digitaluhr"), value: "clock" },
-                { text: i18n("Kalenderblatt"), value: "date" },
-                { text: i18n("Systemabschnitt (Statussymbole)"), value: "system" },
-                { text: i18n("Ordner (Inhalt in der Schublade)"), value: "folder" }
+                { text: i18n("Icon of the main application"), value: "launcher" },
+                { text: i18n("Digital clock"), value: "clock" },
+                { text: i18n("Calendar page"), value: "date" },
+                { text: i18n("System tray (status icons)"), value: "system" },
+                { text: i18n("Folder (contents in the drawer)"), value: "folder" }
             ]
             Component.onCompleted: currentIndex = Math.max(0, indexOfValue(cfg_face))
             onActivated: cfg_face = currentValue
         }
         RowLayout {
-            Kirigami.FormData.label: i18n("Ordner:")
+            Kirigami.FormData.label: i18n("Folder:")
             visible: cfg_face === "folder"
             QQC2.TextField {
                 id: folderField
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 16
-                placeholderText: i18n("z. B. ~/Schreibtisch")
+                placeholderText: i18n("for example ~/Desktop")
             }
             QQC2.Button {
                 icon.name: "document-open-folder"
-                text: i18n("Wählen …")
+                text: i18n("Choose…")
                 onClicked: folderDialog.open()
             }
             Dialogs.FolderDialog {
@@ -50,18 +50,18 @@ KCM.SimpleKCM {
         QQC2.CheckBox {
             id: hideTray
             visible: cfg_face === "system"
-            text: i18n("Plasma-Systemabschnitt im selben Panel ausblenden")
+            text: i18n("Hide the Plasma system tray in the same panel")
         }
         QQC2.TextField {
             id: title
-            Kirigami.FormData.label: i18n("Titel der Schublade:")
-            placeholderText: i18n("Name des Hauptprogramms")
+            Kirigami.FormData.label: i18n("Drawer title:")
+            placeholderText: i18n("Name of the main application")
         }
         QQC2.Label {
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
             opacity: 0.75
-            text: i18n("Programme aus dem Startmenü auf die Lasche oder in die geöffnete Schublade ziehen. Rechtsklick auf einen Eintrag macht ihn zum Hauptsymbol. Bei Uhr und Kalenderblatt startet ein Klick das Hauptprogramm, falls eines gesetzt ist (z. B. Merkuro), sonst öffnet er die Schublade. Der Systemabschnitt braucht einen Plasma-Systemabschnitt im selben Panel; er zeigt dessen aktive Symbole und listet in der Schublade alle Einträge.")
+            text: i18n("Drag applications from the launcher onto the tab or into the open drawer. Right click on an entry makes it the main icon. For the clock and the calendar page a click starts the main application if one is set (for example Merkuro); otherwise it opens the drawer. The system tray mode needs a Plasma system tray in the same panel; it shows its active icons and lists all entries in the drawer.")
         }
     }
 }

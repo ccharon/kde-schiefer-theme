@@ -1,16 +1,16 @@
-/* Schiefer: Motif-Kopfleiste für Fenster mit eigener Titelleiste (CSD) – abschaltbar durch Weglassen des
- * Imports in gtk.css (dann bleibt die Breeze-artige Kopfleiste aus retro.css).
+/* Schiefer: Motif header bar for windows with client-side decorations. Disabled by leaving out its
+ * import in gtk.css; the Breeze-like header bar from retro.css then applies.
  *
- * Wie die KWin-Dekoration „schiefer“: Titelfläche in der Aktivfarbe (@theme_titlebar_background_breeze, inaktiv
- * ..._backdrop_breeze), Titel in einem erhabenen Feld, eckige erhabene Fensterknöpfe mit 1-px-Kante und den Symbolen
- * Minimieren = kleines Kästchen, Maximieren = großes Kästchen, Schließen = X (als Verlaufsflächen gezeichnet, in der
- * Titelvordergrundfarbe), Rahmen als erhabene Kante ohne Schlagschatten und ohne Rundung.
- * Grenzen von CSS: Das Titelfeld reicht nur um den Text (GTK dehnt es nicht zwischen die Knopfgruppen), die Kerben
- * des KWin-Rahmens fehlen, der Rahmen ist 5 px breit (2 px Kante + 3 px Fläche). Maximierte Fenster: kein Rahmen.
+ * Like the KWin decoration "schiefer": title area in the active color (@theme_titlebar_background_breeze, inactive
+ * ..._backdrop_breeze), title in a raised field, square raised window buttons with a 1 px edge and the symbols
+ * minimize = small box, maximize = large box, close = X (drawn as gradient areas in the
+ * title foreground color), frame as a raised edge without drop shadow or rounding.
+ * CSS limits: the title field only wraps the text (GTK does not stretch it between the button groups), the notches
+ * of the KWin frame are missing, the frame is 5 px wide (2 px edge + 3 px area). Maximized windows have no frame.
  */
 
 
-/* Rahmen: kein Schatten, nur eine 1-px-Umrandung; erhabene 2-px-Kante, 3 px Titelfarbe */
+/* Frame: no shadow, only a 1 px outline; raised 2 px edge, 3 px title color */
 window.csd:not(.popup):not(.tooltip):not(.maximized):not(.fullscreen):not(.tiled),
 window.csd:not(.popup):not(.tooltip):not(.maximized):not(.fullscreen):not(.tiled):backdrop {
     border-radius: 0;
@@ -36,7 +36,7 @@ window.csd.tiled {
 }
 
 
-/* Leiste: flach in der Titelfarbe, Titel als erhabenes Feld */
+/* Bar: flat in the title color, title as a raised field */
 headerbar,
 headerbar:backdrop,
 .titlebar:not(headerbar) {
@@ -158,7 +158,7 @@ headerbar button:backdrop:checked {
     -gtk-icon-shadow: none;
 }
 
-/* Fensterknöpfe: 16 x 16 px mit 1-px-Kante statt Breezes riesiger Klickfläche */
+/* Window buttons: 16 x 16 px with a 1 px edge instead of the large Breeze click area */
 window headerbar windowcontrols button,
 window headerbar windowcontrols button:dir(ltr),
 window headerbar windowcontrols button:dir(rtl) {

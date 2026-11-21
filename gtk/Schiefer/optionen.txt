@@ -1,7 +1,0 @@
-# Schiefer-GTK-Optionen (maschinenlesbar, für schiefer-config).
-# Spalten, getrennt durch "|":  Name | Datei (je in gtk-3.0/ und gtk-4.0/) | Beschreibung | Standard (an|aus)
-# Das Theme importiert in gtk.css nacheinander: Breeze-GTK, retro.css, dann die Optionsdateien in der Reihenfolge dieser Liste.
-# Eine Überlagerung (eigenes Theme-Verzeichnis, das Schiefer über @import "file://…/Schiefer/gtk-N.0/gtk.css"-Teile
-# nachbaut) importiert nur die Dateien der gewählten Optionen; ohne Option bleibt das Theme voll funktionsfähig.
-kopfleiste|opt-kopfleiste.css|Motif-Kopfleiste für Fenster mit eigener Titelleiste (CSD): Titel in erhabenem Feld, erhabene eckige Fensterknöpfe mit Deko-Symbolen, Rahmen ohne Schatten; ohne: Breeze-artige Kopfleiste|an
-raute|opt-raute.css|Optionsfelder (Radioknöpfe) als versenkte Raute wie in Motif 1.2/CDE; ohne: runde Optionsfelder|an

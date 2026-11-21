@@ -1,14 +1,14 @@
-/* Schiefer – Motif/CDE-Zeichnung über Breeze-GTK4 (abgeleitet aus gtk-3.0/retro.css).
+/* Schiefer: Motif/CDE drawing on top of Breeze GTK4 (derived from gtk-3.0/retro.css).
  *
- * Grundregel: Breeze hat 1 px Rand. Motif-Kanten sind 2 px breit: äußere Linie = border,
- * innere Linie = box-shadow inset. So bleiben alle Größen und Abstände wie bei Breeze.
- * Licht/Schatten/Auswahl nach der Motif-Formel wie Qt-Stil, Deko und Plasma-Stil (common/schiefercolors.*).
- * CSS kann die Formel nicht rechnen (die Anteile hängen bei Motif von der Helligkeit der Fläche ab),
- * deshalb feste Anteile an Bezugsfarben der Palette „Schiefer“ – schiefercolors.factors():
- *   Fläche 190,194,211 (Helligkeit 77 %): oben mix(weiß, 0.57), unten mix(schwarz, 0.45), Auswahl mix(schwarz, 0.15)
- *   Titel   96,114,158 (Helligkeit 47 %): oben mix(weiß, 0.54), unten mix(schwarz, 0.51)
- * Die Auswahlfarbe ist im mittleren Motif-Zweig exakt; Abweichungen je Palette: gtk/tools/retro_colors.py.
- * Die Farben selbst kommen zur Laufzeit aus colors.css (kde-gtk-config), folgen also dem Farbschema.
+ * Breeze has a 1 px border. Motif edges are 2 px wide: outer line = border,
+ * inner line = box-shadow inset. All sizes and spacing stay as in Breeze.
+ * Light, shadow and select colors follow the Motif formula like the Qt style, decoration and Plasma style (common/schiefercolors.*).
+ * CSS cannot compute the formula (in Motif the fractions depend on the surface brightness),
+ * so it uses fixed fractions taken at reference colors of the "Schiefer" palette (schiefercolors.factors()):
+ *   surface 190,194,211 (brightness 77 %): top mix(white, 0.57), bottom mix(black, 0.45), select mix(black, 0.15)
+ *   title    96,114,158 (brightness 47 %): top mix(white, 0.54), bottom mix(black, 0.51)
+ * The select color is exact in the medium Motif branch; deviations per palette: gtk/tools/retro_colors.py.
+ * The colors themselves come from colors.css (kde-gtk-config) at runtime and follow the color scheme.
  */
 
 @define-color retro_light mix(@theme_bg_color_breeze, white, 0.57);
@@ -22,7 +22,7 @@
 @define-color retro_title_light mix(@theme_titlebar_background_breeze, white, 0.54);
 @define-color retro_title_dark mix(@theme_titlebar_background_breeze, black, 0.51);
 
-/* ------------------------------------------------------------------ Knöpfe */
+/* ------------------------------------------------------------------ Buttons */
 
 button,
 button:backdrop,
@@ -54,7 +54,7 @@ button:checked:hover {
 }
 
 button:focus {
-    /* Motif-Fokus: dunkle Linie innerhalb der Kante */
+    /* Motif focus: dark line inside the edge */
     box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark, inset 0 0 0 2px @retro_focus;
 }
 
@@ -70,7 +70,7 @@ button.destructive-action:backdrop {
     border-color: @retro_light @retro_dark @retro_dark @retro_light;
 }
 
-/* flache Knöpfe (Werkzeugleisten, Kopfleisten, Verweise): erst beim Überfahren erhaben */
+/* flat buttons (toolbars, header bars, links): raised only on hover */
 button.flat,
 button.flat:backdrop,
 button.flat:disabled,
@@ -112,7 +112,7 @@ headerbar button:checked,
     background: @retro_pressed;
 }
 
-/* Knöpfe auf der blauen Kopfleiste: Kanten aus der Titelleistenfarbe */
+/* buttons on the blue header bar: edges from the title bar color */
 headerbar button:hover,
 .titlebar button:hover {
     border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
@@ -129,7 +129,7 @@ headerbar button:checked,
     background: shade(@theme_titlebar_background_breeze, 0.92);
 }
 
-/* Fenster-Knöpfe der Kopfleiste (Firefox, Thunderbird …): immer erhaben wie die KWin-Dekoration */
+/* window buttons in the header bar (Firefox, Thunderbird ...): always raised like the KWin decoration */
 windowcontrols > button,
 headerbar button.titlebutton,
 headerbar button.titlebutton:backdrop,
@@ -148,7 +148,7 @@ headerbar button.titlebutton:active,
     box-shadow: inset 1px 1px @retro_title_dark, inset -1px -1px @retro_title_light;
 }
 
-/* ------------------------------------------------------------------ Eingabefelder */
+/* ------------------------------------------------------------------ Entries */
 
 entry,
 entry:backdrop,
@@ -170,7 +170,7 @@ spinbutton:not(.vertical):focus {
     box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light, inset 0 0 0 2px @retro_focus;
 }
 
-/* Eingabefeld in einem Drehfeld oder in einer verbundenen Gruppe: keine doppelte Kante */
+/* entry inside a spin button or a linked group: no double edge */
 spinbutton:not(.vertical) entry,
 spinbutton:not(.vertical) entry:focus,
 combobox entry + button,
@@ -189,7 +189,7 @@ combobox entry + button,
     box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light, inset 0 0 0 2px @retro_focus;
 }
 
-/* Knöpfe im Drehfeld: kleine erhabene Felder */
+/* spin button buttons: small raised fields */
 spinbutton:not(.vertical) button,
 spinbutton:not(.vertical) button:backdrop {
     border: 1px solid;
@@ -205,7 +205,7 @@ spinbutton:not(.vertical) button:active {
     background: @retro_pressed;
 }
 
-/* ------------------------------------------------------------------ Auswahlkästchen */
+/* ------------------------------------------------------------------ Check boxes */
 
 check,
 check:backdrop,
@@ -236,7 +236,7 @@ radio:indeterminate {
     background-color: @theme_base_color_breeze;
 }
 
-/* gewählter Radioknopf: Punkt in der Hervorhebungsfarbe (wie Qt-Stil) */
+/* checked radio button: dot in the highlight color (like the Qt style) */
 radio:checked,
 radio:checked:backdrop,
 radio:checked:hover {
@@ -249,7 +249,7 @@ radio:checked:disabled {
     background-image: radial-gradient(circle closest-side, @insensitive_fg_color_breeze 38%, transparent 48%);
 }
 
-/* ------------------------------------------------------------------ Schalter */
+/* ------------------------------------------------------------------ Switches */
 
 switch,
 switch:backdrop {
@@ -277,7 +277,7 @@ switch:hover slider {
     background: @theme_button_background_normal_breeze;
 }
 
-/* ------------------------------------------------------------------ Regler, Fortschritt, Pegel */
+/* ------------------------------------------------------------------ Sliders, progress, level bars */
 
 scale trough,
 scale trough:backdrop,
@@ -319,7 +319,7 @@ progressbar progress {
     margin: 1px;
 }
 
-/* Höhe wie im Qt-Stil: 12 px mit Kante, Füllung 1 px innerhalb der Kante */
+/* height as in the Qt style: 12 px including the edge, fill 1 px inside the edge */
 progressbar.horizontal trough {
     min-height: 10px;
 }
@@ -348,8 +348,8 @@ scale slider:disabled {
     background: @theme_button_background_normal_breeze;
 }
 
-/* länglicher Daumen mit Mittelrille wie im Qt-Stil (28 x 16 px; Breeze zählt den Daumen
-   über negative Ränder nicht zur Größe des Reglers) */
+/* oblong handle with a center groove like the Qt style (28 x 16 px; through negative margins Breeze
+   does not count the handle toward the slider size) */
 scale.horizontal slider {
     min-width: 26px;
     min-height: 14px;
@@ -434,7 +434,7 @@ scrollbar.horizontal slider {
     min-width: 30px;
 }
 
-/* schmale Überlagerungs-Rollbalken (Touchpad) bleiben schlicht */
+/* narrow overlay scroll bars (touchpad) stay plain */
 scrollbar.overlay-indicator:not(.dragging):not(.hovering) {
     border: none;
     box-shadow: none;
@@ -448,7 +448,7 @@ scrollbar.overlay-indicator:not(.dragging):not(.hovering) slider {
     box-shadow: none;
 }
 
-/* ------------------------------------------------------------------ Rahmen */
+/* ------------------------------------------------------------------ Frames */
 
 frame > border,
 frame:backdrop > border {
@@ -489,7 +489,7 @@ separator.vertical {
     background-image: linear-gradient(to right, @retro_dark 1px, @retro_light 1px);
 }
 
-/* Tabellenköpfe: erhabene Felder */
+/* table headers: raised fields */
 treeview.view header button,
 treeview.view header button:backdrop,
 treeview.view header button:hover {
@@ -505,7 +505,7 @@ treeview.view header button:active {
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
 }
 
-/* ------------------------------------------------------------------ Reiter */
+/* ------------------------------------------------------------------ Tabs */
 
 notebook > header,
 notebook > header:backdrop {
@@ -581,7 +581,7 @@ notebook > stack:not(:only-child) {
     box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
 }
 
-/* ------------------------------------------------------------------ Menüs und Popover */
+/* ------------------------------------------------------------------ Menus and popovers */
 
 menu,
 .menu,
@@ -640,7 +640,7 @@ tooltip.background,
     box-shadow: none;
 }
 
-/* ------------------------------------------------------------------ Kopfleiste (Fenster mit eigener Titelleiste) */
+/* ------------------------------------------------------------------ Header bar (client-side decorations) */
 
 headerbar,
 .titlebar:not(headerbar) {
@@ -659,7 +659,7 @@ window.csd > headerbar,
     border-top-right-radius: 0;
 }
 
-/* GTK4: Popover-Menüs */
+/* GTK4: popover menus */
 popover.menu > contents,
 popover > contents {
     border-radius: 0;
@@ -684,21 +684,21 @@ popover.menu > contents modelbutton:hover {
     color: @theme_fg_color_breeze;
 }
 
-/* GTK4: Listen mit Rahmen */
+/* GTK4: lists with frames */
 list.boxed-list,
 .card {
     border-radius: 0;
 }
 
-/* ------------------------------------------------------------------ Harmonisierung mit dem Qt-Stil (nicht abschaltbar) */
+/* ------------------------------------------------------------------ Matching the Qt style (always on) */
 
-/* keine Übergänge */
+/* no transitions */
 * {
     transition: none;
 }
 
-/* Auswahlfeld (DropDown, Kombifeld ohne Eingabe): Motif-Optionsmenü-Anzeiger statt Pfeil, kleiner erhabener
-   Balken 12 x 7 (zwei Verläufe übereinander) */
+/* drop-down (DropDown, combo box without entry): Motif option menu indicator instead of an arrow, small raised
+   bar 12 x 7 (two stacked gradients) */
 dropdown > button > box > arrow,
 dropdown arrow,
 combobox > box > button.combo:only-child arrow {
@@ -722,7 +722,7 @@ combobox button.combo {
     border-radius: 0;
 }
 
-/* verbundene Gruppen: eckig */
+/* linked groups: square corners */
 .linked:not(.vertical) > entry,
 .linked:not(.vertical) > button,
 .linked:not(.vertical) > menubutton > button,
@@ -730,8 +730,8 @@ combobox button.combo {
     border-radius: 0;
 }
 
-/* Drehfeld: Dreiecke statt Plus und Minus. Das Symbol wird unsichtbar (color: transparent färbt das symbolische
-   Symbol), das Dreieck (8 x 4 px) entsteht als Treppe aus vier Verlaufsstreifen mitten auf dem Knopf. */
+/* spin button: triangles instead of plus and minus. The symbol is hidden (color: transparent tints the symbolic
+   icon) and the 8 x 4 px triangle is a staircase of four gradient stripes in the middle of the button. */
 spinbutton:not(.vertical) > button.up,
 spinbutton:not(.vertical) > button.down {
     color: transparent;
@@ -774,7 +774,7 @@ spinbutton:not(.vertical) > button.down:disabled {
         linear-gradient(to bottom, @insensitive_fg_color_breeze 0px, @insensitive_fg_color_breeze 1px, transparent 1px);
 }
 
-/* Breeze färbt das Symbol im Drehfeldknopf selbst ein – Bild ganz ausblenden */
+/* Breeze tints the spin button icon itself, so hide the image completely */
 spinbutton:not(.vertical) > button.up > image,
 spinbutton:not(.vertical) > button.down > image {
     opacity: 0;

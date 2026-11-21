@@ -1,25 +1,25 @@
 #!/bin/bash
-# Isoliertes Bildschirmfoto aller Schiefer-Teile (Deko + Qt-Stil + Farbschema) mit echten Programmen.
-# Läuft in einer eigenen KWin-Sitzung mit eigenem D-Bus; die echte Sitzung bleibt unberührt.
-#   tools/screenshot.sh out.png [programm ...]      (Standard: dolphin kwrite)
-#   Programm "plasmashell" startet die Arbeitsfläche mit dem Plasma-Theme aus plasma/schiefer.
-#   GTK-Programme nutzen das Theme gtk/Schiefer (BR_GTK_THEME=Breeze zum Vergleich).
-#   BR_SHELL_CMD="qdbus6 org.kde.plasmashell /PlasmaShell activateLauncherMenu" führt danach einen Befehl aus.
-#   BR_DATA_DIRS=a:b stellt zusätzliche Datenverzeichnisse voran (z. B. wallpaper/plugin/build/data für das Hintergrund-Plugin).
-#   BR_SCALE=1.5 skaliert die virtuelle Ausgabe (fraktionale Skalierung testen; BR_WIDTH/BR_HEIGHT bleiben logisch, das Bild wird größer).
+# Isolated screenshot of all Schiefer parts (decoration + Qt style + color scheme) with real applications.
+# Runs in a separate KWin session with its own D-Bus; the real session stays untouched.
+#   tools/screenshot.sh out.png [application ...]   (default: dolphin kwrite)
+#   The application "plasmashell" starts the desktop with the Plasma theme from plasma/schiefer.
+#   GTK applications use the theme gtk/Schiefer (BR_GTK_THEME=Breeze for comparison).
+#   BR_SHELL_CMD="qdbus6 org.kde.plasmashell /PlasmaShell activateLauncherMenu" runs a command afterwards.
+#   BR_DATA_DIRS=a:b prepends data directories (for example wallpaper/plugin/build/data for the backdrop plugin).
+#   BR_SCALE=1.5 scales the virtual output (tests fractional scaling; BR_WIDTH/BR_HEIGHT stay logical, the image gets larger).
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$(realpath -m "${1:-/tmp/schiefer.png}")"; shift || true
 APPS=("$@"); [ ${#APPS[@]} -eq 0 ] && APPS=(dolphin kwrite)
 if [ -z "${SCHIEFER_INNER:-}" ]; then
-    # Hintergrunddienste der Testsitzung erben sonst stdout und halten Pipes offen
+    # background services of the test session would otherwise inherit stdout and keep pipes open
     SCHIEFER_INNER=1 timeout 150 dbus-run-session -- "$0" "$OUT" "${APPS[@]}" >/dev/null 2>&1 </dev/null
-    [ -s "$OUT" ] && echo "$OUT" || { echo "kein Bild erzeugt" >&2; exit 1; }
+    [ -s "$OUT" ] && echo "$OUT" || { echo "no image produced" >&2; exit 1; }
     exit 0
 fi
 CFG="" DATA="" HOMEDATA="" K=""
 PIDS=()
-# Aufräumen auch bei Abbruch (timeout schickt TERM an die ganze Prozessgruppe, Strg+C INT)
+# clean up on interruption too (timeout sends TERM to the whole process group, Ctrl+C INT)
 cleanup() {
     trap - EXIT INT TERM
     [ ${#PIDS[@]} -gt 0 ] && kill "${PIDS[@]}" 2>/dev/null
@@ -27,8 +27,8 @@ cleanup() {
     [ -n "$K" ] && kill "$K" 2>/dev/null
     sleep 1
     kill -9 ${PIDS[@]+"${PIDS[@]}"} $K 2>/dev/null
-    # alles beenden, was am Bus dieser Testsitzung hängt (vom Bus gestartete Dienste
-    # überleben sonst dbus-run-session und halten z. B. die Aktivitäten-Datenbank offen)
+    # stop everything attached to the bus of this test session (services started by the bus
+    # otherwise outlive dbus-run-session and keep for example the activities database open)
     for p in $(pgrep -u "$(id -u)"); do
         [ "$p" = "$$" ] && continue
         tr '\0' '\n' < /proc/$p/environ 2>/dev/null | grep -qxF "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS" && kill "$p" 2>/dev/null
@@ -50,7 +50,7 @@ for sec in s.sections():
     if sec=="General": continue
     if not d.has_section(sec): d.add_section(sec)
     for k,v in s.items(sec): d.set(sec,k,v)
-# Schemaname passend zur Datei (Leser der Gruppe [Schiefer], z. B. das Dock, öffnen color-schemes/<Name>.colors)
+# scheme name matching the file (readers of the [Schiefer] group, such as the dock, open color-schemes/<name>.colors)
 import os.path
 if not d.has_section("General"): d.add_section("General")
 d.set("General","ColorScheme",os.path.splitext(os.path.basename(sys.argv[1]))[0])
@@ -63,23 +63,23 @@ if os.environ.get("BR_ICON_DIR"): d.set("Icons","Theme","schiefer-test")
 with open(sys.argv[2],"w") as f: d.write(f,space_around_delimiters=False)
 PY
 printf '[org.kde.kdecoration2]\nlibrary=schiefer\ntheme=\nButtonsOnLeft=M\nButtonsOnRight=IAX\n' > "$CFG/kwinrc"
-# BR_DESKTOPS=4: Anzahl virtueller Arbeitsflächen (zwei Reihen)
+# BR_DESKTOPS=4: number of virtual desktops (two rows)
 [ -n "${BR_DESKTOPS:-}" ] && printf '[Desktops]\nNumber=%s\nRows=2\n' "$BR_DESKTOPS" >> "$CFG/kwinrc"
-printf '[Theme]\nname=%s\n' "${BR_PLASMA_THEME:-schiefer}" > "$CFG/plasmarc"   # BR_PLASMA_THEME=default: Breeze zum Vergleich
+printf '[Theme]\nname=%s\n' "${BR_PLASMA_THEME:-schiefer}" > "$CFG/plasmarc"   # BR_PLASMA_THEME=default: Breeze for comparison
 DATA=$(mktemp -d); mkdir -p "$DATA/plasma/desktoptheme"
 mkdir -p "$DATA/color-schemes"; ln -s "$(realpath "${BR_COLORS:-$ROOT/colors/Schiefer.colors}")" "$DATA/color-schemes/"
 ln -s "$ROOT/plasma/schiefer" "$DATA/plasma/desktoptheme/schiefer"
-# BR_ICON_DIR=<Ordner>: dieses Icon-Theme verwenden (z. B. frisch erzeugt von make_theme.py); eigener Name,
-# weil KDE gleichnamige Themes aus allen Datenverzeichnissen zusammenführt (das installierte gewänne)
+# BR_ICON_DIR=<dir>: use this icon theme (for example freshly generated by make_theme.py) under its own name,
+# because KDE merges themes of the same name from all data directories (the installed one would win)
 if [ -n "${BR_ICON_DIR:-}" ]; then mkdir -p "$DATA/icons"; ln -s "$(realpath "$BR_ICON_DIR")" "$DATA/icons/schiefer-test"; fi
-# eigene Daten-/Zustandsverzeichnisse: Dienste der Testsitzung (kactivitymanagerd, ksecretd …)
-# sollen nicht die Datenbanken der echten Sitzung öffnen; ~/.local/share bleibt lesbar
+# separate data and state directories: services of the test session (kactivitymanagerd, ksecretd ...)
+# must not open the databases of the real session; ~/.local/share stays readable
 HOMEDATA=$(mktemp -d)
 export XDG_DATA_DIRS="$DATA:${BR_DATA_DIRS:+$BR_DATA_DIRS:}$HOME/.local/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 export XDG_DATA_HOME="$HOMEDATA/data" XDG_STATE_HOME="$HOMEDATA/state" XDG_CACHE_HOME="$HOMEDATA/cache"
 mkdir -p "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
 export XDG_CONFIG_HOME="$CFG"
-# GTK: colors.css wie kde-gtk-config, Theme aus gtk/Schiefer (Vergleich: BR_GTK_THEME=Breeze)
+# GTK: colors.css like kde-gtk-config, theme from gtk/Schiefer (comparison: BR_GTK_THEME=Breeze)
 mkdir -p "$DATA/themes" "$CFG/gtk-3.0" "$CFG/gtk-4.0"
 ln -s "$ROOT/gtk/Schiefer" "$DATA/themes/Schiefer"
 ICONS=breeze; { [ -d ~/.local/share/icons/schiefer ] || [ -d /usr/share/icons/schiefer ]; } && ICONS=schiefer; [ -n "${BR_ICON_DIR:-}" ] && ICONS=schiefer-test
@@ -89,17 +89,17 @@ for v in gtk-3.0 gtk-4.0; do
     printf '[Settings]\ngtk-font-name=Noto Sans, 10\ngtk-icon-theme-name=%s\n' "$ICONS" > "$CFG/$v/settings.ini"
 done
 export GTK_THEME="${BR_GTK_THEME:-Schiefer}"
-# Dienste, die der Test-D-Bus selbst startet (z. B. das Portal), sollen die Testkonfiguration lesen.
-# Ohne --systemd: betrifft nur den privaten Bus dieser Sitzung, nicht die echte Sitzung.
+# Services that the test D-Bus starts itself (for example the portal) must read the test configuration.
+# Without --systemd this affects only the private bus of this session, not the real session.
 dbus-update-activation-environment XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME XDG_DATA_DIRS QT_PLUGIN_PATH QT_STYLE_OVERRIDE GTK_THEME
 export QT_PLUGIN_PATH="$ROOT/kdecoration/build/plugins:$ROOT/kstyle/build/plugins:$ROOT/dock/build/bin${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
 export QT_STYLE_OVERRIDE=Schiefer
-# eigener Socket je Lauf: parallele Testläufe kommen sich nicht in die Quere
+# one socket per run, so parallel test runs do not interfere
 SOCK="brshot-$$"
 kwin_wayland --virtual --width ${BR_WIDTH:-1280} --height ${BR_HEIGHT:-800} --scale "${BR_SCALE:-1}" --socket "$SOCK" --no-lockscreen >/dev/null 2>&1 &
 K=$!
 sleep 3
-# --scale vergrößert nur den virtuellen Bildschirm; die Skalierung selbst setzt erst die Ausgabekonfiguration
+# --scale only enlarges the virtual screen; the output configuration sets the actual scale
 [ -n "${BR_SCALE:-}" ] && { WAYLAND_DISPLAY=$SOCK kscreen-doctor "output.Virtual-0.scale.$BR_SCALE" >/dev/null 2>&1; sleep 1; }
 LOG="${BR_LOG:-/dev/null}"
 for a in "${APPS[@]}"; do WAYLAND_DISPLAY=$SOCK QT_QPA_PLATFORM=wayland $a >>"$LOG" 2>&1 & PIDS+=($!); sleep 3; done
@@ -108,4 +108,4 @@ sleep 3
 [ -n "${BR_SHELL_CMD:-}" ] && { WAYLAND_DISPLAY=$SOCK QT_QPA_PLATFORM=wayland bash -c "$BR_SHELL_CMD" >/dev/null 2>&1; sleep 3; }
 WAYLAND_DISPLAY=$SOCK QT_QPA_PLATFORM=wayland spectacle -b -n -f -o "$OUT" >/dev/null 2>&1
 sleep 1
-# Aufräumen übernimmt cleanup (trap EXIT)
+# cleanup (trap EXIT) takes care of the rest

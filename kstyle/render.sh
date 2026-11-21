@@ -1,10 +1,10 @@
 #!/bin/bash
-# Rendert die Test-Galerie offscreen mit dem Schiefer-Stil und Farbschema.
-#   ./render.sh out.png [Stil] [Galerie-Argumente …]   (Stil: Schiefer (Standard) oder Breeze zum Vergleich)
-#   SCHIEFERRC=datei ./render.sh …  -> diese schieferrc verwenden (Schalter testen); sonst gelten die Standardwerte
-#   Galerie-Argumente: --menu view (Optionsfelder im Menü), --busy out2.png (siehe test/gallery.cpp)
+# Renders the test gallery offscreen with the Schiefer style and color scheme.
+#   ./render.sh out.png [style] [gallery arguments ...]   (style: Schiefer (default) or Breeze for comparison)
+#   SCHIEFERRC=file ./render.sh ...  -> use this schieferrc (to test options); defaults apply otherwise
+#   gallery arguments: --menu view (radio items in the menu), --busy out2.png (see test/gallery.cpp)
 HERE="$(cd "$(dirname "$0")" && pwd)"
-OUT="${1:-$HERE/galerie.png}"; STYLE="${2:-Schiefer}"
+OUT="${1:-$HERE/gallery.png}"; STYLE="${2:-Schiefer}"
 CFG=$(mktemp -d)
 cp ~/.config/kdeglobals "$CFG/kdeglobals" 2>/dev/null
 [ -n "${SCHIEFERRC:-}" ] && cp "$SCHIEFERRC" "$CFG/schieferrc"

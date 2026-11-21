@@ -1,6 +1,6 @@
 /*
- * Emblem statt Herstellerlogo: drei gestaffelte Schieferplatten auf erhabener Kachel.
- * Farben aus der Palette (Aktivrahmen), Kanten nach der Motif-Formel.
+ * Emblem instead of a vendor logo: three staggered slate plates on a raised tile.
+ * Colors from the palette (active frame), edges from the Motif formula.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -27,11 +27,11 @@ Bevel {
             const m = Motif.colors(slate);
             const face = slate, lite = m.top, dark = m.bottom;
             const deep = Qt.darker(dark, 1.25);
-            // Platte: Oberseite als Parallelogramm, darunter die Stirnkante
+            // plate: top face as a parallelogram, front edge below
             const slab = (cx, cy, w, d, t) => {
-                const k = Math.round(d * 0.9);           // Schräge der Oberseite
+                const k = Math.round(d * 0.9);           // slant of the top face
                 const x0 = Math.round(cx - w / 2), x1 = Math.round(cx + w / 2), y = Math.round(cy);
-                // Stirn (vorn) und Flanke (rechts)
+                // front and right flank
                 ctx.fillStyle = dark;
                 ctx.beginPath();
                 ctx.moveTo(x0, y + d); ctx.lineTo(x1 - k, y + d); ctx.lineTo(x1 - k, y + d + t); ctx.lineTo(x0, y + d + t);
@@ -40,12 +40,12 @@ Bevel {
                 ctx.beginPath();
                 ctx.moveTo(x1 - k, y + d); ctx.lineTo(x1, y); ctx.lineTo(x1, y + t); ctx.lineTo(x1 - k, y + d + t);
                 ctx.closePath(); ctx.fill();
-                // Oberseite
+                // top face
                 ctx.fillStyle = face;
                 ctx.beginPath();
                 ctx.moveTo(x0 + k, y); ctx.lineTo(x1, y); ctx.lineTo(x1 - k, y + d); ctx.lineTo(x0, y + d);
                 ctx.closePath(); ctx.fill();
-                // Lichtkante oben und links (1 px)
+                // light edge top and left (1 px)
                 ctx.fillStyle = lite;
                 ctx.fillRect(x0 + k, y, x1 - x0 - k, 1);
                 ctx.beginPath();

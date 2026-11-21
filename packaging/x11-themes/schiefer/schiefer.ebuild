@@ -1,20 +1,22 @@
-# Lokales Paket – erzeugt von ~/claude/schiefer/tools/make-dist.sh
+# Copyright 2026 Schiefer authors
+# Distributed under the terms of the GNU General Public License v2
 EAPI=8
 
 PYTHON_COMPAT=( python3_{11..14} )
 inherit python-single-r1
 
-DESCRIPTION="Schiefer: globales Design (Startbild, Abmelden), Sperrbildschirm, SDDM-Anmeldung, schiefer-config, Metapaket"
-SRC_URI="schiefer-${PV}.tar.xz"
+DESCRIPTION="Schiefer: global theme (splash, logout), lock screen, SDDM login, schiefer-config, meta package"
+SRC_URI="https://github.com/ccharon/kde-schiefer-theme/releases/download/v${PV}/schiefer-${PV}.tar.xz"
+HOMEPAGE="https://github.com/ccharon/kde-schiefer-theme"
 S="${WORKDIR}/schiefer-${PV}"
 
 LICENSE="GPL-2+"
 SLOT="0"
 KEYWORDS="amd64 arm64"
-RESTRICT="fetch mirror test"
+RESTRICT="test"
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
-# schiefer-config ruft kreadconfig6/kwriteconfig6, qdbus6 und plasma-apply-* auf
+# schiefer-config calls kreadconfig6/kwriteconfig6, qdbus6 and plasma-apply-*
 RDEPEND="
 	${PYTHON_DEPS}
 	dev-qt/qttools:6[qdbus]
@@ -27,20 +29,16 @@ RDEPEND="
 	~x11-themes/schiefer-themes-${PV}
 "
 
-pkg_nofetch() {
-	einfo "Den Quelltarball ${A} erzeugt und kopiert ~/claude/schiefer/tools/install-overlay.sh."
-}
-
 src_prepare() {
 	default
-	# gemeinsamer Motif-Baukasten liegt im Quellbaum als Symlink vor; installiert wird je eine Kopie
-	# (KPackage und SDDM lesen nur innerhalb ihres Verzeichnisses)
+	# The shared Motif kit is a symlink in the source tree; each package gets a copy
+	# because KPackage and SDDM only read inside their own directory.
 	local d
 	for d in lookandfeel/schiefer.desktop/contents greeter/sddm/schiefer greeter/lockscreen; do
 		rm "${d}/kit" || die
 		cp -r greeter/kit "${d}/kit" || die
 	done
-	# Zeile unter dem Rechnernamen bei der Anmeldung: Name des Systems
+	# line below the host name on the login screen: name of the system
 	local os
 	os=$(. /etc/os-release 2>/dev/null && echo "${PRETTY_NAME}")
 	sed -i "s|^subtitle=.*|subtitle=${os//|/}|" greeter/sddm/schiefer/theme.conf || die
@@ -57,22 +55,22 @@ src_install() {
 	doins -r greeter/lockscreen
 
 	insinto /etc/xdg/plasma-workspace/env
-	doins greeter/schiefer-sperrbildschirm.sh
+	doins greeter/schiefer-lockscreen.sh
 
 	python_doscript tools/schiefer-config
 }
 
 pkg_postinst() {
-	elog "Alles auf einmal: Systemeinstellungen › Globales Design › Schiefer"
-	elog "(setzt Farben, Plasma-Stil, Icons, Anwendungsstil, Fensterdekoration und Hintergrund)."
-	elog "Das GTK-Design separat wählen: Anwendungsstil › GTK-Design › Schiefer"
+	elog "Everything at once: System Settings > Global Theme > Schiefer"
+	elog "(sets colors, Plasma style, icons, application style, window decoration and wallpaper)."
+	elog "Select the GTK theme separately: Application Style > GTK Theme > Schiefer"
 	elog
-	elog "Einzelne Motif-Eigenheiten ein- und ausschalten, Paletten wechseln:"
-	elog "  schiefer-config liste"
-	elog "  schiefer-config standard        (alle Schalter auf die Schiefer-Vorgabe, z. B. nach dem globalen Design)"
-	elog "  schiefer-config palette basalt  (Paletten: schiefer, sandstein, jade, granit, basalt)"
+	elog "Toggle single Motif features and switch palettes:"
+	elog "  schiefer-config list"
+	elog "  schiefer-config defaults        (all options to the Schiefer defaults, for example after the global theme)"
+	elog "  schiefer-config palette basalt  (palettes: schiefer, sandstein, jade, granit, basalt)"
 	elog
-	elog "Sperrbildschirm (je Benutzer):  schiefer-config sperrbildschirm an"
-	elog "Anmeldung (SDDM, für alle):      Systemeinstellungen › Anmeldebildschirm (SDDM) › Schiefer"
-	elog "  oder /etc/sddm.conf.d/…: [Theme] Current=schiefer"
+	elog "Lock screen (per user):    schiefer-config lockscreen on"
+	elog "Login (SDDM, all users):   System Settings > Login Screen (SDDM) > Schiefer"
+	elog "  or /etc/sddm.conf.d/...: [Theme] Current=schiefer"
 }

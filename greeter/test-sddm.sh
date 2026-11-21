@@ -1,5 +1,5 @@
 #!/bin/bash
-# Offscreen-Bild des SDDM-Themas (ohne Fenster): greeter/test-sddm.sh out.png [BREITE HÖHE] [qml-Zusatz]
+# Offscreen image of the SDDM theme (no window): greeter/test-sddm.sh out.png [WIDTH HEIGHT]
 #   SCHIEFER_TEST_STAGE=user|pass|busy  SCHIEFER_TEST_MENU=1|user  SCHIEFER_TEST_MSG=1
 set -eu
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -13,7 +13,7 @@ Item { id: r; width: $W; height: $H
   Timer { interval: 1500; running: true; onTriggered: {
       const m = l.item; const st = "${SCHIEFER_TEST_STAGE:-}";
       if (st) { m.stage = st; m.userName = "christian"; }
-      if ("${SCHIEFER_TEST_MSG:-}") m.message = "Anmeldung fehlgeschlagen. Bitte erneut versuchen.";
+      if ("${SCHIEFER_TEST_MSG:-}") m.message = "Login incorrect. Please try again.";
       if ("${SCHIEFER_TEST_MENU:-}" === "user") m.openUsers(); else if ("${SCHIEFER_TEST_MENU:-}") m.openOptions();
   } }
   Timer { interval: 2500; running: true; onTriggered: l.grabToImage(res => { res.saveToFile("$OUT"); Qt.quit(); }) } }

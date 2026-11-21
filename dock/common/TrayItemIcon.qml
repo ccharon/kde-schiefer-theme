@@ -1,5 +1,5 @@
 /*
- * Ein Eintrag des Systemabschnitts (Plasmoid oder StatusNotifierItem) als klickbares Symbol
+ * One system tray entry (plasmoid or StatusNotifierItem) as a clickable icon
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -15,14 +15,14 @@ Item {
     required property var tray
     property int iconMargin: 0
     property bool interactive: true
-    // Popups des Systrays an diesem Symbol statt am popupAnchor der Brücke aufgehen lassen
+    // open system tray popups at this icon instead of the bridge's popupAnchor
     property bool anchorSelf: false
-    // vor dem Aktivieren aufgerufen (z. B. um die Schublade zu schließen)
+    // called before activating (for example to close the drawer)
     signal aboutToActivate()
 
     readonly property bool isPlasmoid: model?.itemType === "Plasmoid"
     readonly property var appletItem: isPlasmoid ? (model?.applet ?? null) : null
-    // Plasmoids setzen ihr Symbol laufend (Lautstärke, Akku …), das Modell meldet das nicht
+    // plasmoids keep changing their icon (volume, battery ...) and the model does not report it
     readonly property var iconSource: isPlasmoid
         ? (appletItem?.plasmoid?.icon || model?.decoration)
         : (model?.status === PlasmaCore.Types.NeedsAttentionStatus ? (model.AttentionIcon || model.AttentionIconName || model.decoration) : model?.decoration)
@@ -32,7 +32,7 @@ Item {
     readonly property string subTitle: (isPlasmoid ? appletItem?.toolTipSubText : model?.ToolTipSubTitle) ?? ""
     readonly property bool expanded: appletItem?.expanded ?? false
 
-    // nur für tools/screenshot.sh: SCHIEFER_DOCK_TRAY=<itemId> aktiviert diesen Eintrag beim Start
+    // only for tools/screenshot.sh: SCHIEFER_DOCK_TRAY=<itemId> activates this entry on start
     Timer {
         interval: 2500
         running: item.interactive && !!item.model && item.model.itemId === item.tray.testItem

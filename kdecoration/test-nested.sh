@@ -1,13 +1,13 @@
 #!/bin/bash
-# Startet ein verschachteltes KWin-Fenster mit der Schiefer-Dekoration.
-# Nichts wird installiert; deine Konfiguration bleibt unberührt (eigenes Test-Konfigverzeichnis).
-#   ./test-nested.sh            -> öffnet KWrite und Konsole im Testfenster
-#   ./test-nested.sh dolphin    -> eigene Programme
+# Starts a nested KWin window with the Schiefer decoration.
+# Installs nothing; your configuration stays untouched (separate test config directory).
+#   ./test-nested.sh            -> opens KWrite and Konsole in the test window
+#   ./test-nested.sh dolphin    -> other applications
 HERE="$(cd "$(dirname "$0")" && pwd)"
 CFG="${XDG_RUNTIME_DIR:-/tmp}/schiefer-test-config"
 rm -rf "$CFG"; mkdir -p "$CFG"
 cp ~/.config/kdeglobals "$CFG/kdeglobals" 2>/dev/null
-# Farbschema Schiefer einmischen (alle Gruppen aus der .colors-Datei)
+# merge the Schiefer color scheme (all groups from the .colors file)
 python3 - "$HERE/../colors/Schiefer.colors" "$CFG/kdeglobals" <<'PY'
 import configparser, sys
 src = configparser.ConfigParser(interpolation=None, strict=False); src.optionxform = str

@@ -1,4 +1,4 @@
-// Motif-Trennlinie (XmSHADOW_ETCHED_IN): Schatten über Licht
+// Motif separator (XmSHADOW_ETCHED_IN): shadow above light
 import QtQuick
 import "Motif.js" as Motif
 

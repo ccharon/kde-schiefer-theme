@@ -1,6 +1,6 @@
 /*
- * Fensterknopf der Schiefer-Konsole: erhaben = Hintergrund, versenkt = aktiv,
- * kursiv/blass = minimiert (wie ein Motif-Symbol).
+ * Window button of the Schiefer console: raised = background, sunken = active,
+ * italic/faded = minimized (like a Motif icon).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -17,7 +17,7 @@ Item {
 
     required property var tasksModel
     required property int index
-    required property var model          // Rollen des TasksModel
+    required property var model          // roles of the TasksModel
     property bool showTooltip: true
     signal activated()
 
@@ -39,7 +39,7 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: 4 + Kirigami.Units.smallSpacing
         anchors.rightMargin: 4 + Kirigami.Units.smallSpacing
-        // versenkte Knöpfe: Inhalt 1 px nach unten rechts, wie im Qt-Stil
+        // sunken buttons: content 1 px down and right, as in the Qt style
         anchors.topMargin: task.active ? 1 : 0
         spacing: Kirigami.Units.smallSpacing
 
@@ -86,7 +86,7 @@ Item {
         }
     }
 
-    // Ziehen auf einen Arbeitsflächen-Knopf verschiebt das Fenster dorthin
+    // dragging onto a desktop button moves the window there
     DragHandler {
         id: dragHandler
         target: null
@@ -113,24 +113,24 @@ Item {
         visualParent: task
         placement: PlasmaExtras.Menu.TopPosedLeftAlignedPopup
         PlasmaExtras.MenuItem {
-            text: task.minimized ? i18n("Wiederherstellen") : i18n("Minimieren")
+            text: task.minimized ? i18n("Restore") : i18n("Minimize")
             icon: task.minimized ? "window-restore" : "window-minimize"
             onClicked: task.tasksModel.requestToggleMinimized(task.modelIndex)
         }
         PlasmaExtras.MenuItem {
-            text: task.model.IsMaximized ? i18n("Maximieren aufheben") : i18n("Maximieren")
+            text: task.model.IsMaximized ? i18n("Unmaximize") : i18n("Maximize")
             icon: task.model.IsMaximized ? "window-restore" : "window-maximize"
             enabled: task.model.IsMaximizable === true
             onClicked: task.tasksModel.requestToggleMaximized(task.modelIndex)
         }
         PlasmaExtras.MenuItem {
-            text: i18n("Neues Fenster")
+            text: i18n("New Window")
             icon: "window-new"
             onClicked: task.tasksModel.requestNewInstance(task.modelIndex)
         }
         PlasmaExtras.MenuItem { separator: true }
         PlasmaExtras.MenuItem {
-            text: i18n("Schließen")
+            text: i18n("Close")
             icon: "window-close"
             onClicked: task.tasksModel.requestClose(task.modelIndex)
         }

@@ -1,11 +1,12 @@
-# Jade – grünlich, wässrig (angelehnt an die Wasser-/Grün-Paletten von CDE)
+# Jade: greenish, watery (after the water and green CDE palettes)
 id = "SchieferJade"
 name = "Schiefer Jade"
-comment = "grünlich-wässriges Motif/CDE-Farbschema"
+name_de = "Schiefer Jade"
+comment = "greenish, watery Motif/CDE color scheme"
 variant = "light"
 
 [cde]
-1 = "#367476"   # Petrol
+1 = "#367476"   # petrol
 2 = "#a8c0ba"
 3 = "#6f9fa0"
 4 = "#a7b884"

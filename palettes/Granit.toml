@@ -1,7 +1,8 @@
-# Granit – Graustufen (angelehnt an die grauen CDE-Paletten)
+# Granite: gray levels (after the gray CDE palettes)
 id = "SchieferGranit"
-name = "Schiefer Granit"
-comment = "Motif/CDE-Farbschema in Graustufen"
+name = "Schiefer Granite"
+name_de = "Schiefer Granit"
+comment = "Motif/CDE color scheme in gray levels"
 variant = "light"
 
 [cde]

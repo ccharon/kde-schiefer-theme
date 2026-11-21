@@ -9,14 +9,14 @@
     <entry name="taskButtonWidth" type="Int"><default>10</default></entry>
     <entry name="minTaskColumns" type="Int"><default>2</default></entry>
     <entry name="minTaskButtonWidth" type="Int"><default>5</default></entry>
-    <!-- 0 = unbegrenzt: wächst, solange das Panel Platz hat -->
+    <!-- 0 = unlimited: grows while the panel has room -->
     <entry name="maxTaskColumns" type="Int"><default>0</default></entry>
-    <!-- Fensterknöpfe; aus, wenn die Icon Box die Fenster zeigt -->
+    <!-- window buttons; off when the icon box shows the windows -->
     <entry name="showTasks" type="Bool"><default>false</default></entry>
     <entry name="showLockButton" type="Bool"><default>true</default></entry>
     <entry name="showExitButton" type="Bool"><default>true</default></entry>
     <entry name="onlyCurrentDesktop" type="Bool"><default>true</default></entry>
-    <!-- Farben der Arbeitsflächen aus [Schiefer] DesktopColors des aktiven Farbschemas; aus (oder nichts gefunden) = Liste unten -->
+    <!-- desktop colors from [Schiefer] DesktopColors of the active color scheme; off (or nothing found) = list below -->
     <entry name="desktopColorsFromScheme" type="Bool"><default>true</default></entry>
     <entry name="desktopColors" type="StringList">
       <default>#8fa3bf,#bba78e,#7fa39a,#b48f96,#a8a47e,#9c90b5,#8faf8f,#c09c7c</default>

@@ -1,34 +1,34 @@
 #!/usr/bin/env python3
-"""Schiefer-Mauszeiger: moderne Vektor-Fassung der klassischen X11-Kernzeiger.
+"""Schiefer mouse cursors: modern vector version of the classic X11 core cursors.
 
-Die Formen folgen den Glyphen der X-Zeigerschrift (left_ptr mit schmalem Schwanz, Taschenuhr,
-dünnes Fadenkreuz, xterm-Balken mit geschwungenen Enden, Doppelpfeile, Stift, Fragezeichen mit
-Pfeil …), gezeichnet als glatte Vektorformen auf einem 24-px-Nennraster (Größe wie Breeze/Adwaita),
-schwarz mit weißem Rand bzw. weiß mit schwarzer Kontur. Keine Pixel-Vergrößerung: jede Größe wird
-mit Kantenglättung eigens gerastert.
+The shapes follow the glyphs of the X cursor font (left_ptr with a narrow tail, pocket watch,
+thin crosshair, xterm bar with curved ends, double arrows, pencil, question mark with an
+arrow ...), drawn as smooth vector shapes on a 24 px nominal grid (size like Breeze/Adwaita),
+black with a white border or white with a black outline. No pixel scaling: every size is
+rasterized separately with anti-aliasing.
 
-Erzeugt (nur Python-Standardbibliothek; PIL nur für --preview):
-  svg/<name>.svg                   SVG-Quellen (viewBox 24x24)
+Generates (Python standard library only; PIL only for --preview):
+  svg/<name>.svg                   SVG sources (viewBox 24x24)
   Schiefer/index.theme             Inherits=breeze_cursors
-  Schiefer/cursors/<name>          XCursor-Dateien (eigener Rasterer und Schreiber, kein xcursorgen)
-  Schiefer/cursors_scalable/<n>/   SVG-Zeiger + metadata.json (Plasma >= 6.2)
-  Aliase als Symlinks (Namenliste wie breeze_cursors plus X-Kernnamen)
+  Schiefer/cursors/<name>          XCursor files (own rasterizer and writer, no xcursorgen)
+  Schiefer/cursors_scalable/<n>/   SVG cursors + metadata.json (Plasma >= 6.2)
+  aliases as symlinks (name list as in breeze_cursors plus X core names)
 
-Aufruf:  make_cursors.py [--out DIR] [--preview PNG] [--check]
+Usage:  make_cursors.py [--out DIR] [--preview PNG] [--check]
 
-Herkunft / Lizenz: eigene Zeichnungen, angelehnt an die Glyphen der X-Cursor-Schrift
-(cursorfont.h, (c) X Consortium, MIT-Lizenz); keine Original-Bitmaps übernommen.
+Origin and license: original drawings after the glyphs of the X cursor font
+(cursorfont.h, (c) X Consortium, MIT license); no original bitmaps are used.
 """
 import argparse, json, math, os, shutil, struct
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-NOMINAL = 24                                   # Nennraster; Größe 24 = 1:1
+NOMINAL = 24                                   # nominal grid; size 24 = 1:1
 SIZES = (24, 30, 32, 36, 40, 48, 60, 64, 72, 96)
 BLACK, WHITE = (0, 0, 0), (255, 255, 255)
-HALO = 1.0                                     # weißer Rand um schwarze Formen (Nenn-px)
-BORDER = 1.25                                  # schwarze Kontur um weiße Formen
+HALO = 1.0                                     # white border around black shapes (nominal px)
+BORDER = 1.25                                  # black outline around white shapes
 
-# ---------------------------------------------------------------- Geometrie
+# ---------------------------------------------------------------- Geometry
 def area(c):
     return sum(c[i][0] * c[i - 1][1] - c[i - 1][0] * c[i][1] for i in range(len(c))) / 2
 
@@ -58,7 +58,7 @@ def rect_line_pts(p, q, w, ext=0.0):
     return [(x0 + nx, y0 + ny), (x1 + nx, y1 + ny), (x1 - nx, y1 - ny), (x0 - nx, y0 - ny)]
 
 class Poly:
-    """Gefülltes Vieleck; gewachsen = Vieleck plus Kapseln auf allen Kanten (runde Ecken)."""
+    """Filled polygon; grown = polygon plus capsules on all edges (round corners)."""
     def __init__(self, pts): self.pts = list(pts)
     def contours(self, t):
         out = [orient(self.pts)]
@@ -69,7 +69,7 @@ class Poly:
     def map(self, f, k): return Poly([f(p) for p in self.pts])
 
 class Line:
-    """Dicke Strecke; cap 'round' (Kapsel) oder 'butt' (Rechteck, beim Wachsen eckig verlängert)."""
+    """Thick segment; cap 'round' (capsule) or 'butt' (rectangle, extended square when grown)."""
     def __init__(self, p, q, w, cap='butt'): self.p, self.q, self.w, self.cap = p, q, w, cap
     def contours(self, t):
         if self.cap == 'round':
@@ -78,7 +78,7 @@ class Line:
     def map(self, f, k): return Line(f(self.p), f(self.q), self.w * k, self.cap)
 
 class PLine:
-    """Linienzug mit runden Gelenken."""
+    """Polyline with round joints."""
     def __init__(self, pts, w): self.pts, self.w = list(pts), w
     def contours(self, t):
         r = self.w / 2 + t
@@ -101,7 +101,7 @@ class Ring:
     def map(self, f, k): return Ring(f(self.c), self.r * k, self.w * k)
 
 def xform(prims, scale=1.0, angle=0.0, center=(12, 12), move=(0, 0), mirror_x=False, mirror_y=False):
-    """Formen um center skalieren/drehen/spiegeln, dann verschieben."""
+    """Scale/rotate/mirror shapes around center, then translate."""
     ca, sa = math.cos(math.radians(angle)), math.sin(math.radians(angle))
     def f(p):
         x, y = p[0] - center[0], p[1] - center[1]
@@ -112,23 +112,23 @@ def xform(prims, scale=1.0, angle=0.0, center=(12, 12), move=(0, 0), mirror_x=Fa
     return [pr.map(f, scale) for pr in prims], f
 
 def head(tip, direction, length=5.0, half=4.2):
-    """Gefüllte Pfeilspitze: Spitze bei tip, zeigt in direction (Winkel in Grad, 0 = rechts, 90 = unten)."""
+    """Filled arrow head: tip at tip, pointing in direction (degrees, 0 = right, 90 = down)."""
     a = math.radians(direction)
     ux, uy = math.cos(a), math.sin(a)
     bx, by = tip[0] - ux * length, tip[1] - uy * length
     return Poly([tip, (bx - uy * half, by + ux * half), (bx + uy * half, by - ux * half)])
 
-# ---------------------------------------------------------------- Ebenen-Stile
+# ---------------------------------------------------------------- Layer styles
 def solid(prims, halo=HALO):
-    """Schwarze Form mit weißem Rand (X11: Glyphe schwarz, Maske 1 px größer)."""
+    """Black shape with a white border (X11: black glyph, mask 1 px larger)."""
     return [(WHITE, prims, halo), (BLACK, prims, 0)]
 
 def outlined(prims, details=(), border=BORDER, halo=HALO * 0.75):
-    """Weiße Form mit schwarzer Kontur (X11-Hand, Stift); außen ein schmaler weißer Saum."""
+    """White shape with a black outline (X11 hand, pencil); a narrow white rim outside."""
     return [(WHITE, prims, border + halo), (BLACK, prims, border), (WHITE, prims, 0),
             (BLACK, list(details), 0)]
 
-# ---------------------------------------------------------------- Formen (Nennraster 24)
+# ---------------------------------------------------------------- Shapes (nominal grid 24)
 ARROW = [(4, 3), (4, 18.2), (7.7, 14.7), (10.3, 20.4), (12.5, 19.4), (9.9, 13.8), (14.8, 13.8)]
 ARROW_HOT = (4, 3)
 
@@ -239,7 +239,7 @@ def question():
     return solid(p)
 
 def hand(kind):
-    """kind: 'point' (Zeigefinger hoch), 'open' (gespreizt), 'closed' (Faust)."""
+    """kind: 'point' (index finger up), 'open' (spread), 'closed' (fist)."""
     palm = Poly([(7.2, 12.0), (20.6, 12.4), (20.6, 16.6), (18.4, 21.0), (10.4, 21.0), (7.2, 17.0)])
     thumb = Line((4.9, 12.9), (8.4, 16.6), 3.1, 'round')
     if kind == 'point':
@@ -264,7 +264,7 @@ def hand(kind):
     return outlined(prims, det)
 
 def badge(symbol):
-    """Pfeil mit kleinem Zeichen unten rechts (Kopieren, Verknüpfen, …)."""
+    """Arrow with a small sign at the bottom right (copy, link, ...)."""
     layers = solid(arrow())
     c = (19, 18.5)
     if symbol == 'plus':
@@ -284,7 +284,7 @@ def badge(symbol):
 
 # ---------------------------------------------------------------- Zeigertabelle
 def build():
-    """name -> (Ebenen, Hotspot im Nennraster)"""
+    """name -> (layers, hotspot in the nominal grid)"""
     A = {}
     A['default'] = (solid(arrow()), ARROW_HOT)
     A['right_ptr'] = (solid(xform(arrow(), mirror_x=True)[0]), (20, 3))
@@ -333,9 +333,9 @@ def build():
     A['context-menu'] = (badge('menu'), ARROW_HOT)
     return A
 
-# Aliase: Name -> Ziel (Namenliste von breeze_cursors plus X-Kernnamen)
+# Aliases: name -> target (name list of breeze_cursors plus X core names)
 ALIASES = {
-    # X-Kernnamen / klassisch
+    # X core names / classic
     'left_ptr': 'default', 'arrow': 'default', 'top_left_arrow': 'default', 'wayland-cursor': 'default',
     'size-bdiag': 'size_bdiag', 'size-fdiag': 'size_fdiag', 'size-hor': 'size_hor', 'size-ver': 'size_ver',
     'xterm': 'text', 'ibeam': 'text', 'watch': 'wait', 'clock': 'wait',
@@ -361,7 +361,7 @@ ALIASES = {
     'link': 'alias', 'dnd-copy': 'copy', 'plus': 'cell',
     'split_h': 'col-resize', 'split_v': 'row-resize',
     'draft': 'pencil', 'draft_large': 'pencil', 'draft_small': 'pencil',
-    # Hash-Namen (Qt/GTK/Firefox-Altlasten), Ziele wie in breeze_cursors
+    # hash names (legacy Qt/GTK/Firefox names), targets as in breeze_cursors
     '00000000000000020006000e7e9ffc3f': 'progress', '08e8e1c95fe2fc01f976f1e063a24ccd': 'progress',
     '3ecb610c1bf2410f44200f48c40d3599': 'progress',
     '00008160000006810000408080010102': 'size_ver', '03b6e0fcb3499374a867c041f52298f0': 'not-allowed',
@@ -375,11 +375,11 @@ ALIASES = {
     '9d800788f1b08800ae810202380a0822': 'pointer', 'e29285e634086352946a0e7090d73106': 'pointer',
 }
 
-# ---------------------------------------------------------------- Rastern (kantengeglättet)
-SUB = 12                                         # Teilzeilen je Pixelzeile; waagerecht exakte Bedeckung
+# ---------------------------------------------------------------- Rasterizing (anti-aliased)
+SUB = 12                                         # subrows per pixel row; exact horizontal coverage
 
 def coverage(contours, size):
-    """Bedeckung 0..1 je Pixel für die Vereinigung aller Konturen (Nonzero-Regel)."""
+    """Coverage 0..1 per pixel for the union of all contours (nonzero rule)."""
     s = size / NOMINAL
     rows = [[] for _ in range(size)]
     for c in contours:
@@ -430,7 +430,7 @@ def layer_contours(prims, t):
     return out
 
 def render(layers, size):
-    """Ebenen übereinander -> vormultiplizierte ARGB-Pixel (wie XCursor sie erwartet)."""
+    """Stacked layers -> premultiplied ARGB pixels (as XCursor expects them)."""
     A = [0.0] * (size * size); R = [0.0] * (size * size); G = [0.0] * (size * size); B = [0.0] * (size * size)
     for col, prims, t in layers:
         if not prims: continue
@@ -461,7 +461,7 @@ def hotspot(h, size):
     s = size / NOMINAL
     return min(size - 1, int(h[0] * s)), min(size - 1, int(h[1] * s))
 
-# ---------------------------------------------------------------- XCursor lesen/schreiben
+# ---------------------------------------------------------------- XCursor read/write
 XC_MAGIC = b'Xcur'; XC_IMAGE = 0xfffd0002
 
 def write_xcursor(path, images):
@@ -477,7 +477,7 @@ def write_xcursor(path, images):
 
 def read_xcursor(path):
     d = open(path, 'rb').read()
-    if d[:4] != XC_MAGIC: raise ValueError('keine XCursor-Datei: ' + path)
+    if d[:4] != XC_MAGIC: raise ValueError('not an XCursor file: ' + path)
     hsz, ver, n = struct.unpack_from('<3I', d, 4)
     out = []
     for i in range(n):
@@ -488,10 +488,10 @@ def read_xcursor(path):
         out.append((sz, w, h, xh, yh, dl, px))
     return out
 
-# ---------------------------------------------------------------- Erzeugen
+# ---------------------------------------------------------------- Generation
 INDEX = """[Icon Theme]
 Name=Schiefer
-Comment=Moderne Vektor-Fassung der klassischen X11-Kernzeiger (schwarz/weiß), Teil des Schiefer-Themas
+Comment=Modern vector version of the classic X11 core cursors (black/white), part of the Schiefer theme
 Inherits=breeze_cursors
 """
 
@@ -544,20 +544,20 @@ def check(theme, arts):
             assert w == h == sz and 0 <= xh < sz and 0 <= yh < sz, (name, sz)
             near = [px[y * w + x] >> 24 for y in range(max(0, yh - 1), min(h, yh + 2))
                     for x in range(max(0, xh - 1), min(w, xh + 2))]
-            if max(near) == 0: bad.append('Hotspot liegt neben der Form: %s %d' % (name, sz))
+            if max(near) == 0: bad.append('hotspot lies outside the shape: %s %d' % (name, sz))
         n += 1
         layers, _ = arts[name]
         pts = [p for _, prims, t in layers for c in layer_contours(prims, t) for p in c]
         lo = min(min(p) for p in pts); hi = max(max(p) for p in pts)
-        if lo < 0 or hi > NOMINAL: bad.append('Form ragt aus dem Raster: %s (%.2f..%.2f)' % (name, lo, hi))
+        if lo < 0 or hi > NOMINAL: bad.append('shape exceeds the grid: %s (%.2f..%.2f)' % (name, lo, hi))
     for a in ALIASES:
         assert os.path.exists(os.path.join(theme, 'cursors', a)), a
         assert os.path.exists(os.path.join(theme, 'cursors_scalable', a, 'metadata.json')), a
     if bad: raise SystemExit('\n'.join(bad))
-    print('ok: %d Zeiger, %d Aliase, Größen %s' % (n, len(ALIASES), SIZES))
+    print('ok: %d cursors, %d aliases, sizes %s' % (n, len(ALIASES), SIZES))
 
 def preview(theme, arts, png, size=32, zoom=3):
-    """Kontaktbogen: jeder Zeiger in Originalgröße auf hell und dunkel, daneben vergrößert."""
+    """Contact sheet: every cursor at original size on light and dark, enlarged next to it."""
     from PIL import Image, ImageDraw
     names = sorted(arts)
     cols = 6
@@ -569,7 +569,7 @@ def preview(theme, arts, png, size=32, zoom=3):
         sz, w, h, xh, yh, _, px = [x for x in read_xcursor(os.path.join(theme, 'cursors', name)) if x[0] == size][0]
         tile = Image.new('RGBA', (w, h))
         tile.putdata([((p >> 16) & 255, (p >> 8) & 255, p & 255, p >> 24) for p in px])
-        # vormultipliziert -> gerade (für die Vorschau unerheblich bei Schwarz/Weiß, aber sauber)
+        # premultiplied -> straight alpha
         x0 = 10 + (i % cols) * cw; y0 = 10 + (i // cols) * ch
         dr.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=(200, 204, 212))
         dr.rectangle([x0, y0 + size, x0 + size - 1, y0 + 2 * size - 1], fill=(40, 44, 52))
@@ -585,13 +585,13 @@ def preview(theme, arts, png, size=32, zoom=3):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument('--out', default=HERE, help='Ausgabeordner (Standard: cursors/); darin entsteht Schiefer/')
-    ap.add_argument('--preview', metavar='PNG', help='Kontaktbogen (Größe 32, Hotspot rot) schreiben')
-    ap.add_argument('--check', action='store_true', help='Dateien zurücklesen und prüfen')
-    ap.add_argument('-j', '--jobs', type=int, default=None, help='Prozesse (Standard: alle Kerne)')
+    ap.add_argument('--out', default=HERE, help='output directory (default: cursors/); Schiefer/ is created inside')
+    ap.add_argument('--preview', metavar='PNG', help='write a contact sheet (size 32, hotspot red)')
+    ap.add_argument('--check', action='store_true', help='read the files back and check them')
+    ap.add_argument('-j', '--jobs', type=int, default=None, help='processes (default: all cores)')
     a = ap.parse_args()
     theme, arts = generate(a.out, a.jobs)
-    print('Theme:', theme, '-', len(arts), 'gezeichnete Zeiger,', len(ALIASES), 'Aliase')
+    print('Theme:', theme, '-', len(arts), 'drawn cursors,', len(ALIASES), 'aliases')
     if a.check: check(theme, arts)
     if a.preview: preview(theme, arts, a.preview); print('Vorschau:', a.preview)
 

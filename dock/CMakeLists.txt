@@ -1,4 +1,4 @@
-# Schiefer-Dock: Plasma-Widgets im Stil des CDE-Frontpanels
+# Schiefer dock: Plasma widgets in the style of the CDE front panel
 cmake_minimum_required(VERSION 3.22)
 project(schiefer-dock VERSION 0.2)
 
@@ -17,7 +17,7 @@ find_package(KF6KirigamiPlatform ${KF_MIN_VERSION} REQUIRED)
 find_package(Plasma REQUIRED)
 find_package(PlasmaQuick REQUIRED)
 
-# Motif-Farbformel (gemeinsam mit kstyle/ und kdecoration/)
+# Motif color formula (shared with kstyle/ and kdecoration/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
 
 add_subdirectory(drawer)
@@ -25,3 +25,5 @@ add_subdirectory(console)
 add_subdirectory(iconbox)
 add_subdirectory(tiles)
 add_subdirectory(endcap)
+
+ki18n_install(po)

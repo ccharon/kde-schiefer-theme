@@ -1,0 +1,6 @@
+# Schiefer GTK options, read by schiefer-config.
+# Columns separated by "|": name | file (in gtk-3.0/ and gtk-4.0/) | description | default (on|off)
+# gtk.css imports Breeze GTK, retro.css, then the option files in the order of this list.
+# The theme stays complete with any subset of options.
+headerbar|opt-headerbar.css|Motif header bar for windows with client-side decorations: title in a raised field, square raised window buttons with decoration symbols, frame without shadow; off: Breeze-like header bar|on
+diamond|opt-diamond.css|radio buttons as a sunken diamond as in Motif 1.2/CDE; off: round radio buttons|on

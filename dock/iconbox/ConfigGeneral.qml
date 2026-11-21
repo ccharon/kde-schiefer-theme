@@ -20,46 +20,46 @@ KCM.SimpleKCM {
 
     Kirigami.FormLayout {
         QQC2.ComboBox {
-            Kirigami.FormData.label: i18n("Darstellung:")
+            Kirigami.FormData.label: i18n("Display:")
             textRole: "text"
             valueRole: "value"
             model: [
-                { text: i18n("Liste (Icon-Manager wie twm)"), value: "list" },
-                { text: i18n("Symbole (Icon Box wie mwm)"), value: "icons" }
+                { text: i18n("List (icon manager like twm)"), value: "list" },
+                { text: i18n("Icons (icon box like mwm)"), value: "icons" }
             ]
             Component.onCompleted: currentIndex = Math.max(0, indexOfValue(cfg_display))
             onActivated: cfg_display = currentValue
         }
-        QQC2.CheckBox { id: onlyCurrent; Kirigami.FormData.label: i18n("Fenster:"); text: i18n("Nur von der aktuellen Arbeitsfläche") }
-        QQC2.CheckBox { id: showNormal; text: i18n("Auch offene Fenster zeigen (sonst nur minimierte)") }
-        QQC2.CheckBox { id: groupWindows; text: i18n("Fenster einer Anwendung gruppieren") }
+        QQC2.CheckBox { id: onlyCurrent; Kirigami.FormData.label: i18n("Windows:"); text: i18n("Only from the current desktop") }
+        QQC2.CheckBox { id: showNormal; text: i18n("Also show open windows (otherwise only minimized ones)") }
+        QQC2.CheckBox { id: groupWindows; text: i18n("Group windows of an application") }
         QQC2.ComboBox {
-            Kirigami.FormData.label: i18n("Reihenfolge:")
+            Kirigami.FormData.label: i18n("Order:")
             textRole: "text"
             valueRole: "value"
             model: [
-                { text: i18n("Wie geöffnet"), value: "opening" },
-                { text: i18n("Nach Programm"), value: "app" },
-                { text: i18n("Zuletzt benutzt zuerst"), value: "lastActivated" }
+                { text: i18n("As opened"), value: "opening" },
+                { text: i18n("By application"), value: "app" },
+                { text: i18n("Most recently used first"), value: "lastActivated" }
             ]
             Component.onCompleted: currentIndex = Math.max(0, indexOfValue(cfg_sortMode))
             onActivated: cfg_sortMode = currentValue
         }
-        QQC2.SpinBox { id: columns; Kirigami.FormData.label: i18n("Spalten:"); from: 1; to: 4 }
-        QQC2.CheckBox { id: fromScheme; Kirigami.FormData.label: i18n("Farben:"); text: i18n("Aus dem Farbschema übernehmen") }
+        QQC2.SpinBox { id: columns; Kirigami.FormData.label: i18n("Columns:"); from: 1; to: 4 }
+        QQC2.CheckBox { id: fromScheme; Kirigami.FormData.label: i18n("Colors:"); text: i18n("Take from the color scheme") }
         QQC2.TextField {
-            Kirigami.FormData.label: i18n("Eigene Farben der Arbeitsflächen:")
+            Kirigami.FormData.label: i18n("Custom desktop colors:")
             enabled: !onlyCurrent.checked
             Layout.preferredWidth: Kirigami.Units.gridUnit * 22
             text: (cfg_desktopColors || []).join(", ")
             onEditingFinished: cfg_desktopColors = text.split(",").map(s => s.trim()).filter(s => s.length)
         }
-        QQC2.CheckBox { id: showTitle; Kirigami.FormData.label: i18n("Kopfzeile:"); text: i18n("„Fenster“ anzeigen") }
+        QQC2.CheckBox { id: showTitle; Kirigami.FormData.label: i18n("Header:"); text: i18n("Show \"Windows\"") }
         QQC2.Label {
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
             opacity: 0.75
-            text: i18n("Klick holt ein Fenster nach vorn oder stellt es wieder her, ein Klick auf das aktive Fenster minimiert es. Ein Klick auf eine Gruppe klappt ihre Fenster seitlich auf. Mittelklick minimiert, Rechtsklick öffnet das Fenstermenü. Damit die Box Fenstern ausweicht, die Leiste auf „Fenstern ausweichen“ stellen.")
+            text: i18n("A click raises or restores a window; a click on the active window minimizes it. A click on a group opens its windows to the side. Middle click minimizes, right click opens the window menu. To keep windows clear of the box, set the panel to \"Dodge Windows\".")
         }
     }
 }

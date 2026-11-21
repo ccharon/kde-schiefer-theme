@@ -1,5 +1,5 @@
 /*
-    Eine Musterebene: Index-Kachel geräteexakt kacheln und in der Abstufung von `color` einfärben.
+    One pattern layer: tile the index tile device-exact and color it in the levels of `color`.
 */
 import QtQuick
 import QtQuick.Window
@@ -14,13 +14,13 @@ ShaderEffect {
 
     readonly property var ramp: Palette.ramp(color)
 
-    // tatsächliches Verhältnis Gerätepixel/logische Pixel des Fensters. Screen.devicePixelRatio
-    // meldet unter Wayland bei gebrochener Skalierung (1,5) die ganzzahlige Ausgabeskalierung (2)
-    // – damit würde jeder Musterpixel abwechselnd 1 und 2 Gerätepixel breit.
-    // QQuickWindow.devicePixelRatio gibt es seit Qt 6.11, sonst Screen als Ersatz.
+    // Actual ratio of device to logical pixels of the window. With fractional scaling (1.5)
+    // Screen.devicePixelRatio on Wayland reports the integer output scale (2), which would make
+    // pattern pixels alternate between 1 and 2 device pixels.
+    // QQuickWindow.devicePixelRatio exists since Qt 6.11; Screen is the fallback.
     readonly property real devicePixelRatio: Window.window?.devicePixelRatio ?? Screen.devicePixelRatio
 
-    // Uniforms (Namen wie in shaders/backdrop.frag)
+    // uniforms (names as in shaders/backdrop.frag)
     readonly property size deviceSize: Qt.size(Math.round(width * devicePixelRatio),
                                                Math.round(height * devicePixelRatio))
     readonly property size tileSize: Qt.size(Math.max(1, tileImage.sourceSize.width),
@@ -38,7 +38,7 @@ ShaderEffect {
     Image {
         id: tileImage
         visible: false
-        // ungefiltert, nicht skaliert: der Shader liest ohnehin nur Texelmitten
+        // unfiltered and unscaled: the shader only reads texel centers
         smooth: false
         mipmap: false
         asynchronous: false

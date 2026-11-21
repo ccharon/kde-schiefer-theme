@@ -1,18 +1,19 @@
-# Schiefer – helles Schieferblau-grau (Nachfolger des früheren colors/Schiefer.colors)
-# Farbsätze wie bei CDE: 1 Aktivrahmen, 2 Inaktivrahmen, 3–4 Arbeitsflächen, 5 Textflächen,
-# 6 Hauptfenster, 7 Dialoge/Knöpfe, 8 Frontpanel. Alles Weitere leitet make_palette.py ab.
+# Schiefer: light slate blue gray.
+# Color sets as in CDE: 1 active frame, 2 inactive frame, 3-4 desktops, 5 text areas,
+# 6 main windows, 7 dialogs and buttons, 8 front panel. make_palette.py derives everything else.
 id = "Schiefer"
 name = "Schiefer"
-comment = "helles Solaris/CDE-artiges Farbschema (nachempfunden, keine Originalwerte)"
+name_de = "Schiefer"
+comment = "light Solaris/CDE-like color scheme (recreated, no original values)"
 variant = "light"
 
 [cde]
-1 = "#60729e"   # Aktivrahmen: kräftiges Schieferblau, deutlich vom Inhalt abgesetzt
-2 = "#aeb3c6"   # Inaktivrahmen: etwas dunkler und grauer als das Fenster
+1 = "#60729e"   # active frame: strong slate blue, clearly set off from the content
+2 = "#aeb3c6"   # inactive frame: a little darker and grayer than the window
 3 = "#8fa3bf"
 4 = "#bba78e"
-5 = "#e2e5ed"   # Textflächen: klar heller als das Fenster
-6 = "#bec2d3"   # Hauptfenster 190,194,211 (wie bisher)
+5 = "#e2e5ed"   # text areas: clearly lighter than the window
+6 = "#bec2d3"   # main window 190,194,211
 7 = "#bec2d3"
 8 = "#969eb8"
 

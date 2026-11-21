@@ -1,6 +1,6 @@
 /*
- * Digitaluhr im Motif-Stil: versenktes Anzeigefeld in dunklem Schiefer,
- * Siebensegment-Ziffern in hellem Blaugrau, unbeleuchtete Segmente schwach sichtbar.
+ * Digital clock in Motif style: sunken display in dark slate,
+ * seven-segment digits in light blue gray, unlit segments faintly visible.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -46,19 +46,19 @@ Item {
             onPaint: {
                 const ctx = getContext("2d");
                 ctx.reset();
-                // Platz: 4 Ziffern, 2 Abstände, 1 Doppelpunkt (Breiten in Ziffernbreiten)
+                // room: 4 digits, 2 gaps, 1 colon (widths in digit widths)
                 const units = 4 + 2 * 0.22 + 0.55;
                 let dw = width / units;
                 let dh = dw * 1.75;
                 if (dh > height) { dh = height; dw = dh / 1.75; }
-                const t = Math.max(2, dw * 0.22);      // Segmentstärke
+                const t = Math.max(2, dw * 0.22);      // segment thickness
                 const gap = dw * 0.22, cw = dw * 0.55;
                 let x = (width - dw * units) / 2;
                 const y = (height - dh) / 2;
                 const lit = clock.litColor;
                 const off = Qt.rgba(lit.r, lit.g, lit.b, 0.05);
 
-                // Segment als Sechseck mit spitzen Enden
+                // segment as a hexagon with pointed ends
                 const hSeg = (sx, sy, len) => {
                     ctx.beginPath();
                     ctx.moveTo(sx, sy);
@@ -85,7 +85,7 @@ Item {
                     const on = segs[n];
                     const l = dx + t / 2, r = dx + dw - t / 2;
                     const top = y + t / 2, mid = y + dh / 2, bot = y + dh - t / 2;
-                    const sp = Math.max(0.5, t * 0.12);   // Fuge zwischen den Segmenten
+                    const sp = Math.max(0.5, t * 0.12);   // gap between the segments
                     const hl = r - l - 2 * sp, vl = mid - top - 2 * sp;
                     const parts = {
                         a: () => hSeg(l + sp, top, hl),
@@ -105,7 +105,7 @@ Item {
                 const h = clock.now.getHours(), m = clock.now.getMinutes();
                 digit(Math.floor(h / 10), x); x += dw + gap;
                 digit(h % 10, x); x += dw;
-                // Doppelpunkt: zwei quadratische Punkte
+                // colon: two square dots
                 ctx.fillStyle = lit;
                 const p = t, cx = x + (cw - p) / 2;
                 ctx.fillRect(Math.round(cx), Math.round(y + dh * 0.3 - p / 2), Math.round(p), Math.round(p));

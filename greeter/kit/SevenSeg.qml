@@ -1,6 +1,6 @@
 /*
- * Siebensegment-Uhr wie im Dock (drawer/ClockFace.qml): versenktes dunkles Schieferfeld,
- * unbeleuchtete Segmente schwach sichtbar.
+ * Seven-segment clock as in the dock (drawer/ClockFace.qml): sunken dark slate field,
+ * unlit segments faintly visible.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick

@@ -1,5 +1,5 @@
 /*
- * Gesicht der System-Schublade: die aktiven Einträge des Systemabschnitts als Symbolraster
+ * Face of the system drawer: the active system tray entries as an icon grid
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -13,7 +13,7 @@ Item {
     id: face
 
     required property var tray      // TrayBridge
-    required property var model     // gefiltertes Systray-Modell (nur aktive Einträge)
+    required property var model     // filtered system tray model (active entries only)
     signal openDrawer()
 
     readonly property int count: Math.min(model ? model.count : 0, 4)
@@ -21,10 +21,10 @@ Item {
     readonly property int rows: count <= 2 ? 1 : 2
     readonly property int cell: Math.floor(Math.min(width / columns, height / Math.max(rows, columns)))
 
-    // Klicks neben die Symbole öffnen die Schublade
+    // clicks next to the icons open the drawer
     MouseArea { anchors.fill: parent; onClicked: face.openDrawer() }
 
-    // ohne aktive Einträge: allgemeines Systemsymbol
+    // without active entries: generic system icon
     Kirigami.Icon {
         anchors.fill: parent
         visible: face.count === 0

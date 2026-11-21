@@ -1,6 +1,6 @@
 /*
- * Motif-Popup-Menü: erhabene Tafel, Einträge mit erhabener Hervorhebung (wie XmMenuShell),
- * Optionsfelder als Raute. Liegt als Ebene über dem ganzen Bildschirm; Klick daneben schließt.
+ * Motif popup menu: raised panel, items with a raised highlight (like XmMenuShell),
+ * radio items as diamonds. Covers the whole screen as a layer; a click outside closes it.
  *   entries: [{type: "title"|"radio"|"item"|"sep", text, checked, enabled, action}]
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -15,7 +15,7 @@ Item {
     z: 100
 
     property Item anchorItem: null
-    property bool below: false          // Optionsmenüs klappen nach unten auf, Knopfmenüs nach oben
+    property bool below: false          // option menus open downward, button menus upward
     function open(anchor, openBelow) {
         anchorItem = anchor;
         below = openBelow === true;
@@ -47,7 +47,7 @@ Item {
     Bevel {
         id: panel
         base: menu.pal.bg
-        // bevorzugt über dem Knopf (Knöpfe stehen unten), sonst darunter; folgt der Tafelgröße
+        // above the button by default (buttons sit at the bottom), otherwise below; follows the panel size
         readonly property point at: menu.visible && menu.anchorItem ? menu.anchorItem.mapToItem(menu, 0, 0) : Qt.point(0, 0)
         x: Math.max(0, Math.min(menu.width - width, at.x))
         readonly property real up: at.y - height - 2
@@ -55,7 +55,7 @@ Item {
         y: menu.below ? (down + height <= menu.height ? down : up) : (up >= 0 ? up : down)
         width: col.width + 4
         height: col.height + 4
-        MouseArea { anchors.fill: parent }       // Klicks auf die Tafel schließen nicht
+        MouseArea { anchors.fill: parent }       // clicks on the panel do not close it
         Column {
             id: col
             x: 2; y: 2

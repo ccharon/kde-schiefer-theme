@@ -1,7 +1,7 @@
 /*
- * Farben und Grundmaß für alle Schiefer-Anmeldeteile. Vorgabe = Palette „Schiefer“;
- * Sperrbildschirm, Abmelden und Startbild setzen die Werte aus dem Farbschema (Kirigami),
- * SDDM aus theme.conf.
+ * Colors and base unit for all Schiefer login screens. Defaults = "Schiefer" palette;
+ * lock screen, logout and splash set the values from the color scheme (Kirigami),
+ * SDDM from theme.conf.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -19,8 +19,8 @@ QtObject {
     property color panelText: "#000000"
     property color alert: "#a02828"
     property color lamp: "#e0a030"        // Startlampe wie am Dock
-    // Schrift: Grundschrift des Systems (Sperre/Abmelden: Kirigami, SDDM: sddm.conf, dort oft nur 8 pt),
-    // für die Tafeln in Bildschirmmitte vergrößert; fontPoints > 0 setzt die Größe fest (SDDM: theme.conf).
+    // Font: the system font (lock/logout: Kirigami, SDDM: sddm.conf, often only 8 pt there),
+    // enlarged for the centered panels; fontPoints > 0 fixes the size (SDDM: theme.conf).
     property font baseFont: Qt.application.font
     property real fontPoints: 0
     readonly property real basePoints: baseFont.pointSize > 0 ? baseFont.pointSize : (baseFont.pixelSize > 0 ? baseFont.pixelSize * 0.75 : 10)
@@ -29,13 +29,13 @@ QtObject {
         pointSize: fontPoints > 0 ? fontPoints : Math.max(12, Math.round(basePoints * 1.25)),
         weight: baseFont.weight
     })
-    // Gerasterte Schrift mit Hinting wie in Plasma statt Distanzfeld (das wirkt klein und bei Faktor 1 kratzig)
+    // Rasterized, hinted text as in Plasma; distance field text looks thin and ragged at scale 1
     readonly property int renderType: Text.NativeRendering
 
     property FontMetrics metrics: FontMetrics { font: pal.font }
-    readonly property int u: Math.max(12, Math.round(metrics.height))   // Grundmaß = Zeilenhöhe
+    readonly property int u: Math.max(12, Math.round(metrics.height))   // base unit = line height
 
     function edges(c) { return Motif.colors(c); }
-    // Hover wie im Dock: ein Drittel des Wegs zur Motif-Lichtkante
+    // hover as in the dock: a third of the way to the Motif light edge
     function hover(c) { const t = Motif.colors(c).top; return Qt.rgba(c.r + (t.r - c.r) / 3, c.g + (t.g - c.g) / 3, c.b + (t.b - c.b) / 3, 1); }
 }

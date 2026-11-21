@@ -1,8 +1,8 @@
 /*
- * Ein Eintrag der Icon Box in der Symbolansicht (mwm): Bild im Rahmen, Beschriftung darunter.
- * Zustand über das Relief wie in der Listenansicht: offen = erhaben, aktiv = eingedrückt
- * + hervorgehobene Beschriftung, minimiert = flach + kursiv, Aufmerksamkeit = orange.
- * Gruppen tragen ein Zählschild und klappen per Klick seitlich ihre Fenster auf.
+ * An icon box entry in the icon view (mwm): image in a frame, label below.
+ * State through the relief as in the list view: open = raised, active = pressed in
+ * + highlighted label, minimized = flat + italic, attention = orange.
+ * Groups carry a count badge and open their windows to the side on click.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -33,7 +33,7 @@ Item {
                                             : Kirigami.Theme.backgroundColor
     readonly property string title: isGroup ? (model?.AppName || model?.display || "") : (model?.display ?? "")
 
-    // ---------- Rahmen mit Bild ----------
+    // ---------- Frame with image ----------
     Item {
         id: iconFrame
         anchors.horizontalCenter: parent.horizontalCenter
@@ -66,7 +66,7 @@ Item {
                 onRunningChanged: if (!running) icon.rotation = 0
             }
         }
-        // Zählschild für Gruppen
+        // count badge for groups
         Rectangle {
             visible: win.isGroup
             anchors.right: parent.right
@@ -85,7 +85,7 @@ Item {
         }
     }
 
-    // ---------- Beschriftung ----------
+    // ---------- Label ----------
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: iconFrame.bottom
@@ -134,8 +134,8 @@ Item {
         anchors.fill: parent
         active: !win.groupOpen
         mainText: win.title
-        subText: win.isGroup ? i18np("%1 Fenster", "%1 Fenster", win.model?.ChildCount ?? 0)
-               : [win.model?.AppName !== win.model?.display ? win.model?.AppName : "", win.minimized ? i18n("minimiert") : ""].filter(s => s).join(" – ")
+        subText: win.isGroup ? i18np("%1 window", "%1 windows", win.model?.ChildCount ?? 0)
+               : [win.model?.AppName !== win.model?.display ? win.model?.AppName : "", win.minimized ? i18n("minimized") : ""].filter(s => s).join(" – ")
         icon: win.model?.decoration
         location: Plasmoid.location
     }

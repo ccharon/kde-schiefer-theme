@@ -1,0 +1,121 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: schiefer\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+msgid "Show in the panel:"
+msgstr "Im Panel zeigen:"
+
+msgid "Icon of the main application"
+msgstr "Symbol des Hauptprogramms"
+
+msgid "Digital clock"
+msgstr "Digitaluhr"
+
+msgid "Calendar page"
+msgstr "Kalenderblatt"
+
+msgid "System tray (status icons)"
+msgstr "Systemabschnitt (Statussymbole)"
+
+msgid "Folder (contents in the drawer)"
+msgstr "Ordner (Inhalt in der Schublade)"
+
+msgid "Folder:"
+msgstr "Ordner:"
+
+msgid "for example ~/Desktop"
+msgstr "z. B. ~/Schreibtisch"
+
+msgid "Choose…"
+msgstr "Wählen …"
+
+msgid "Hide the Plasma system tray in the same panel"
+msgstr "Plasma-Systemabschnitt im selben Panel ausblenden"
+
+msgid "Drawer title:"
+msgstr "Titel der Schublade:"
+
+msgid "Name of the main application"
+msgstr "Name des Hauptprogramms"
+
+msgid "Drag applications from the launcher onto the tab or into the open drawer. Right click on an entry makes it the main icon. For the clock and the calendar page a click starts the main application if one is set (for example Merkuro); otherwise it opens the drawer. The system tray mode needs a Plasma system tray in the same panel; it shows its active icons and lists all entries in the drawer."
+msgstr "Programme aus dem Startmenü auf die Lasche oder in die geöffnete Schublade ziehen. Rechtsklick auf einen Eintrag macht ihn zum Hauptsymbol. Bei Uhr und Kalenderblatt startet ein Klick das Hauptprogramm, falls eines gesetzt ist (z. B. Merkuro), sonst öffnet er die Schublade. Der Systemabschnitt braucht einen Plasma-Systemabschnitt im selben Panel; er zeigt dessen aktive Symbole und listet in der Schublade alle Einträge."
+
+msgid "Configure System Tray…"
+msgstr "Systemabschnitt einrichten …"
+
+msgid "The folder is empty"
+msgstr "Der Ordner ist leer"
+
+msgid "No folder chosen"
+msgstr "Kein Ordner gewählt"
+
+msgid "Drop an icon here"
+msgstr "Symbol hier ablegen"
+
+msgid "Use as Main Icon in the Panel"
+msgstr "Als Hauptsymbol ins Panel"
+
+msgid "Move Up"
+msgstr "Nach oben"
+
+msgid "Move Down"
+msgstr "Nach unten"
+
+msgid "Remove from Drawer"
+msgstr "Aus der Schublade entfernen"
+
+msgctxt "@title"
+msgid "General"
+msgstr "Allgemein"
+
+msgid "Clock"
+msgstr "Uhr"
+
+msgid "Calendar"
+msgstr "Kalender"
+
+msgid "System"
+msgstr "System"
+
+msgid "Drawer"
+msgstr "Schublade"
+
+msgid "Choose a folder for the drawer"
+msgstr "Ordner für die Schublade wählen"
+
+msgid "Choose Folder…"
+msgstr "Ordner wählen …"
+
+msgid "Choose Main Application…"
+msgstr "Hauptprogramm wählen …"
+
+msgid "Add Application to Drawer…"
+msgstr "Programm in die Schublade legen …"
+
+msgid "No application"
+msgstr "Kein Programm"
+
+msgid "%1 entry. Click to open the folder."
+msgid_plural "%1 entries. Click to open the folder."
+msgstr[0] "%1 Eintrag – Klick öffnet den Ordner"
+msgstr[1] "%1 Einträge – Klick öffnet den Ordner"
+
+msgid "Click to choose a folder"
+msgstr "Klicken, um einen Ordner zu wählen"
+
+msgid "Click or drag an application here"
+msgstr "Klicken oder Programm hierher ziehen"
+
+msgctxt "@label name of the home folder (~)"
+msgid "Home Folder"
+msgstr "Persönlicher Ordner"
+
+msgctxt "@label name of the trash in the dock"
+msgid "Trash"
+msgstr "Papierkorb"

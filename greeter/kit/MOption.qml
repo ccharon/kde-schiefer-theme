@@ -1,7 +1,7 @@
 /*
- * Motif-Optionsmenü (XmOptionMenu): erhabener Knopf mit der aktuellen Wahl, rechts der kleine
- * erhabene Balken als Kaskadenzeichen. Klick, Leertaste, Eingabe oder Pfeil ab öffnen das Menü
- * (Signal activated, der Aufrufer öffnet sein MMenu an diesem Knopf).
+ * Motif option menu (XmOptionMenu): raised button with the current choice and the small
+ * raised bar as the cascade indicator on the right. Click, Space, Return or Down opens the menu
+ * (signal activated; the caller opens its MMenu at this button).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -21,7 +21,7 @@ Item {
         if ([Qt.Key_Space, Qt.Key_Return, Qt.Key_Enter, Qt.Key_Down].includes(e.key)) { e.accepted = true; o.activated(); }
     }
 
-    // Fokus: dunkler 1-px-Rahmen
+    // focus: dark 1 px frame
     Rectangle {
         anchors.fill: parent
         anchors.margins: -2
@@ -46,7 +46,7 @@ Item {
             color: o.pal.fg
             text: o.text
         }
-        // Kaskadenzeichen: flacher erhabener Balken
+        // cascade indicator: flat raised bar
         Bevel {
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right

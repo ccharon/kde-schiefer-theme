@@ -3,12 +3,12 @@
     "KPlugin": {
         "Authors": [{ "Name": "Schiefer" }],
         "Category": "",
-        "Description": "Motif/CDE-artiges Erscheinungsbild auf Basis von Breeze",
+        "Description": "Motif/CDE-like look based on Breeze",
         "Description[de]": "Motif/CDE-artiges Erscheinungsbild auf Basis von Breeze",
         "Id": "schiefer.desktop",
         "License": "GPL-2.0-or-later",
         "Name": "Schiefer",
-        "Version": "0.6"
+        "Version": "0.7"
     },
     "X-Plasma-APIVersion": "2"
 }

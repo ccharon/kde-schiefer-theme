@@ -1,6 +1,6 @@
 /*
- * Schiefer – Startbild: Muster-Hintergrund, Tafel mit Rechnername und Benutzer,
- * Fortschritt als versenkte Rinne mit Blöcken (eine je Startstufe) und blinkende Startlampe.
+ * Schiefer splash screen: pattern backdrop, panel with host name and user,
+ * progress as a sunken groove with blocks (one per startup stage) and a blinking launch lamp.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -56,7 +56,7 @@ Rectangle {
             RowLayout {
                 spacing: pal.u
                 Layout.fillWidth: true
-                // Rinne mit Blöcken
+                // groove with blocks
                 Bevel {
                     id: trough
                     base: pal.bg

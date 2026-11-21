@@ -1,7 +1,7 @@
 /*
- * Schiefer – Abmelden / Neu starten / Herunterfahren als Motif-Dialog mit Titelleiste.
- * Der Bildschirm dahinter wird mit einem 50-%-Punktraster abgedeckt (wie X11 Unzugängliches ausgraut).
- * Signale und Kontext (sdtype, maysd, spdMethods …) wie im Breeze-Design, sonst verbindet ksmserver nicht.
+ * Schiefer: log out / restart / shut down as a Motif dialog with a title bar.
+ * The screen behind it is covered with a 50 % dot pattern (the way X11 grays out unavailable things).
+ * Signals and context (sdtype, maysd, spdMethods ...) as in the Breeze theme, or ksmserver does not connect.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -70,7 +70,7 @@ Item {
     KCoreAddons.KUser { id: kuser }
     SessionsModel { id: otherSessions; includeUnusedSessions: false; includeOwnSession: false }
 
-    // 50-%-Punktraster über dem Bildschirm
+    // 50 % dot pattern over the screen
     Image {
         anchors.fill: parent
         source: "stipple.png"
@@ -175,7 +175,7 @@ Item {
             }
             Etch { base: pal.bg; Layout.fillWidth: true }
 
-            // Knopfzeile wie im Motif-Dialog: gleich breit, Standardknopf mit Ring
+            // button row as in a Motif dialog: equal widths, default button with a ring
             RowLayout {
                 id: buttons
                 spacing: Math.round(pal.u / 2)
@@ -228,7 +228,7 @@ Item {
         if (e.key === Qt.Key_Right || e.key === Qt.Key_Tab) { move(1); e.accepted = true; return; }
         const c = e.text.toLowerCase();
         if (!c) return;
-        // Mnemonik: mit oder ohne Alt, wie in Motif-Dialogen ohne Textfeld
+        // mnemonics: with or without Alt, as in Motif dialogs without a text field
         for (const b of visibleButtons()) {
             if (b.mnemonic === c) { b.clicked(); e.accepted = true; return; }
         }

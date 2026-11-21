@@ -37,12 +37,12 @@
 
 namespace Schiefer
 {
-// Schiefer: Lichtkanten im Gerätepixelraster (fraktionale Skalierung)
+// Schiefer: bevels on the device pixel grid (fractional scaling)
 namespace
 {
-// Skalierungsfaktor logisch -> Gerät, falls nur verschoben und gleichmäßig um einen gebrochenen
-// Faktor (z. B. 1,25 oder 1,5) skaliert wird; sonst 0. Dann wird wie bisher in logischen Pixeln
-// gezeichnet: bei ganzzahligen Faktoren (1, 2, 3) sind die Kanten ohnehin gleichmäßig und bleiben pixelgleich.
+// Logical-to-device scale factor if the transform is a translation plus a uniform fractional
+// scale (for example 1.25 or 1.5); otherwise 0, and drawing stays in logical pixels. Integer
+// factors (1, 2, 3) give even edges anyway.
 qreal bevelDeviceScale(const QPainter *painter)
 {
     const QTransform t = painter->deviceTransform();
@@ -52,13 +52,13 @@ qreal bevelDeviceScale(const QPainter *painter)
     return t.m11();
 }
 
-// Kante wie fillRect ohne AA (x,5 wird aufgerundet, wie auch die Widget-Clips), Toleranz gegen Rundungsfehler
+// Edge like fillRect without AA (x.5 rounds up, as the widget clips do), with tolerance for rounding errors
 int snapToDevice(qreal v)
 {
     return qFloor(v + 0.5 + 1e-4);
 }
 
-// ganzzahliges logisches Rechteck in Gerätepixel; Painter danach auf Gerätekoordinaten umstellen
+// Integer logical rect in device pixels; switches the painter to device coordinates
 QRect beginDevicePixels(QPainter *painter, const QRect &logical)
 {
     const QTransform t = painter->deviceTransform();
@@ -67,7 +67,7 @@ QRect beginDevicePixels(QPainter *painter, const QRect &logical)
     return QRect(QPoint(snapToDevice(m.left()), snapToDevice(m.top())), QPoint(snapToDevice(m.right()) - 1, snapToDevice(m.bottom()) - 1));
 }
 
-// eigentliche Lichtkante, je Linie 1 Pixel im aktuellen Koordinatensystem
+// The bevel itself, 1 pixel per line in the current coordinate system
 void fillBevel(QPainter *painter, const QRect &rect, const QColor &hi, const QColor &lo, int width)
 {
     for (int i = 0; i < width; ++i) {
@@ -249,7 +249,7 @@ QColor Helper::sidePanelOutlineColor(const QPalette &palette, bool hasFocus, qre
 //____________________________________________________________________
 QColor Helper::frameBackgroundColor(const QPalette &palette, QPalette::ColorGroup group) const
 {
-    return palette.color(group, QPalette::Window); // Schiefer: Motif-Flächen in Fensterfarbe
+    return palette.color(group, QPalette::Window); // Schiefer: Motif surfaces use the window color
 }
 
 //____________________________________________________________________
@@ -460,10 +460,10 @@ void Helper::renderFocusLine(QPainter *painter, const QRectF &rect, const QColor
         return;
     }
 
-    // Schiefer: Motif-Fokusrahmen um den Text statt Unterstrich.
-    // Belegte Pixel: 3 px links/rechts, 1 px oben/unten um den Text. Der Rahmen wird in den
-    // Bereich des Aufrufers geklemmt (nach innen gelegt statt abgeschnitten), damit beim
-    // Fokuswechsel keine Reste außerhalb des neu gezeichneten Rechtecks stehen bleiben.
+    // Schiefer: Motif focus frame around the text instead of an underline.
+    // It takes 3 px left/right and 1 px above/below the text. The frame is clamped into the
+    // caller's area (moved inward instead of clipped), so a focus change leaves no remnants
+    // outside the repainted rectangle.
     QRect frame = rect.toAlignedRect().adjusted(-3, -1, 3, 1);
     if (bounds.isValid()) {
         frame = frame.intersected(bounds);
@@ -476,7 +476,7 @@ void Helper::renderFocusLine(QPainter *painter, const QRectF &rect, const QColor
     painter->setRenderHint(QPainter::Antialiasing, false);
     painter->setBrush(Qt::NoBrush);
     painter->setPen(color);
-    painter->drawRect(frame.adjusted(0, 0, -1, -1)); // drawRect(QRect) zeichnet eine Spalte/Zeile mehr
+    painter->drawRect(frame.adjusted(0, 0, -1, -1)); // drawRect(QRect) draws one extra column/row
     painter->restore();
 }
 
@@ -561,7 +561,7 @@ void Helper::renderFrame(QPainter *painter, const QRectF &rect, const QColor &co
 }
 
 //______________________________________________________________________________
-// Schiefer: Grundbausteine – Kantenfarben nach der Motif-Formel (common/schiefercolors.h)
+// Schiefer: building blocks; edge colors from the Motif formula (common/schiefercolors.h)
 QColor Helper::bevelLight(const QColor &base) const
 {
     return SchieferColors::topShadow(base);
@@ -586,7 +586,7 @@ void Helper::renderBevel(QPainter *painter, const QRectF &rectF, const QColor &b
     }
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
-    // Schiefer: bei fraktionaler Skalierung in Gerätepixeln, Kantenbreite = round(width * Faktor)
+    // Schiefer: with fractional scaling in device pixels, edge width = round(width * factor)
     if (const qreal scale = bevelDeviceScale(painter)) {
         fillBevel(painter, beginDevicePixels(painter, rect), hi, lo, qMax(1, qRound(width * scale)));
     } else {
@@ -597,7 +597,7 @@ void Helper::renderBevel(QPainter *painter, const QRectF &rectF, const QColor &b
 
 void Helper::renderBevelPanel(QPainter *painter, const QRectF &rectF, const QColor &fill, const QColor &base, bool sunken, int width, int inset) const
 {
-    // Schiefer: Einzug und Kante bei fraktionaler Skalierung in ganzen Gerätepixeln
+    // Schiefer: inset and edge in whole device pixels with fractional scaling
     if (const qreal scale = bevelDeviceScale(painter)) {
         QColor hi = bevelLight(base), lo = bevelDark(base);
         if (sunken) {
@@ -628,7 +628,7 @@ void Helper::renderBevelPanel(QPainter *painter, const QRectF &rectF, const QCol
 void Helper::renderEtchedFrame(QPainter *painter, const QRectF &rectF, const QColor &base) const
 {
     const QRect r = rectF.toAlignedRect();
-    // Schiefer: bei fraktionaler Skalierung beide Linien gleich breit in Gerätepixeln
+    // Schiefer: with fractional scaling both lines have the same device pixel width
     if (const qreal scale = bevelDeviceScale(painter)) {
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing, false);
@@ -639,7 +639,7 @@ void Helper::renderEtchedFrame(QPainter *painter, const QRectF &rectF, const QCo
         painter->restore();
         return;
     }
-    // versenkte 1-px-Kante außen, erhabene 1-px-Kante innen -> geätzte Rille
+    // sunken 1 px edge outside, raised 1 px edge inside -> etched groove
     renderBevel(painter, r.adjusted(0, 0, -1, -1), base, true, 1);
     renderBevel(painter, r.adjusted(1, 1, 0, 0), base, false, 1);
 }
@@ -704,7 +704,7 @@ void Helper::renderSidePanelFrame(QPainter *painter, const QRectF &rect, const Q
 void Helper::renderMenuFrame(QPainter *painter, const QRectF &rect, const QColor &color, const QColor &outline, bool roundCorners, Qt::Edges seamlessEdges)
     const
 {
-    // Schiefer: eckiger, erhabener Motif-Menürahmen
+    // Schiefer: square, raised Motif menu frame
     Q_UNUSED(outline)
     Q_UNUSED(roundCorners)
     Q_UNUSED(seamlessEdges)
@@ -753,7 +753,7 @@ void Helper::renderButtonFrame(QPainter *painter,
                                qreal bgAnimation,
                                qreal penAnimation) const
 {
-    // Schiefer: Motif-Knopf – erhabene Fläche, gedrückt/eingerastet versenkt
+    // Schiefer: Motif button; raised surface, sunken when pressed or checked
     Q_UNUSED(bgAnimation)
     Q_UNUSED(penAnimation)
     const bool enabled = stateProperties.value("enabled", true);
@@ -765,7 +765,7 @@ void Helper::renderButtonFrame(QPainter *painter,
     const bool defaultButton = stateProperties.value("defaultButton");
     const bool hasNeutralHighlight = stateProperties.value("hasNeutralHighlight");
 
-    // flache Knöpfe (Werkzeugleiste) nur bei Hover/Druck/Zustand zeigen
+    // flat buttons (toolbar) only show on hover, press or checked state
     if (flat && !(hovered || down || checked || visualFocus)) {
         return;
     }
@@ -784,18 +784,18 @@ void Helper::renderButtonFrame(QPainter *painter,
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
 
-    // Standardknopf: zusätzlicher dunkler Ring wie bei Motif
+    // default button: extra dark ring as in Motif
     if (defaultButton && !flat) {
         painter->setPen(Qt::NoPen);
         renderBevel(painter, r, base, true, 1);
     }
 
-    // Schiefer: Einzug für den Ring über inset (in Gerätepixeln gleich breit wie der Ring)
+    // Schiefer: inset for the ring (same device pixel width as the ring)
     const int ring = (defaultButton && !flat) ? 1 : 0;
     renderBevelPanel(painter, r, fill, base, sunken, flat ? 1 : 2, ring);
     r.adjust(ring, ring, -ring, -ring);
 
-    // Tastaturfokus: dunkles Rechteck innen
+    // keyboard focus: dark rectangle inside
     if (visualFocus && enabled) {
         painter->setPen(QPen(palette.color(QPalette::Highlight).darker(130), 1));
         painter->setBrush(Qt::NoBrush);
@@ -848,7 +848,7 @@ void Helper::renderToolBoxFrame(QPainter *painter, const QRectF &rect, int tabWi
 //______________________________________________________________________________
 void Helper::renderTabWidgetFrame(QPainter *painter, const QRectF &rect, const QColor &color, const QColor &outline, Corners corners) const
 {
-    // Schiefer: erhabene Reiterfläche
+    // Schiefer: raised tab surface
     Q_UNUSED(outline)
     Q_UNUSED(corners)
     const QColor base = color.isValid() ? color : QColor(Qt::gray);
@@ -858,7 +858,7 @@ void Helper::renderTabWidgetFrame(QPainter *painter, const QRectF &rect, const Q
 //______________________________________________________________________________
 void Helper::renderSeparator(QPainter *painter, const QRectF &rect, const QColor &base, bool vertical) const
 {
-    // Schiefer: geätzte Linie (dunkel + hell) nach dem Farbkern: base = Fläche, auf der die Linie liegt
+    // Schiefer: etched line (dark + light) from the color core; base = surface under the line
     painter->setRenderHint(QPainter::Antialiasing, false);
     const QRect r = rect.toAlignedRect();
     const QColor dark = bevelDark(base);
@@ -883,7 +883,7 @@ void Helper::renderCheckBoxBackground(QPainter *painter,
                                       bool sunken,
                                       qreal animation) const
 {
-    // Schiefer: versenktes Kästchen
+    // Schiefer: sunken check box
     Q_UNUSED(state)
     Q_UNUSED(animation)
     const QRect box = rect.toAlignedRect().adjusted(2, 2, -2, -2);
@@ -1016,11 +1016,11 @@ void Helper::renderRadioButtonBackground(QPainter *painter,
     // Schiefer: Motif/CDE-Raute (Schalter [Style] RadioDiamond)
     if (StyleConfigData::radioDiamond()) {
         const QColor base = palette.color(QPalette::Window);
-        // gesetzt (auch während einer Umschaltanimation ab der Hälfte): Motif selectColor
+        // checked (also from halfway through a toggle animation): Motif selectColor
         const bool on = state == RadioOn || (state == RadioAnimated && animation >= 0.5);
         QColor fill = on ? bevelSelect(base) : palette.color(QPalette::Base);
         if (sunken && !on) {
-            fill = bevelSelect(fill); // gedrückt: wie beim Kästchen
+            fill = bevelSelect(fill); // pressed: as for the check box
         }
         if (neutalHighlight) {
             fill = KColorUtils::mix(fill, neutralText(palette), 0.25);
@@ -1029,7 +1029,7 @@ void Helper::renderRadioButtonBackground(QPainter *painter,
         return;
     }
 
-    // Schiefer: versenkter Kreis (CDE)
+    // Schiefer: sunken circle (CDE)
     Q_UNUSED(state)
     Q_UNUSED(animation)
     const QRectF r = QRectF(rect).adjusted(3, 3, -3, -3);
@@ -1046,7 +1046,7 @@ void Helper::renderRadioButtonBackground(QPainter *painter,
     painter->setPen(Qt::NoPen);
     painter->setBrush(fill);
     painter->drawEllipse(r);
-    // Schatten oben links, Licht unten rechts
+    // shadow top left, light bottom right
     QPen pen(bevelDark(base), 2);
     pen.setCapStyle(Qt::FlatCap);
     painter->setBrush(Qt::NoBrush);
@@ -1073,7 +1073,7 @@ void Helper::renderRadioButton(QPainter *painter,
     Q_UNUSED(sunken)
     Q_UNUSED(animationHover)
 
-    // Schiefer: die Raute zeichnet renderRadioButtonBackground vollständig (inkl. Füllung)
+    // Schiefer: renderRadioButtonBackground draws the complete diamond, fill included
     if (StyleConfigData::radioDiamond()) {
         return;
     }
@@ -1121,11 +1121,11 @@ void Helper::renderRadioButton(QPainter *painter,
 }
 
 //______________________________________________________________________________
-// Schiefer: versenkte Motif-Raute in Gerätepixeln. Ecken liegen auf ganzen Gerätepixeln, die Kanten
-// laufen also genau durch Pixelecken: jedes Randpixel ist exakt zur Hälfte bedeckt (50 %-Mischung),
-// alle anderen ganz – das wirkt bei jeder Skalierung gleichmäßig scharf. Gerechnet über den
-// L1-Abstand der Pixelmitte vom Mittelpunkt (bei halbzahligen Mitten immer ganzzahlig).
-// Obere Hälfte dunkel, untere hell (versenkt; Motif XmeDrawDiamond teilt waagerecht).
+// Schiefer: sunken Motif diamond in device pixels. Corners sit on whole device pixels, so the edges
+// run exactly through pixel corners: every edge pixel is covered by exactly half (50 % mix),
+// all others fully. This looks evenly sharp at every scale. Computed from the
+// L1 distance of the pixel center to the midpoint (always an integer for half-integer centers).
+// Upper half dark, lower half light (sunken; Motif XmeDrawDiamond splits horizontally).
 void Helper::renderRadioDiamond(QPainter *painter, const QRectF &rect, const QColor &fill, const QColor &base) const
 {
     painter->save();
@@ -1136,10 +1136,10 @@ void Helper::renderRadioDiamond(QPainter *painter, const QRectF &rect, const QCo
     if (t.type() <= QTransform::TxScale && t.m11() > 0 && qFuzzyCompare(t.m11(), t.m22())) {
         scale = t.m11();
         r = t.mapRect(rect);
-        painter->setWorldTransform(t.inverted() * painter->worldTransform()); // jetzt Gerätekoordinaten
+        painter->setWorldTransform(t.inverted() * painter->worldTransform()); // device coordinates from here
     }
 
-    // halbe Diagonale: 1 logisches Pixel Luft zum Indikatorrand (20 px -> 9), Kante 2 px
+    // half diagonal: 1 logical pixel gap to the indicator border (20 px -> 9), edge 2 px
     const int h = qMax(3, qRound((qMin(rect.width(), rect.height()) / 2 - 1) * scale));
     const int d = qMin(h - 1, qMax(1, qRound(2 * scale)));
     const int cx = qRound(r.center().x()), cy = qRound(r.center().y());
@@ -1153,9 +1153,9 @@ void Helper::renderRadioDiamond(QPainter *painter, const QRectF &rect, const QCo
     const QColor topInner = KColorUtils::mix(top, fill, 0.5), bottomInner = KColorUtils::mix(bottom, fill, 0.5);
 
     for (int y = cy - h; y < cy + h; ++y) {
-        const int dy = qAbs(2 * (y - cy) + 1); // doppelter Abstand (ungerade)
+        const int dy = qAbs(2 * (y - cy) + 1); // twice the distance (odd)
         const bool upper = y < cy;
-        // Lauf gleicher Farbe zusammenfassen
+        // merge a run of the same color
         int runStart = cx - h;
         QColor runColor;
         bool runValid = false;
@@ -1163,7 +1163,7 @@ void Helper::renderRadioDiamond(QPainter *painter, const QRectF &rect, const QCo
             QColor c;
             bool valid = false;
             if (x < cx + h) {
-                const int dist = (qAbs(2 * (x - cx) + 1) + dy) / 2; // L1-Abstand der Pixelmitte
+                const int dist = (qAbs(2 * (x - cx) + 1) + dy) / 2; // L1 distance of the pixel center
                 if (dist == h) {
                     c = upper ? topEdge : bottomEdge;
                     valid = true;
@@ -1195,7 +1195,7 @@ void Helper::renderRadioDiamond(QPainter *painter, const QRectF &rect, const QCo
 //______________________________________________________________________________
 void Helper::renderSliderGroove(QPainter *painter, const QRectF &rect, const QColor &fg, const QColor &bg) const
 {
-    // Schiefer: versenkte Rinne (fg wird nicht genutzt – Motif kennt keine Füllung)
+    // Schiefer: sunken groove (fg is unused because Motif has no fill)
     Q_UNUSED(fg)
     renderBevelPanel(painter, rect, bevelSelect(bg), bg, true, 2); // Schiefer: Motif troughColor = select
 }
@@ -1272,7 +1272,7 @@ QRectF Helper::pathForSliderHandleFocusFrame(QPainterPath &focusFramePath, const
 //______________________________________________________________________________
 void Helper::renderSliderHandle(QPainter *painter, const QRectF &rect, const QColor &color, const QColor &outline, const QColor &shadow, bool sunken) const
 {
-    // Schiefer: erhabener eckiger Daumen
+    // Schiefer: raised square handle
     Q_UNUSED(outline)
     Q_UNUSED(shadow)
     Q_UNUSED(sunken)
@@ -1282,7 +1282,7 @@ void Helper::renderSliderHandle(QPainter *painter, const QRectF &rect, const QCo
 
 void Helper::renderRetroSliderThumb(QPainter *painter, const QRectF &rect, const QColor &color, bool horizontal) const
 {
-    // Motif-Daumen: länglich quer zur Rinne, mit geätzter Mittellinie
+    // Motif handle: oblong across the groove, with an etched center line
     QRect r = rect.toAlignedRect();
     if (horizontal) {
         r.adjust(0, 2, 0, -2);
@@ -1290,10 +1290,10 @@ void Helper::renderRetroSliderThumb(QPainter *painter, const QRectF &rect, const
         r.adjust(2, 0, -2, 0);
     }
     if (r.isEmpty()) {
-        return; // Schiefer: zu klein
+        return; // Schiefer: too small
     }
     renderBevelPanel(painter, r, color, color, false, 2);
-    // geätzte Mittellinie nur, wenn innerhalb der Kanten Platz ist
+    // etched center line only if there is room inside the edges
     if ((horizontal ? r.height() : r.width()) <= 4) {
         return;
     }
@@ -1313,7 +1313,7 @@ void Helper::renderRetroSliderThumb(QPainter *painter, const QRectF &rect, const
 //______________________________________________________________________________
 void Helper::renderProgressBarGroove(QPainter *painter, const QRectF &rect, const QColor &fg, const QColor &bg) const
 {
-    // Schiefer: versenkte Rinne
+    // Schiefer: sunken groove
     Q_UNUSED(fg)
     renderBevelPanel(painter, rect, bevelSelect(bg), bg, true, 2); // Schiefer: Motif troughColor = select
 }
@@ -1373,7 +1373,7 @@ void Helper::renderProgressBarBusyContents(QPainter *painter,
 //______________________________________________________________________________
 void Helper::renderScrollBarHandle(QPainter *painter, const QRectF &rect, const QColor &fg, const QColor &bg) const
 {
-    // Schiefer: erhabener Motif-Schieber (fg = Knopffarbe)
+    // Schiefer: raised Motif slider (fg = button color)
     Q_UNUSED(bg)
     renderBevelPanel(painter, rect, fg, fg, false, 2);
 }
@@ -1396,7 +1396,7 @@ void Helper::renderStaticTabBarTab(QPainter *painter,
                                    Corners corners,
                                    qreal animation) const
 {
-    // Schiefer: Motif-Reiter – drei erhabene Kanten, der aktive verschmilzt mit der Fläche
+    // Schiefer: Motif tab; three raised edges, the active one merges with the surface
     Q_UNUSED(corners)
     Q_UNUSED(animation)
     const bool selected = stateProperties.value("selected");
@@ -1407,7 +1407,7 @@ void Helper::renderStaticTabBarTab(QPainter *painter,
     const QColor base = palette.color(QPalette::Window);
     const QColor hi = bevelLight(base), lo = bevelDark(base);
     QRect r = rect.toAlignedRect();
-    // inaktive Reiter etwas niedriger und dunkler
+    // inactive tabs a little lower and darker
     if (!selected) {
         if (north) r.adjust(0, 2, 0, 0);
         else if (south) r.adjust(0, 0, 0, -2);
@@ -1415,7 +1415,7 @@ void Helper::renderStaticTabBarTab(QPainter *painter,
         else if (east) r.adjust(0, 0, -2, 0);
     }
     if (r.width() < 4 || r.height() < 4) {
-        return; // Schiefer: zu klein für zwei Kanten
+        return; // Schiefer: too small for two edges
     }
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
@@ -1452,7 +1452,7 @@ void Helper::renderTabBarTab(QPainter *painter,
                              Corners corners,
                              qreal animation) const
 {
-    // Schiefer: Motif-Reiter – drei erhabene Kanten, der aktive verschmilzt mit der Fläche
+    // Schiefer: Motif tab; three raised edges, the active one merges with the surface
     Q_UNUSED(corners)
     Q_UNUSED(animation)
     const bool selected = stateProperties.value("selected");
@@ -1463,7 +1463,7 @@ void Helper::renderTabBarTab(QPainter *painter,
     const QColor base = palette.color(QPalette::Window);
     const QColor hi = bevelLight(base), lo = bevelDark(base);
     QRect r = rect.toAlignedRect();
-    // inaktive Reiter etwas niedriger und dunkler
+    // inactive tabs a little lower and darker
     if (!selected) {
         if (north) r.adjust(0, 2, 0, 0);
         else if (south) r.adjust(0, 0, 0, -2);
@@ -1471,7 +1471,7 @@ void Helper::renderTabBarTab(QPainter *painter,
         else if (east) r.adjust(0, 0, -2, 0);
     }
     if (r.width() < 4 || r.height() < 4) {
-        return; // Schiefer: zu klein für zwei Kanten
+        return; // Schiefer: too small for two edges
     }
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
@@ -1559,7 +1559,7 @@ void Helper::renderArrow(QPainter *painter, const QRectF &rect, const QColor &co
 
     arrow.translate(rect.x() + (rect.width() - size) / 2.0, rect.y() + (rect.height() - size) / 2.0);
 
-    // Schiefer: gefülltes Motif-Dreieck
+    // Schiefer: filled Motif triangle
     painter->save();
     painter->setRenderHints(QPainter::Antialiasing);
     painter->setPen(QPen(color, 1));
@@ -1951,9 +1951,9 @@ qreal Helper::devicePixelRatio(QPainter *painter) const
 //______________________________________________________________________________
 void Helper::renderOptionMenuIndicator(QPainter *painter, const QRectF &rect, const QColor &base, bool enabled) const
 {
-    // Motif-Optionsmenü: kleiner erhabener Balken statt Pfeil
+    // Motif option menu: small raised bar instead of an arrow
     const QRect r = rect.toAlignedRect();
-    const int w = qMin(12, r.width()), h = qMin(7, r.height()); // Schiefer: nie größer als rect
+    const int w = qMin(12, r.width()), h = qMin(7, r.height()); // Schiefer: never larger than rect
     if (w < 4 || h < 4) {
         return;
     }
@@ -1966,14 +1966,14 @@ void Helper::renderRetroDial(QPainter *painter, const QRectF &rect, const QPalet
 {
     const qreal size = qMin(rect.width(), rect.height()) - 2;
     if (size < 6) {
-        return; // Schiefer: zu klein für Mulde und Ring
+        return; // Schiefer: too small for well and ring
     }
     const QRectF outer(rect.center().x() - size / 2, rect.center().y() - size / 2, size, size);
     const QColor base = palette.color(QPalette::Window);
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, true);
 
-    // versenkte Mulde
+    // sunken well
     painter->setPen(Qt::NoPen);
     painter->setBrush(bevelSelect(base)); // Schiefer: Mulde in Motif-Auswahlfarbe
     painter->drawEllipse(outer);
@@ -1987,7 +1987,7 @@ void Helper::renderRetroDial(QPainter *painter, const QRectF &rect, const QPalet
     painter->setPen(pen);
     painter->drawArc(ring, 225 * 16, 180 * 16);
 
-    // erhabener Knopf (bei sehr kleinem Regler nur die Mulde)
+    // raised knob (only the well for very small dials)
     const QRectF knob = outer.adjusted(6, 6, -6, -6);
     if (knob.width() < 8) {
         painter->restore();
@@ -2004,7 +2004,7 @@ void Helper::renderRetroDial(QPainter *painter, const QRectF &rect, const QPalet
     painter->setPen(pen);
     painter->drawArc(kring, 225 * 16, 180 * 16);
 
-    // Kerbe als Zeiger
+    // notch as the pointer
     const QPointF c = knob.center();
     const qreal rk = knob.width() / 2;
     const QPointF dir(std::cos(angle), -std::sin(angle));

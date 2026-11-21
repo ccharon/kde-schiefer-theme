@@ -1,15 +1,15 @@
 /*
- * Schiefer – Farben aus dem aktiven Farbschema für die Dock-Widgets
- *  - motifColors(): Kantenfarben nach der Motif-Formel (common/schiefercolors.h)
- *  - desktopColors / frontPanel: Gruppe [Schiefer] der Schemadatei (color-schemes/<Name>.colors);
- *    KDE kopiert diese Gruppe nicht nach kdeglobals, deshalb wird die Datei selbst gelesen.
- *    Aktualisiert sich, wenn sich das Schema in kdeglobals ändert (KConfigWatcher) oder die Datei.
- *  - usePanelColor / panelColor: Schalter `frontpanel-farbe` (schieferrc [Dock] FrontPanelColor,
- *    Vorgabe an). Gilt nur, wenn das Schema eine FrontPanel-Farbe hat; sonst bleibt es bei der
- *    Fensterfarbe (Kirigami.Theme.backgroundColor).
- *  - hoverColor(): Hover-Tönung aus der Motif-Formel, ein Drittel des Wegs zur Lichtkante.
- *  - tintFrames(): färbt die Plasma-Rahmen (Leistenhintergrund, Popup-Hintergrund) im Fenster
- *    eines Items in der Frontpanel-Farbe bzw. setzt sie zurück.
+ * Schiefer: colors from the active color scheme for the dock widgets
+ *  - motifColors(): edge colors from the Motif formula (common/schiefercolors.h)
+ *  - desktopColors / frontPanel: group [Schiefer] of the scheme file (color-schemes/<name>.colors);
+ *    KDE does not copy this group to kdeglobals, so the file itself is read.
+ *    Updates when the scheme in kdeglobals changes (KConfigWatcher) or the file changes.
+ *  - usePanelColor / panelColor: option `frontpanel-color` (schieferrc [Dock] FrontPanelColor,
+ *    default on). Applies only if the scheme has a FrontPanel color; otherwise the
+ *    window color stays (Kirigami.Theme.backgroundColor).
+ *  - hoverColor(): hover tint from the Motif formula, a third of the way to the light edge.
+ *  - tintFrames(): tints the Plasma frames (panel background, popup background) in the window
+ *    of an item with the front panel color, or resets them.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
@@ -31,13 +31,13 @@ class SchieferScheme : public QObject
     QML_SINGLETON
 
     Q_PROPERTY(QString schemeName READ schemeName NOTIFY changed)
-    // leer, wenn das Schema keine [Schiefer]-Gruppe hat
+    // empty if the scheme has no [Schiefer] group
     Q_PROPERTY(QStringList desktopColors READ desktopColors NOTIFY changed)
     Q_PROPERTY(QColor frontPanel READ frontPanel NOTIFY changed)
     Q_PROPERTY(bool hasFrontPanel READ hasFrontPanel NOTIFY changed)
-    // Schalter frontpanel-farbe an und Schema hat FrontPanel
+    // option frontpanel-color on and the scheme has FrontPanel
     Q_PROPERTY(bool usePanelColor READ usePanelColor NOTIFY changed)
-    // Frontpanel-Farbe, wenn usePanelColor, sonst ungültig
+    // front panel color if usePanelColor, otherwise invalid
     Q_PROPERTY(QColor panelColor READ panelColor NOTIFY changed)
 
 public:
@@ -50,12 +50,12 @@ public:
     bool usePanelColor() const { return m_panelEnabled && m_frontPanel.isValid(); }
     QColor panelColor() const { return usePanelColor() ? m_frontPanel : QColor(); }
 
-    // {top, bottom, select, foreground} zur Grundfarbe, Motif-Formel
+    // {top, bottom, select, foreground} for the base color, Motif formula
     Q_INVOKABLE QVariantMap motifColors(const QColor &base) const;
-    // Hover-Tönung zur Grundfarbe: ein Drittel des Wegs zur Motif-Lichtkante (hell wie dunkel)
+    // hover tint for the base color: a third of the way to the Motif light edge (light and dark)
     Q_INVOKABLE QColor hoverColor(const QColor &base) const;
-    // Plasma-Rahmen (widgets/panel-background, dialogs/background) im Fenster von item färben
-    // (usePanelColor) bzw. zurücksetzen
+    // tint the Plasma frames (widgets/panel-background, dialogs/background) in the window of item
+    // (usePanelColor) or reset them
     Q_INVOKABLE void tintFrames(QQuickItem *item) const;
 
 Q_SIGNALS:

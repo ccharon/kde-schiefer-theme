@@ -1,20 +1,20 @@
 #!/bin/bash
-# Bringt Schiefer ins lokale Overlay (Standard: /var/db/repos/local, anders: REPO=/pfad).
+# Puts Schiefer into a local overlay (default: /var/db/repos/local, otherwise REPO=/path).
 #
-#   Im Projekt:        tools/install-overlay.sh       packt erst dist/ (make-dist.sh), dann Installation
-#   Anderer Rechner:   dist/ kopieren (z. B. scp -r dist macbook:schiefer-dist), dort:
+#   In the project:    tools/install-overlay.sh       packs dist/ first (make-dist.sh), then installs
+#   Other machine:     copy dist/ (for example scp -r dist macbook:schiefer-dist), there:
 #                      ~/schiefer-dist/install-overlay.sh
 #
-# Als normaler Benutzer aufrufen; das Skript ruft sich per sudo selbst auf. Als root:
-# Tarball nach DISTDIR, Ebuilds ins Overlay, `ebuild … digest`, Besitzer root:root,
-# Rechte: Dateien 644 (root lesen/schreiben, alle anderen lesen),
-#         Verzeichnisse 755 (zusätzlich betretbar – sonst könnte Portage sie nicht lesen).
+# Run as a normal user; the script calls itself through sudo. As root it puts the
+# tarball into DISTDIR and the ebuilds into the overlay, runs `ebuild ... digest`, owner root:root,
+# modes: files 644 (root read/write, everyone else read),
+#        directories 755 (also searchable, or Portage could not read them).
 set -euo pipefail
 SELF="$(readlink -f "$0")"
 HERE="$(dirname "$SELF")"
 REPO="${REPO:-/var/db/repos/local}"
 
-# Liegt das Skript in einem dist-Ordner (Tarball + overlay/ daneben) oder im Projekt unter tools/?
+# Is the script inside a dist directory (tarball + overlay/ next to it) or in the project under tools/?
 if [ -d "$HERE/overlay" ] && [ -f "$HERE/VERSION" ]; then
     DIST="$HERE"
 else
@@ -25,14 +25,14 @@ else
 fi
 
 if [ "$(id -u)" -ne 0 ]; then
-    echo "Weiter als root …"
+    echo "Continuing as root ..."
     exec sudo REPO="$REPO" "$SELF"
 fi
 
 V="$(cat "$DIST/VERSION")"
 TARBALL="$DIST/schiefer-$V.tar.xz"
-[ -f "$TARBALL" ] || { echo "Fehlt: $TARBALL – erst tools/make-dist.sh ausführen" >&2; exit 1; }
-[ -d "$REPO/profiles" ] || { echo "Kein Overlay unter $REPO" >&2; exit 1; }
+[ -f "$TARBALL" ] || { echo "Missing: $TARBALL. Run tools/make-dist.sh first." >&2; exit 1; }
+[ -d "$REPO/profiles" ] || { echo "No overlay at $REPO" >&2; exit 1; }
 
 DISTDIR="$(portageq distdir)"
 install -o root -g root -m 0644 "$TARBALL" "$DISTDIR/"
@@ -41,7 +41,7 @@ echo "Tarball -> $DISTDIR/$(basename "$TARBALL")"
 install -d -o root -g root -m 0755 "$REPO/x11-themes"
 for src in "$DIST"/overlay/x11-themes/*/; do
     pkg="$(basename "$src")"
-    case "$pkg" in schiefer|schiefer-*) ;; *) echo "übersprungen: $pkg"; continue ;; esac
+    case "$pkg" in schiefer|schiefer-*) ;; *) echo "skipped: $pkg"; continue ;; esac
     dest="$REPO/x11-themes/$pkg"
     rm -rf "$dest"
     cp -r "$src" "$dest"
@@ -54,4 +54,4 @@ for src in "$DIST"/overlay/x11-themes/*/; do
 done
 
 echo
-echo "Fertig. Installieren mit:  emerge -av x11-themes/schiefer"
+echo "Done. Install with:  emerge -av x11-themes/schiefer"

@@ -1,10 +1,10 @@
 /*
- * Schiefer – Brücke zum Plasma-Systemabschnitt (org.kde.plasma.systemtray)
+ * Schiefer: bridge to the Plasma system tray (org.kde.plasma.systemtray)
  *
- * Die System-Schublade zeigt die Einträge des Systrays selbst an. Der Systray bleibt
- * dafür im selben Panel, wird aber ausgeblendet (HiddenStatus); seine Popups hängen
- * wir an die Schublade um. Zugriff nur über Properties/Q_INVOKABLEs, ohne private Header –
- * welche Plasma-Interna das sind, steht in UPSTREAM.md („Plasma-Interna des Docks“).
+ * The system drawer shows the system tray entries itself. The system tray stays
+ * in the same panel but hidden (HiddenStatus); its popups are reparented
+ * to the drawer. Access is only through properties and Q_INVOKABLEs, without private headers.
+ * UPSTREAM.md lists these Plasma internals ("Plasma internals used by the dock").
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
@@ -30,14 +30,14 @@ class SchieferTray : public QObject
     Q_OBJECT
     QML_NAMED_ELEMENT(TrayBridge)
 
-    // das eigene Applet (Plasmoid), darüber finden wir den Systray im selben Panel
+    // our own applet (Plasmoid), used to find the system tray in the same panel
     Q_PROPERTY(QObject *applet READ applet WRITE setApplet NOTIFY appletChanged)
-    // Item, an dem die Systray-Popups erscheinen sollen
+    // item at which the system tray popups should appear
     Q_PROPERTY(QQuickItem *popupAnchor READ popupAnchor WRITE setPopupAnchor NOTIFY popupAnchorChanged)
     Q_PROPERTY(bool hideTray READ hideTray WRITE setHideTray NOTIFY hideTrayChanged)
     Q_PROPERTY(bool available READ available NOTIFY trayChanged)
     Q_PROPERTY(QAbstractItemModel *model READ model NOTIFY trayChanged)
-    // Testhilfe: Inhalt von SCHIEFER_DOCK_TRAY
+    // test helper: value of SCHIEFER_DOCK_TRAY
     Q_PROPERTY(QString testItem READ testItem CONSTANT)
 
 public:
@@ -54,13 +54,13 @@ public:
     QAbstractItemModel *model() const;
     QString testItem() const;
 
-    // Plasmoid-Eintrag (model.applet) auf- bzw. zuklappen
+    // expand or collapse a plasmoid entry (model.applet)
     Q_INVOKABLE void togglePlasmoid(QQuickItem *appletItem);
-    // StatusNotifierItem (model.DataEngineSource) aktivieren / Kontextmenü
+    // activate a StatusNotifierItem (model.DataEngineSource) / context menu
     Q_INVOKABLE void activateSni(const QString &service, QQuickItem *source);
     Q_INVOKABLE void sniContextMenu(const QString &service, QQuickItem *source);
     Q_INVOKABLE void sniScroll(const QString &service, int delta, bool horizontal);
-    // Popup des Systrays mit allen Einträgen (Breeze-Ansicht)
+    // system tray popup with all entries (Breeze view)
     Q_INVOKABLE void toggleTrayPopup();
     Q_INVOKABLE void configureTray();
 
@@ -74,12 +74,12 @@ private:
     void findTray();
     void setTray(Plasma::Applet *tray);
     void applyHidden();
-    // Popup an m_anchor hängen; warn: fehlendes Popup melden (beim Klick, nicht beim Start)
+    // attach the popup to m_anchor; warn: report a missing popup (on click, not on start)
     void retargetPopup(bool warn = false);
-    // ursprüngliches visualParent des Systray-Popups wiederherstellen
+    // restore the original visualParent of the system tray popup
     void restorePopup();
     QObject *findPopup() const;
-    // wartet kurz, falls Modell oder Popup des Systrays beim Fund noch fehlen
+    // waits briefly if model or popup of the system tray are still missing when found
     void retryTick();
     bool checkInvoke(bool ok, const char *method);
     void warnOnce(const char *key, const QString &message);
@@ -93,7 +93,7 @@ private:
     bool m_trayHiddenByUs = false;
     Plasma::Types::ItemStatus m_trayOldStatus = Plasma::Types::PassiveStatus;
 
-    // umgehängtes Popup und sein visualParent vor dem Umhängen (das Systray-Item)
+    // reparented popup and its visualParent before reparenting (the system tray item)
     QPointer<QObject> m_popup;
     QPointer<QQuickItem> m_popupOrigParent;
     QPointer<QQuickItem> m_popupSetTo;

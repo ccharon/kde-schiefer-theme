@@ -842,7 +842,7 @@ int Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWi
     case PM_SliderControlThickness:
         return Metrics::Slider_ControlThickness;
     case PM_SliderLength:
-        return Metrics::Slider_RetroThumbLength; // Schiefer: länglicher Motif-Daumen
+        return Metrics::Slider_RetroThumbLength; // Schiefer: oblong Motif handle
 
     // checkboxes and radio buttons
     case PM_IndicatorWidth:
@@ -1415,7 +1415,7 @@ bool Style::drawWidgetPrimitive(const QStyleOption *option, QPainter *painter, c
 
         rect.setWidth(splitterWidth);
 
-        // Schiefer: Kanten aus der Fensterfarbe (Farbkern)
+        // Schiefer: edges from the window color (color core)
         _helper->renderSeparator(painter, rect, option->palette.color(QPalette::Window), true);
     }
     return true;
@@ -1730,7 +1730,7 @@ bool Style::eventFilterDialogButtonBox(QDialogButtonBox *widget, QEvent *event)
         rect.setHeight(1);
         const auto &palette(widget->palette());
 
-        // Schiefer: Kanten aus der Fensterfarbe (Farbkern)
+        // Schiefer: edges from the window color (color core)
         _helper->renderSeparator(&painter, rect, palette.color(QPalette::Window), false);
     }
 
@@ -1759,7 +1759,7 @@ bool Style::eventFilterPageViewHeader(QWidget *widget, QEvent *event)
             rect.setHeight(rect.height() - Metrics::ToolBar_SeparatorVerticalMargin * 2);
             rect.setY(Metrics::ToolBar_SeparatorVerticalMargin);
 
-            // Schiefer: Kanten aus der Fensterfarbe (Farbkern)
+            // Schiefer: edges from the window color (color core)
             _helper->renderSeparator(&painter, rect, palette.color(QPalette::Window), true);
         }
     }
@@ -2063,7 +2063,7 @@ void Style::configurationChanged()
     // reload configuration
     loadConfiguration();
 
-    // Schiefer: Schalter wie RadioDiamond wirken beim Zeichnen – offene Fenster sofort neu zeichnen
+    // Schiefer: options such as RadioDiamond affect painting, so repaint open windows right away
     const auto topLevels = QApplication::topLevelWidgets();
     for (QWidget *widget : topLevels) {
         widget->update();
@@ -2084,8 +2084,8 @@ void Style::loadGlobalAnimationSettings()
     const int animationsDuration = cg.readEntry("AnimationDurationFactor", StyleConfigData::animationsDuration() / 100.0f) * 100;
     if (animationsDuration > 0) {
         StyleConfigData::setAnimationsDuration(animationsDuration);
-        // Schiefer: globale Animationsgeschwindigkeit schaltet Animationen nicht ein –
-        // das entscheidet [Style] AnimationsEnabled in schieferrc (Standard aus); 0 schaltet weiterhin aus
+        // Schiefer: the global animation speed does not enable animations; [Style] AnimationsEnabled
+        // in schieferrc decides (default off). A speed of 0 still disables them.
     } else {
         StyleConfigData::setAnimationsEnabled(false);
     }
@@ -3272,7 +3272,7 @@ QRect Style::sliderSubControlRect(const QStyleOptionComplex *option, SubControl 
 
     switch (subControl) {
     case SC_SliderHandle: {
-        // Schiefer: länglicher Daumen (entlang der Rinne länger)
+        // Schiefer: oblong handle (longer along the groove)
         constexpr int len = Metrics::Slider_RetroThumbLength;
         QRect ret(horizontal ? centerRect(rect, len, Metrics::Slider_ControlThickness) : centerRect(rect, Metrics::Slider_ControlThickness, len));
         const int sliderPos = sliderPositionFromValue(sliderOption->minimum,
@@ -3971,7 +3971,7 @@ bool Style::drawFramePrimitive(const QStyleOption *option, QPainter *painter, co
             _frameShadowFactory->updateState(widget, hasFocus, mouseOver, opacity, mode);
         }
 
-        // Schiefer: versenktes Feld
+        // Schiefer: sunken field
         Q_UNUSED(opacity)
         Q_UNUSED(mode)
         _helper->renderSunkenField(painter, rect, palette, hasFocus);
@@ -4081,7 +4081,7 @@ bool Style::drawFrameLineEditPrimitive(const QStyleOption *option, QPainter *pai
         const qreal opacity(_animations->inputWidgetEngine().frameOpacity(widget));
 
         // render
-        // Schiefer: versenktes Eingabefeld
+        // Schiefer: sunken entry field
         Q_UNUSED(opacity)
         Q_UNUSED(mode)
         _helper->renderSunkenField(painter, rect, palette, hasFocus);
@@ -4222,7 +4222,7 @@ bool Style::drawFrameGroupBoxPrimitive(const QStyleOption *option, QPainter *pai
      */
 
     painter->setClipRegion(option->rect);
-    // Schiefer: geätzter Gruppenrahmen ohne eigene Füllung
+    // Schiefer: etched group box frame without its own fill
     Q_UNUSED(background)
     Q_UNUSED(outline)
     _helper->renderEtchedFrame(painter, option->rect, palette.color(QPalette::Window));
@@ -4715,7 +4715,7 @@ bool Style::drawPanelMenuPrimitive(const QStyleOption *option, QPainter *painter
     const auto &palette(option->palette);
     const bool hasAlpha(_helper->hasAlphaChannel(widget));
     const auto seamlessEdges = _helper->menuSeamlessEdges(widget);
-    auto background(palette.color(QPalette::Window)); // Schiefer: Menü in Fensterfarbe
+    auto background(palette.color(QPalette::Window)); // Schiefer: menu in the window color
     auto outline(_helper->frameOutlineColor(palette));
 
     painter->save();
@@ -5180,7 +5180,7 @@ bool Style::drawIndicatorToolBarHandlePrimitive(const QStyleOption *option, QPai
     const bool separatorIsVertical(state & State_Horizontal);
 
     // define color and render
-    const auto color(palette.color(QPalette::Window)); // Schiefer: Fläche für den Farbkern
+    const auto color(palette.color(QPalette::Window)); // Schiefer: surface for the color core
     if (separatorIsVertical) {
         rect.setWidth(Metrics::ToolBar_HandleWidth);
         rect = centerRect(option->rect, rect.size());
@@ -5224,7 +5224,7 @@ bool Style::drawIndicatorToolBarSeparatorPrimitive(const QStyleOption *option, Q
     const bool separatorIsVertical(state & State_Horizontal);
 
     // define color and render
-    const auto color(palette.color(QPalette::Window)); // Schiefer: Fläche für den Farbkern
+    const auto color(palette.color(QPalette::Window)); // Schiefer: surface for the color core
     _helper->renderSeparator(painter, rect, color, separatorIsVertical);
 
     return true;
@@ -5320,7 +5320,7 @@ bool Style::drawPanelStatusBarPrimitive(const QStyleOption *option, QPainter *pa
         return true;
     }
     auto rect(option->rect);
-    const auto color(option->palette.color(QPalette::Window)); // Schiefer: Fläche für den Farbkern
+    const auto color(option->palette.color(QPalette::Window)); // Schiefer: surface for the color core
     const auto size = pixelMetric(QStyle::PM_SplitterWidth, option, widget);
     rect.setHeight(size);
     _helper->renderSeparator(painter, rect, color, false);
@@ -5763,8 +5763,8 @@ bool Style::drawCheckBoxLabelControl(const QStyleOption *option, QPainter *paint
     }
 
     // render focus
-    // Schiefer: im neu gezeichneten Bereich bleiben (QCheckBox/QRadioButton zeichnen beim Fokuswechsel
-    // das ganze Widget neu; option->rect ist hier nur der Textbereich und wäre zu eng)
+    // Schiefer: stay inside the repainted area (QCheckBox/QRadioButton repaint the whole widget on
+    // focus change; option->rect is only the text area here and would be too narrow)
     _helper->renderFocusLine(painter, focusRect, focusColor, widget ? widget->rect() : option->rect);
 
     return true;
@@ -5881,7 +5881,7 @@ bool Style::drawMenuBarItemControl(const QStyleOption *option, QPainter *painter
             color = _helper->hoverColor(palette);
         }
 
-        // Schiefer: erhabener Menüleisteneintrag
+        // Schiefer: raised menu bar item
         Q_UNUSED(color)
         _helper->renderBevelPanel(painter, rect, palette.color(QPalette::Window), palette.color(QPalette::Window), false, 2);
     }
@@ -5927,7 +5927,7 @@ bool Style::drawMenuBarItemControl(const QStyleOption *option, QPainter *painter
                 outlineColor = _helper->hoverColor(palette);
             }
 
-            _helper->renderFocusLine(painter, iconRect, outlineColor, rect); // Schiefer: im Eintrag bleiben
+            _helper->renderFocusLine(painter, iconRect, outlineColor, rect); // Schiefer: stay inside the item
         }
 
     } else {
@@ -5948,7 +5948,7 @@ bool Style::drawMenuBarItemControl(const QStyleOption *option, QPainter *painter
                 outlineColor = _helper->hoverColor(palette);
             }
 
-            _helper->renderFocusLine(painter, textRect, outlineColor, option->rect); // Schiefer: im Eintrag bleiben
+            _helper->renderFocusLine(painter, textRect, outlineColor, option->rect); // Schiefer: stay inside the item
         }
     }
 
@@ -5987,7 +5987,7 @@ bool Style::drawMenuItemControl(const QStyleOption *option, QPainter *painter, c
     if (menuItemOption->menuItemType == QStyleOptionMenuItem::Separator) {
         auto contentsRect = rect.adjusted(Metrics::MenuItem_MarginWidth, 0,
                                          -Metrics::MenuItem_MarginWidth, 0);
-        // Schiefer: Fläche des Menüs für den Farbkern (bei durchscheinendem Menü mit dessen Deckkraft)
+        // Schiefer: menu surface for the color core (with the menu opacity if translucent)
         QColor separatorColor = palette.color(QPalette::Window);
         if (StyleConfigData::menuOpacity() < 100) {
             separatorColor.setAlphaF(StyleConfigData::menuOpacity() / 100.0);
@@ -6055,7 +6055,7 @@ bool Style::drawMenuItemControl(const QStyleOption *option, QPainter *painter, c
             }
         }
 
-        // Schiefer: Motif – aktiver Eintrag erhaben in Fensterfarbe
+        // Schiefer: Motif; the active item is raised in the window color
         Q_UNUSED(color)
         Q_UNUSED(outlineColor)
         Q_UNUSED(sides)
@@ -6193,7 +6193,7 @@ bool Style::drawMenuItemControl(const QStyleOption *option, QPainter *painter, c
                 outlineColor = _helper->hoverColor(palette);
             }
 
-            _helper->renderFocusLine(painter, textRect, outlineColor, option->rect); // Schiefer: im Eintrag bleiben
+            _helper->renderFocusLine(painter, textRect, outlineColor, option->rect); // Schiefer: stay inside the item
         }
     }
 
@@ -6301,7 +6301,7 @@ bool Style::drawProgressBarContentsControl(const QStyleOption *option, QPainter 
 
         auto contentsColor(option->state.testFlag(QStyle::State_Selected) ? palette.color(QPalette::HighlightedText) : palette.color(HighlightColor));
 
-        // Schiefer: flache Füllung innerhalb der versenkten Rinne
+        // Schiefer: flat fill inside the sunken groove
         painter->fillRect(rect.adjusted(2, 2, -2, -2), contentsColor);
         painter->setClipRegion(oldClipRegion);
     }
@@ -6362,7 +6362,7 @@ bool Style::drawScrollBarSliderControl(const QStyleOption *option, QPainter *pai
     // const auto& rect( option->rect );
     const auto &palette(option->palette);
 
-    // Schiefer: erhabener Schieber über die ganze Rinnenbreite
+    // Schiefer: raised slider across the whole groove width
     {
         QRect r = option->rect;
         if (option->state & State_Horizontal) {
@@ -6453,7 +6453,7 @@ bool Style::drawScrollBarAddLineControl(const QStyleOption *option, QPainter *pa
     // adjust rect, based on number of buttons to be drawn
     auto rect(scrollBarInternalSubControlRect(sliderOption, SC_ScrollBarAddLine));
 
-    // Schiefer: Motif-Pfeilknopf (erhaben, gedrückt versenkt)
+    // Schiefer: Motif arrow button (raised, sunken when pressed)
     if (_addLineButtons == SingleButton) {
         QRect r = rect;
         if (horizontal) {
@@ -6551,7 +6551,7 @@ bool Style::drawScrollBarSubLineControl(const QStyleOption *option, QPainter *pa
     // adjust rect, based on number of buttons to be drawn
     auto rect(scrollBarInternalSubControlRect(sliderOption, SC_ScrollBarSubLine));
 
-    // Schiefer: Motif-Pfeilknopf (erhaben, gedrückt versenkt)
+    // Schiefer: Motif arrow button (raised, sunken when pressed)
     if (_subLineButtons == SingleButton) {
         QRect r = rect;
         if (horizontal) {
@@ -6649,7 +6649,7 @@ bool Style::drawShapedFrameControl(const QStyleOption *option, QPainter *painter
     case QFrame::HLine:
     case QFrame::VLine: {
         const auto &rect(option->rect);
-        const auto color(option->palette.color(QPalette::Window)); // Schiefer: Fläche für den Farbkern
+        const auto color(option->palette.color(QPalette::Window)); // Schiefer: surface for the color core
         const bool isVertical(frameOpt->frameShape == QFrame::VLine);
         _helper->renderSeparator(painter, rect, color, isVertical);
         return true;
@@ -6903,7 +6903,7 @@ bool Style::drawHeaderSectionControl(const QStyleOption *option, QPainter *paint
         color = normal;
     }
 
-    // Schiefer: jede Spalte als erhabener Knopf, gedrückt versenkt
+    // Schiefer: each column as a raised button, sunken when pressed
     Q_UNUSED(color)
     Q_UNUSED(isCorner)
     Q_UNUSED(horizontal)
@@ -7200,7 +7200,7 @@ bool Style::drawTabBarTabLabelControl(const QStyleOption *option, QPainter *pain
 
     // text rect
     auto textRect(subElementRect(SE_TabBarTabText, option, widget));
-    QRect focusBounds(rect); // Schiefer: Fokusrahmen im Reiter halten
+    QRect focusBounds(rect); // Schiefer: keep the focus frame inside the tab
 
     if (verticalTabs) {
         // properly rotate painter
@@ -7221,7 +7221,7 @@ bool Style::drawTabBarTabLabelControl(const QStyleOption *option, QPainter *pain
         transform.translate(newX, newY);
         transform.rotate(newRot);
         painter->setTransform(transform, true);
-        focusBounds = transform.inverted().mapRect(rect); // Schiefer: in gedrehten Koordinaten
+        focusBounds = transform.inverted().mapRect(rect); // Schiefer: in rotated coordinates
     }
 
     // adjust text rect based on font metrics
@@ -7236,7 +7236,7 @@ bool Style::drawTabBarTabLabelControl(const QStyleOption *option, QPainter *pain
     }
 
     // render focus line
-    _helper->renderFocusLine(painter, textRect, focusColor, focusBounds); // Schiefer: im Reiter bleiben
+    _helper->renderFocusLine(painter, textRect, focusColor, focusBounds); // Schiefer: stay inside the tab
 
     if (verticalTabs) {
         painter->restore();
@@ -7622,7 +7622,7 @@ bool Style::drawDockWidgetTitleControl(const QStyleOption *option, QPainter *pai
         rect.setHeight(1);
         auto palette = option->palette;
         palette.setCurrentColorGroup(QPalette::Disabled);
-        const auto color(palette.color(QPalette::Window)); // Schiefer: Fläche für den Farbkern
+        const auto color(palette.color(QPalette::Window)); // Schiefer: surface for the color core
         _helper->renderSeparator(painter, rect, color, false);
     }
 
@@ -7997,7 +7997,7 @@ bool Style::drawComboBoxComplexControl(const QStyleOptionComplex *option, QPaint
         // arrow rect
         auto arrowRect(subControlRect(CC_ComboBox, option, SC_ComboBoxArrow, widget));
 
-        // render (Schiefer: nicht editierbar = Motif-Optionsmenü mit Balken)
+        // render (Schiefer: not editable = Motif option menu with a bar)
         if (!editable && !flat) {
             _helper->renderOptionMenuIndicator(painter, arrowRect, option->palette.color(QPalette::Button), enabled && !empty);
         } else {
@@ -8123,7 +8123,7 @@ bool Style::drawSliderComplexControl(const QStyleOptionComplex *option, QPainter
             while (current <= sliderOption->maximum) {
                 // adjust color
                 Q_UNUSED(highlight)
-                const auto color(base); // Schiefer: einfarbige Skala
+                const auto color(base); // Schiefer: single-color scale
                 painter->setPen(color);
 
                 // calculate positions and draw lines
@@ -8166,7 +8166,7 @@ bool Style::drawSliderComplexControl(const QStyleOptionComplex *option, QPainter
                     std::swap(leftRect, rightRect);
                 }
 
-                // Schiefer: ganze Rinne, keine Füllung
+                // Schiefer: whole groove, no fill
                 Q_UNUSED(upsideDown)
                 Q_UNUSED(highlight)
                 _helper->renderSliderGroove(painter, grooveRect, grooveColor, palette.color(QPalette::Window));
@@ -8177,7 +8177,7 @@ bool Style::drawSliderComplexControl(const QStyleOptionComplex *option, QPainter
                 topRect.setBottom(handleRect.bottom() - Metrics::Slider_ControlThickness / 2);
                 bottomRect.setTop(handleRect.top() + Metrics::Slider_ControlThickness / 2);
 
-                // Schiefer: ganze Rinne, keine Füllung
+                // Schiefer: whole groove, no fill
                 _helper->renderSliderGroove(painter, grooveRect, grooveColor, palette.color(QPalette::Window));
             }
         }
@@ -8230,7 +8230,7 @@ bool Style::drawDialComplexControl(const QStyleOptionComplex *option, QPainter *
     const bool mouseOver(enabled && (state & State_MouseOver));
     const bool hasFocus(enabled && (state & State_HasFocus));
 
-    // Schiefer: versenkte Mulde mit erhabenem Drehknopf und Kerbe
+    // Schiefer: sunken well with a raised knob and a notch
     {
         const QRectF grooveRect(option->rect.adjusted(2, 2, -2, -2));
         _animations->dialEngine().updateState(widget, AnimationHover, mouseOver);
@@ -8306,7 +8306,7 @@ bool Style::drawScrollBarComplexControl(const QStyleOptionComplex *option, QPain
         return true;
     }
 
-    // Schiefer: versenkte Motif-Rinne über die ganze Leiste
+    // Schiefer: sunken Motif groove across the whole bar
     {
         const QColor window = option->palette.color(QPalette::Window);
         _helper->renderBevelPanel(painter, option->rect, _helper->bevelSelect(window), window, true, 2); // Schiefer: Motif troughColor = select

@@ -1,4 +1,4 @@
-// Schiefer-Abschluss – Einstellungen
+// Schiefer end piece: settings
 // SPDX-License-Identifier: GPL-2.0-or-later
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -10,13 +10,13 @@ KCM.SimpleKCM {
 
     Kirigami.FormLayout {
         QQC2.RadioButton {
-            Kirigami.FormData.label: i18n("Seite:")
-            text: i18n("Links (Knopf mit Strich)")
+            Kirigami.FormData.label: i18n("Side:")
+            text: i18n("Left (button with bar)")
             checked: cfg_side !== "right"
             onToggled: if (checked) cfg_side = "left"
         }
         QQC2.RadioButton {
-            text: i18n("Rechts (Knopf mit Quadrat)")
+            text: i18n("Right (button with square)")
             checked: cfg_side === "right"
             onToggled: if (checked) cfg_side = "right"
         }

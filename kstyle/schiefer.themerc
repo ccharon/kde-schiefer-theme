@@ -1,5 +1,5 @@
 [Misc]
 Name=Schiefer
-Comment=Motif/CDE-artiger Widget-Stil auf Basis von Breeze
+Comment=Motif/CDE-like widget style based on Breeze
 [KDE]
 WidgetStyle=Schiefer

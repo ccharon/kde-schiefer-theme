@@ -1,5 +1,5 @@
 /*
- * Schiefer – Brücke zum Plasma-Systemabschnitt
+ * Schiefer: bridge to the Plasma system tray
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "schiefertray.h"
@@ -19,7 +19,7 @@ Q_LOGGING_CATEGORY(lcSchieferDock, "schiefer.dock", QtInfoMsg)
 static const QString trayPluginId = QStringLiteral("org.kde.plasma.systemtray");
 static const QString popupObjectName = QStringLiteral("popupWindow");
 
-// Modell oder Popup fehlen beim Fund des Systrays noch: so oft im Abstand nachsehen
+// model or popup may be missing when the system tray is found: retry this often at this interval
 static constexpr int retryInterval = 500;
 static constexpr int retryMax = 20;
 
@@ -33,7 +33,7 @@ SchieferTray::SchieferTray(QObject *parent)
 SchieferTray::~SchieferTray()
 {
     m_retry.stop();
-    // Systray wieder zeigen und sein Popup zurückgeben, wenn die Schublade verschwindet (Widget entfernt)
+    // show the system tray again and return its popup when the drawer goes away (widget removed)
     restorePopup();
     if (m_tray) {
         disconnect(m_tray, nullptr, this, nullptr);
@@ -49,15 +49,15 @@ void SchieferTray::warnOnce(const char *key, const QString &message)
         return;
     }
     m_warned.insert(key);
-    qCWarning(lcSchieferDock).noquote() << "Systray-Brücke:" << message
-                                        << "– hat sich org.kde.plasma.systemtray geändert? Siehe UPSTREAM.md, „Plasma-Interna des Docks“.";
+    qCWarning(lcSchieferDock).noquote() << "system tray bridge:" << message
+                                        << "- did org.kde.plasma.systemtray change? See UPSTREAM.md, \"Plasma internals used by the dock\".";
 }
 
 bool SchieferTray::checkInvoke(bool ok, const char *method)
 {
     if (!ok) {
         warnOnce(method,
-                 QStringLiteral("QMetaObject::invokeMethod(\"%1\") am Systray ist fehlgeschlagen (Methode fehlt oder Signatur anders)")
+                 QStringLiteral("QMetaObject::invokeMethod(\"%1\") on the system tray failed (method missing or signature changed)")
                      .arg(QLatin1String(method)));
     }
     return ok;
@@ -108,7 +108,7 @@ void SchieferTray::setPopupAnchor(QQuickItem *item)
     }
     m_anchor = item;
     if (m_anchor) {
-        // verschwindet der Anker (Kachel/Schublade entfernt), bekommt der Systray sein Popup zurück
+        // if the anchor goes away (tile or drawer removed), the system tray gets its popup back
         connect(m_anchor, &QObject::destroyed, this, [this]() {
             restorePopup();
         });
@@ -186,7 +186,7 @@ void SchieferTray::setTray(Plasma::Applet *tray)
     m_trayHiddenByUs = false;
     m_hadModel = model() != nullptr;
     if (m_tray) {
-        // der Systray setzt beim Auf-/Zuklappen selbst RequiresAttention bzw. Passive
+        // the system tray sets RequiresAttention or Passive itself when expanding or collapsing
         connect(m_tray, &Plasma::Applet::statusChanged, this, [this](Plasma::Types::ItemStatus status) {
             if (m_hideTray && status != Plasma::Types::HiddenStatus) {
                 m_trayOldStatus = Plasma::Types::PassiveStatus;
@@ -194,7 +194,7 @@ void SchieferTray::setTray(Plasma::Applet *tray)
                 m_trayHiddenByUs = true;
             }
         });
-        // falls er vor uns verschwindet: Zeiger sind QPointer, aber available/model ändern sich
+        // in case it goes away before us: the pointers are QPointer, but available/model change
         connect(m_tray, &QObject::destroyed, this, [this]() {
             m_retry.stop();
             m_hadModel = false;
@@ -203,8 +203,8 @@ void SchieferTray::setTray(Plasma::Applet *tray)
     }
     applyHidden();
     Q_EMIT trayChanged();
-    // Das Modell legt der Systray beim ersten Lesen an (vorhanden, sobald init() lief); das Popup
-    // entsteht erst mit seiner QML-Oberfläche. Fehlt eins davon noch, kurz danach erneut nachsehen.
+    // The system tray creates the model on first read (present once init() ran); the popup
+    // appears only with its QML UI. If either is still missing, look again shortly after.
     if (m_tray) {
         m_retryCount = 0;
         QMetaObject::invokeMethod(this, &SchieferTray::retryTick, Qt::QueuedConnection);
@@ -231,11 +231,11 @@ void SchieferTray::retryTick()
         m_retry.stop();
         if (!m_hadModel) {
             warnOnce("systemTrayModel",
-                     QStringLiteral("der Systray hat keine Property „systemTrayModel“ (QAbstractItemModel*); die Einträge bleiben leer"));
+                     QStringLiteral("the system tray has no property \"systemTrayModel\" (QAbstractItemModel*); the entries stay empty"));
         }
         if (!popupOk) {
             warnOnce("popupWindow",
-                     QStringLiteral("Popup des Systrays (objectName „popupWindow“ mit Property „visualParent“) nicht gefunden; es öffnet am Systray"));
+                     QStringLiteral("system tray popup (objectName \"popupWindow\" with property \"visualParent\") not found; it opens at the system tray"));
         }
         return;
     }
@@ -278,7 +278,7 @@ QObject *SchieferTray::findPopup() const
     if (hasVisualParent(popup)) {
         return popup;
     }
-    // Fenster hängen nicht immer als QObject-Kind am Item: über die Fensterliste suchen
+    // windows are not always QObject children of the item: search the window list
     const auto windows = QGuiApplication::allWindows();
     for (QWindow *w : windows) {
         if (w->objectName() != popupObjectName || !hasVisualParent(w)) {
@@ -301,7 +301,7 @@ void SchieferTray::retargetPopup(bool warn)
     if (!popup) {
         if (warn && PlasmaQuick::AppletQuickItem::itemForApplet(m_tray)) {
             warnOnce("popupWindow",
-                     QStringLiteral("Popup des Systrays (objectName „popupWindow“ mit Property „visualParent“) nicht gefunden; es öffnet am Systray"));
+                     QStringLiteral("system tray popup (objectName \"popupWindow\" with property \"visualParent\") not found; it opens at the system tray"));
         }
         return;
     }
@@ -324,12 +324,12 @@ void SchieferTray::restorePopup()
         if (!orig && m_tray) {
             orig = PlasmaQuick::AppletQuickItem::itemForApplet(m_tray);
         }
-        // nur zurückstellen, wenn niemand sonst es inzwischen umgehängt hat
-        // (ein zerstörter Anker steht im Popup als nullptr, es hält ihn per QPointer)
+        // only restore if nobody else has reparented it in the meantime
+        // (a destroyed anchor shows up as nullptr in the popup, which holds it in a QPointer)
         const auto current = m_popup->property("visualParent").value<QQuickItem *>();
         if (current != orig && (current == m_popupSetTo.data() || !current)) {
             m_popup->setProperty("visualParent", QVariant::fromValue<QQuickItem *>(orig));
-            qCDebug(lcSchieferDock) << "Systray-Popup zurück an" << orig;
+            qCDebug(lcSchieferDock) << "system tray popup returned to" << orig;
         }
     }
     m_popup = nullptr;
@@ -353,7 +353,7 @@ void SchieferTray::togglePlasmoid(QQuickItem *appletItem)
     retargetPopup(true);
     // PlasmaQuick::AppletQuickItem: Q_PROPERTY(bool expanded …)
     if (!appletItem->setProperty("expanded", !appletItem->property("expanded").toBool())) {
-        warnOnce("expanded", QStringLiteral("Property „expanded“ am Applet-Item (model.applet) lässt sich nicht setzen"));
+        warnOnce("expanded", QStringLiteral("property \"expanded\" on the applet item (model.applet) cannot be set"));
     }
 }
 
@@ -402,7 +402,7 @@ void SchieferTray::toggleTrayPopup()
         return;
     }
     retargetPopup(true);
-    // der Systray schaltet bei activated() sein Popup um (main.qml: Connections { target: Plasmoid; onActivated })
+    // the system tray toggles its popup on activated() (main.qml: Connections { target: Plasmoid; onActivated })
     Q_EMIT m_tray->activated();
 }
 
@@ -414,6 +414,6 @@ void SchieferTray::configureTray()
     if (QAction *a = m_tray->internalAction(QStringLiteral("configure"))) {
         a->trigger();
     } else {
-        warnOnce("configure", QStringLiteral("der Systray hat keine internalAction(\"configure\")"));
+        warnOnce("configure", QStringLiteral("the system tray has no internalAction(\"configure\")"));
     }
 }

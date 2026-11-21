@@ -1,5 +1,5 @@
 /*
- * Schiefer – Farben aus dem aktiven Farbschema für die Dock-Widgets
+ * Schiefer: colors from the active color scheme for the dock widgets
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "schieferscheme.h"
@@ -63,9 +63,8 @@ QVariantMap SchieferScheme::motifColors(const QColor &base) const
 
 QColor SchieferScheme::hoverColor(const QColor &base) const
 {
-    // Ein Drittel des Wegs von der Grundfarbe zur Motif-Lichtkante: bleibt sichtbar unter
-    // der Lichtkante (das Relief liest sich weiter) und wirkt hell wie dunkel ähnlich stark
-    // (Schiefer etwa wie das frühere Qt.tint(base, 15 % Weiß), Basalt ebenso)
+    // A third of the way from the base color to the Motif light edge: stays visibly below
+    // the light edge (the relief stays readable) and looks similarly strong in light and dark palettes
     const QColor top = SchieferColors::motifColors(base).topShadow;
     const QColor b = base.toRgb();
     auto third = [](int from, int to) {
@@ -80,9 +79,9 @@ void SchieferScheme::tintFrames(QQuickItem *item) const
         return;
     }
     const QColor color = panelColor();
-    // Leistenhintergrund (Panel.qml der Shell) und Popup-Hintergrund (DialogBackground) sind
-    // KSvg-Rahmen; sie färben ihre ColorScheme-Background-Flächen nach ihrem Kirigami.Theme.
-    // Gesetzt wird nur die eigene Hintergrundfarbe des Rahmens (wirkt nicht auf Kinder).
+    // The panel background (shell Panel.qml) and popup background (DialogBackground) are
+    // KSvg frames; they tint their ColorScheme-Background areas from their Kirigami.Theme.
+    // Only the frame's own background color is set (does not affect children).
     std::function<void(QQuickItem *)> walk = [&](QQuickItem *it) {
         if (it->inherits("KSvg::FrameSvgItem")) {
             const QString path = it->property("imagePath").toString();
@@ -122,7 +121,7 @@ void SchieferScheme::reload()
     if (!file.isEmpty() && fileCfg.hasGroup(QStringLiteral("Schiefer"))) {
         g = fileCfg.group(QStringLiteral("Schiefer"));
     } else {
-        // Ersatz: [Schiefer] in kdeglobals (z. B. von Hand oder Testumgebung hineinkopiert)
+        // fallback: [Schiefer] in kdeglobals (for example copied there by hand or by a test setup)
         g = globals->group(QStringLiteral("Schiefer"));
     }
 
@@ -140,7 +139,7 @@ void SchieferScheme::reload()
     rc->reparseConfiguration();
     const bool panelEnabled = rc->group(QStringLiteral("Dock")).readEntry("FrontPanelColor", true);
 
-    // Datei beobachten (atomares Neuschreiben entfernt den Eintrag, deshalb jedes Mal neu setzen)
+    // watch the file (an atomic rewrite removes the watch, so add it again every time)
     if (!m_files.files().isEmpty()) {
         m_files.removePaths(m_files.files());
     }
@@ -150,10 +149,10 @@ void SchieferScheme::reload()
     if (!file.isEmpty()) {
         m_files.addPath(file);
     }
-    // auch kdeglobals selbst (Schemawechsel ohne D-Bus-Meldung, z. B. kwriteconfig6 ohne --notify)
+    // kdeglobals itself too (scheme changes without a D-Bus notification, for example kwriteconfig6 without --notify)
     const QString configDir = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
     m_files.addPath(configDir + QStringLiteral("/kdeglobals"));
-    // schieferrc (schiefer-config schreibt ohne D-Bus-Meldung); fehlt sie noch, auf ihr Entstehen warten
+    // schieferrc (schiefer-config writes without a D-Bus notification); if missing, wait for it to appear
     const QString rcFile = configDir + QStringLiteral("/schieferrc");
     if (QFile::exists(rcFile)) {
         m_files.addPath(rcFile);

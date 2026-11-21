@@ -1,7 +1,7 @@
 /*
- * Motif-Druckknopf: erhaben, beim Drücken versenkt; Default-Knopf mit versenktem Ring
- * (XmNshowAsDefault), Tastaturfokus als 1-px-Rahmen (XmNhighlightThickness).
- * Mnemonik wie in Motif immer unterstrichen: text "&Neu starten" -> N unterstrichen, Alt+N löst aus.
+ * Motif push button: raised, sunken when pressed; default button with a sunken ring
+ * (XmNshowAsDefault), keyboard focus as a 1 px frame (XmNhighlightThickness).
+ * Mnemonics are always underlined as in Motif: text "&Restart" -> R underlined, Alt+R triggers.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -26,7 +26,7 @@ Item {
     Keys.onPressed: e => { if (e.key === Qt.Key_Space || e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { keyDown = true; e.accepted = true; } }
     Keys.onReleased: e => { if (keyDown && (e.key === Qt.Key_Space || e.key === Qt.Key_Return || e.key === Qt.Key_Enter)) { keyDown = false; e.accepted = true; b.clicked(); } }
 
-    // Default-Ring: versenkte Mulde um den Knopf
+    // default ring: sunken well around the button
     Bevel {
         anchors.fill: parent
         visible: b.isDefault
@@ -35,7 +35,7 @@ Item {
         base: b.pal.bg
         filled: false
     }
-    // Fokus: dunkler 1-px-Rahmen innerhalb des Rings
+    // focus: dark 1 px frame inside the ring
     Rectangle {
         anchors.fill: parent
         anchors.margins: b.ring - 2

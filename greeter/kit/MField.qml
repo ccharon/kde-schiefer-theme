@@ -1,5 +1,5 @@
 /*
- * Motif-Textfeld: versenkt, Textflächenfarbe, I-Balken-Schreibmarke mit Serifen (wie XmText).
+ * Motif text field: sunken, text area color, I-beam cursor with serifs (like XmText).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -21,7 +21,7 @@ Bevel {
     function clear() { input.clear(); }
     function grab() { input.forceActiveFocus(); }
 
-    // Fokus wie bei Motif: dunkler Rahmen außen
+    // focus as in Motif: dark frame outside
     Rectangle {
         anchors.fill: parent
         anchors.margins: -2

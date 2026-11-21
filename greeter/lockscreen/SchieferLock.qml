@@ -1,8 +1,8 @@
 /*
- * Schiefer – Sperrbildschirm im Stil klassischer Unix-Workstations.
- * Ruhezustand: nur der Hintergrund und eine Uhrtafel (Siebensegment wie im Dock).
- * Bei Taste oder Maus: Dialogtafel mit Rechnername, wer gesperrt hat, Passwortfeld,
- * Entsperren / Bereitschaft / Benutzer wechseln. Logik wie in der Plasma-Shell (LockScreenUi.qml).
+ * Schiefer lock screen in the style of classic Unix workstations.
+ * Idle: only the backdrop and a clock panel (seven segments as in the dock).
+ * On key or mouse input: dialog panel with host name, who locked, password field,
+ * Unlock / Sleep / Switch User. Logic as in the Plasma shell (LockScreenUi.qml).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -18,7 +18,7 @@ import "kit/T.js" as T
 Item {
     id: ui
 
-    // Farben aus dem Farbschema (Fenster, Ansicht, Auswahl = Aktivrahmen, Ergänzung = Frontpanel)
+    // colors from the color scheme (window, view, selection = active frame, complementary = front panel)
     Item { id: viewSet; Kirigami.Theme.colorSet: Kirigami.Theme.View; Kirigami.Theme.inherit: false }
     Item { id: compSet; Kirigami.Theme.colorSet: Kirigami.Theme.Complementary; Kirigami.Theme.inherit: false }
     Kirigami.Theme.colorSet: Kirigami.Theme.Window
@@ -32,7 +32,7 @@ Item {
         active: Kirigami.Theme.highlightColor
         activeText: Kirigami.Theme.highlightedTextColor
         panel: compSet.Kirigami.Theme.backgroundColor
-        panelText: Kirigami.Theme.textColor          // wie das Dock: Schema-Textfarbe auf dem Frontpanel (lesbarer als die Motif-Formel)
+        panelText: Kirigami.Theme.textColor          // like the dock: scheme text color on the front panel (more readable than the Motif formula)
         alert: Kirigami.Theme.negativeTextColor
         baseFont: Kirigami.Theme.defaultFont
     }
@@ -44,9 +44,9 @@ Item {
     property date now: new Date()
     Timer { interval: 1000; running: true; repeat: true; onTriggered: ui.now = new Date() }
 
-    property bool testShowDialog: false   // nur für greeter/test-lock.sh
+    property bool testShowDialog: false   // only for greeter/test-lock.sh
     Component.onCompleted: if (testShowDialog) screen.uiVisible = true
-    property bool noPassword: false       // Authentifizierung ohne Eingabe gelungen (z. B. RequirePassword=false)
+    property bool noPassword: false       // authenticated without input (for example RequirePassword=false)
 
     function handleMessage(msg) {
         if (!msg) return;
@@ -58,7 +58,7 @@ Item {
     Connections {
         target: authenticator
         function onFailed(kind) {
-            if (kind != 0) return;          // nicht-interaktive Verfahren (Fingerabdruck, Smartcard)
+            if (kind != 0) return;          // non-interactive methods (fingerprint, smart card)
             ui.handleMessage(T.t("Entsperren fehlgeschlagen", "Unlocking failed"));
             graceLockTimer.restart();
             notificationRemoveTimer.restart();
@@ -91,7 +91,7 @@ Item {
     function unlock() {
         if (noPassword) { Qt.quit(); return; }
         if (!screen.uiVisible) return;
-        okButton.forceActiveFocus();       // umgeht QTBUG-55460 wie die Plasma-Shell
+        okButton.forceActiveFocus();       // works around QTBUG-55460 like the Plasma shell
         authenticator.respond(field.text);
     }
 
@@ -116,7 +116,7 @@ Item {
         onBlockUIChanged: { if (blockUI) { fadeoutTimer.running = false; uiVisible = true; } else fadeoutTimer.restart(); }
         onExited: uiVisible = false
         Keys.onEscapePressed: {
-            // Escape: kscreenlocker schaltet den Bildschirm ab; Eingabe verwerfen
+            // Escape: kscreenlocker turns the screen off; discard the input
             if (uiVisible) { uiVisible = false; root.clearPassword(); }
         }
         Keys.onPressed: event => { uiVisible = true; event.accepted = false; }
@@ -133,7 +133,7 @@ Item {
             onTriggered: { root.clearPassword(); authenticator.startAuthenticating(); }
         }
 
-        // Ruhe: Uhrtafel in Frontpanel-Farbe
+        // idle: clock panel in the front panel color
         Bevel {
             id: idlePlate
             visible: !screen.uiVisible
@@ -277,7 +277,7 @@ Item {
         }
     }
 
-    // Alt+Buchstabe löst den passenden Knopf aus
+    // Alt+letter triggers the matching button
     Keys.onPressed: e => {
         if (!(e.modifiers & Qt.AltModifier) || !screen.uiVisible) return;
         const c = e.text.toLowerCase() || String.fromCharCode(e.key).toLowerCase();

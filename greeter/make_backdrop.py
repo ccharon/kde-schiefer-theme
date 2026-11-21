@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Köper-Kachel in einer Arbeitsflächenfarbe, genau wie das Hintergrund-Plugin sie färbt
-(Index-Kachel + RAMP_DELTA aus wallpaper/plugin/package/contents/ui/Palette.js).
-   python3 greeter/make_backdrop.py '#8fa3bf' out.png [muster]
-Erzeugt die mitgelieferten Kacheln für SDDM und das Startbild (Palette Schiefer, Farbsatz 3)."""
+"""Twill tile in a desktop color, colored exactly like the backdrop plugin does it
+(index tile + RAMP_DELTA from wallpaper/plugin/package/contents/ui/Palette.js).
+   python3 greeter/make_backdrop.py '#8fa3bf' out.png [pattern]
+Generates the shipped tiles for SDDM and the splash screen (Schiefer palette, color set 3)."""
 import os, sys
 from PIL import Image
 

@@ -1,5 +1,5 @@
 /*
- * Inhalt der ausgeklappten Schublade: Titel, Ablagefeld, Starterliste
+ * Content of the open drawer: title, drop field, launcher list
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -29,7 +29,7 @@ Item {
     height: implicitHeight
 
     Keys.onEscapePressed: content.Window.window.visible = false
-    // Popup wie CDE-Schubladen in der Frontpanel-Farbe (Schalter frontpanel-farbe)
+    // popup in the front panel color like CDE drawers (option frontpanel-color)
     Kirigami.Theme.inherit: !Scheme.usePanelColor
     Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
     FrameTint {}
@@ -39,7 +39,7 @@ Item {
         anchors.fill: parent
         spacing: 2
 
-        // Titel wie die Kopfzeile eines CDE-Subpanels
+        // title like the header of a CDE subpanel
         Item {
             Layout.fillWidth: true
             implicitHeight: titleLabel.implicitHeight + 2 * Kirigami.Units.smallSpacing + 4
@@ -55,7 +55,7 @@ Item {
             }
         }
 
-        // System-Schublade: Einträge des Systemabschnitts
+        // system drawer: system tray entries
         Repeater {
             model: content.drawer.isSystem ? content.drawer.trayAllModel : null
             delegate: Item {
@@ -95,7 +95,7 @@ Item {
                         }
                         PlasmaComponents3.Label {
                             Layout.fillWidth: true
-                            // Kurzinfo (z. B. Lautstärke, Akkustand), sofern sie sich vom Namen unterscheidet
+                            // short info (for example volume, battery level) if it differs from the name
                             readonly property string info: trayIcon.title !== trayRow.model.displayText ? trayIcon.title : trayIcon.subTitle
                             visible: text.length > 0
                             text: info.split("\n")[0]
@@ -116,7 +116,7 @@ Item {
             }
         }
 
-        // System-Schublade: Systemabschnitt einrichten
+        // system drawer: configure the system tray
         Item {
             Layout.fillWidth: true
             visible: content.drawer.isSystem
@@ -137,7 +137,7 @@ Item {
                 }
                 PlasmaComponents3.Label {
                     Layout.fillWidth: true
-                    text: i18n("Systemabschnitt einrichten …")
+                    text: i18n("Configure System Tray…")
                     elide: Text.ElideRight
                     Component.onCompleted: content.maxLabel = Math.max(content.maxLabel, implicitWidth)
                 }
@@ -153,7 +153,7 @@ Item {
             }
         }
 
-        // Ordner-Schublade: Inhalt des Ordners, bei vielen Einträgen rollbar
+        // folder drawer: folder contents, scrollable with many entries
         ListView {
             id: folderList
             visible: content.drawer.isFolder
@@ -222,11 +222,11 @@ Item {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.largeSpacing
             horizontalAlignment: Text.AlignHCenter
-            text: content.drawer.folderUrl ? i18n("Der Ordner ist leer") : i18n("Kein Ordner gewählt")
+            text: content.drawer.folderUrl ? i18n("The folder is empty") : i18n("No folder chosen")
             opacity: 0.7
         }
 
-        // Ablagefeld („Install Icon“)
+        // drop field ("Install Icon")
         Item {
             visible: !content.drawer.isSystem && !content.drawer.isFolder
             Layout.fillWidth: true
@@ -244,7 +244,7 @@ Item {
                 }
                 PlasmaComponents3.Label {
                     Layout.fillWidth: true
-                    text: i18n("Symbol hier ablegen")
+                    text: i18n("Drop an icon here")
                     opacity: 0.7
                     elide: Text.ElideRight
                 }
@@ -321,25 +321,25 @@ Item {
                     id: menu
                     placement: PlasmaExtras.Menu.RightPosedTopAlignedPopup
                     PlasmaExtras.MenuItem {
-                        text: i18n("Als Hauptsymbol ins Panel")
+                        text: i18n("Use as Main Icon in the Panel")
                         icon: "go-down"
                         onClicked: content.drawer.promote(entry.index)
                     }
                     PlasmaExtras.MenuItem {
-                        text: i18n("Nach oben")
+                        text: i18n("Move Up")
                         icon: "arrow-up"
                         enabled: entry.index > 0
                         onClicked: content.drawer.moveInDrawer(entry.index, entry.index - 1)
                     }
                     PlasmaExtras.MenuItem {
-                        text: i18n("Nach unten")
+                        text: i18n("Move Down")
                         icon: "arrow-down"
                         enabled: entry.index < content.drawer.drawerUrls.length - 1
                         onClicked: content.drawer.moveInDrawer(entry.index, entry.index + 1)
                     }
                     PlasmaExtras.MenuItem { separator: true }
                     PlasmaExtras.MenuItem {
-                        text: i18n("Aus der Schublade entfernen")
+                        text: i18n("Remove from Drawer")
                         icon: "list-remove"
                         onClicked: content.drawer.removeFromDrawer(entry.index)
                     }

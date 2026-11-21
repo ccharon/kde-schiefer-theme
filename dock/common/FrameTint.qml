@@ -1,10 +1,10 @@
 /*
- * Färbt die Plasma-Rahmen im eigenen Fenster in der Frontpanel-Farbe (Schalter
- * frontpanel-farbe): in der Leiste deren Hintergrund (widgets/panel-background aus
- * Panel.qml der Shell), in einem Popup dessen Hintergrund (dialogs/background). So
- * bleiben zwischen und neben den Dock-Widgets keine Flächen in der Fensterfarbe stehen.
- * Ist der Schalter aus, setzt es die Rahmen zurück. Unsichtbar, nimmt keinen Platz ein
- * (Layouts und Positionierer überspringen unsichtbare Items).
+ * Tints the Plasma frames in the item's own window with the front panel color (option
+ * frontpanel-color): in a panel its background (widgets/panel-background from the
+ * shell's Panel.qml), in a popup its background (dialogs/background). This way no
+ * areas in the window color remain between and next to the dock widgets.
+ * With the option off it resets the frames. Invisible and takes no space
+ * (layouts and positioners skip invisible items).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -22,8 +22,8 @@ Item {
         Scheme.tintFrames(tint);
     }
 
-    // Leiste und Popup legen ihre Rahmen erst nach und nach an (imagePath setzt das Popup
-    // beim Zeigen); deshalb sofort und nach kurzer Ruhe noch einmal
+    // Panel and popup create their frames gradually (the popup sets imagePath when shown),
+    // so tint right away and once more after a short pause
     Timer {
         id: later
         interval: 200

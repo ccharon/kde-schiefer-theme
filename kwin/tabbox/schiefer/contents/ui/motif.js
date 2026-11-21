@@ -1,7 +1,7 @@
 .pragma library
-// Motif-Farbformel (lib/Xm/Color.c, CalculateColorsRGB) – JS-Fassung von common/schiefercolors.py,
-// damit der Fensterwechsler dieselben Kanten wie Deko, Qt-Stil und Dock zeichnet.
-// Copyright (c) 1987-2012 The Open Group, LGPL-2.1-or-later (Formel); geprüft gegen die Python-Fassung.
+// Motif color formula (lib/Xm/Color.c, CalculateColorsRGB); JS version of common/schiefercolors.py,
+// so the window switcher draws the same edges as the decoration, Qt style and dock.
+// Copyright (c) 1987-2012 The Open Group, LGPL-2.1-or-later (formula); checked against the Python version.
 
 const MAX = 65535;
 const PCT = Math.floor(MAX / 100);          // 655
@@ -10,7 +10,7 @@ const DARK_THRESHOLD = 20 * PCT;
 const FG_THRESHOLD = 70 * PCT;
 
 function cdiv(a, b) { return Math.trunc(a / b); }
-function to16(c) { return Math.round(c * 255) * 257; }   // QML-Farbkanal 0…1 -> 16 bit über 8 bit
+function to16(c) { return Math.round(c * 255) * 257; }   // QML color channel 0...1 -> 16 bit via 8 bit
 function to8(v) { return Math.floor((v * 255 + 32767) / 65535); }
 
 function brightness16(r, g, b) {
@@ -19,7 +19,7 @@ function brightness16(r, g, b) {
     return Math.floor((intensity * 75 + luminosity * 25) / 100);
 }
 
-// bg: QML-Farbe; Ergebnis {top, bottom, select, fg} als [r,g,b] in 0…255
+// bg: QML color; result {top, bottom, select, fg} as [r,g,b] in 0...255
 function colors8(r8, g8, b8) {
     const bg = [r8 * 257, g8 * 257, b8 * 257];
     const br = brightness16(bg[0], bg[1], bg[2]);
