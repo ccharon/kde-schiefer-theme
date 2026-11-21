@@ -5,6 +5,7 @@
 #   Programm "plasmashell" startet die Arbeitsfläche mit dem Plasma-Theme aus plasma/schiefer.
 #   GTK-Programme nutzen das Theme gtk/Schiefer (BR_GTK_THEME=Breeze zum Vergleich).
 #   BR_SHELL_CMD="qdbus6 org.kde.plasmashell /PlasmaShell activateLauncherMenu" führt danach einen Befehl aus.
+#   BR_SCALE=1.5 skaliert die virtuelle Ausgabe (fraktionale Skalierung testen; BR_WIDTH/BR_HEIGHT bleiben logisch, das Bild wird größer).
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$(realpath -m "${1:-/tmp/schiefer.png}")"; shift || true
@@ -15,6 +16,27 @@ if [ -z "${SCHIEFER_INNER:-}" ]; then
     [ -s "$OUT" ] && echo "$OUT" || { echo "kein Bild erzeugt" >&2; exit 1; }
     exit 0
 fi
+CFG="" DATA="" HOMEDATA="" K=""
+PIDS=()
+# Aufräumen auch bei Abbruch (timeout schickt TERM an die ganze Prozessgruppe, Strg+C INT)
+cleanup() {
+    trap - EXIT INT TERM
+    [ ${#PIDS[@]} -gt 0 ] && kill "${PIDS[@]}" 2>/dev/null
+    sleep 1
+    [ -n "$K" ] && kill "$K" 2>/dev/null
+    sleep 1
+    kill -9 ${PIDS[@]+"${PIDS[@]}"} $K 2>/dev/null
+    # alles beenden, was am Bus dieser Testsitzung hängt (vom Bus gestartete Dienste
+    # überleben sonst dbus-run-session und halten z. B. die Aktivitäten-Datenbank offen)
+    for p in $(pgrep -u "$(id -u)"); do
+        [ "$p" = "$$" ] && continue
+        tr '\0' '\n' < /proc/$p/environ 2>/dev/null | grep -qxF "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS" && kill "$p" 2>/dev/null
+    done
+    sleep 1
+    rm -rf ${CFG:+"$CFG"} ${DATA:+"$DATA"} ${HOMEDATA:+"$HOMEDATA"}
+}
+trap cleanup EXIT
+trap 'exit 130' INT TERM
 CFG=$(mktemp -d)
 cp ~/.config/kdeglobals "$CFG/kdeglobals" 2>/dev/null
 python3 -I - "${BR_COLORS:-$ROOT/colors/Schiefer.colors}" "$CFG/kdeglobals" <<'PY'
@@ -66,23 +88,18 @@ export GTK_THEME="${BR_GTK_THEME:-Schiefer}"
 dbus-update-activation-environment XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME XDG_DATA_DIRS QT_PLUGIN_PATH QT_STYLE_OVERRIDE GTK_THEME
 export QT_PLUGIN_PATH="$ROOT/kdecoration/build/plugins:$ROOT/kstyle/build/plugins:$ROOT/dock/build/bin${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
 export QT_STYLE_OVERRIDE=Schiefer
-kwin_wayland --virtual --width ${BR_WIDTH:-1280} --height ${BR_HEIGHT:-800} --socket brshot --no-lockscreen >/dev/null 2>&1 &
+# eigener Socket je Lauf: parallele Testläufe kommen sich nicht in die Quere
+SOCK="brshot-$$"
+kwin_wayland --virtual --width ${BR_WIDTH:-1280} --height ${BR_HEIGHT:-800} --scale "${BR_SCALE:-1}" --socket "$SOCK" --no-lockscreen >/dev/null 2>&1 &
 K=$!
 sleep 3
-PIDS=()
+# --scale vergrößert nur den virtuellen Bildschirm; die Skalierung selbst setzt erst die Ausgabekonfiguration
+[ -n "${BR_SCALE:-}" ] && { WAYLAND_DISPLAY=$SOCK kscreen-doctor "output.Virtual-0.scale.$BR_SCALE" >/dev/null 2>&1; sleep 1; }
 LOG="${BR_LOG:-/dev/null}"
-for a in "${APPS[@]}"; do WAYLAND_DISPLAY=brshot QT_QPA_PLATFORM=wayland $a >>"$LOG" 2>&1 & PIDS+=($!); sleep 3; done
+for a in "${APPS[@]}"; do WAYLAND_DISPLAY=$SOCK QT_QPA_PLATFORM=wayland $a >>"$LOG" 2>&1 & PIDS+=($!); sleep 3; done
 sleep 3
 [[ " ${APPS[*]} " == *" plasmashell "* ]] && sleep 6
-[ -n "${BR_SHELL_CMD:-}" ] && { WAYLAND_DISPLAY=brshot QT_QPA_PLATFORM=wayland bash -c "$BR_SHELL_CMD" >/dev/null 2>&1; sleep 3; }
-WAYLAND_DISPLAY=brshot QT_QPA_PLATFORM=wayland spectacle -b -n -f -o "$OUT" >/dev/null 2>&1
+[ -n "${BR_SHELL_CMD:-}" ] && { WAYLAND_DISPLAY=$SOCK QT_QPA_PLATFORM=wayland bash -c "$BR_SHELL_CMD" >/dev/null 2>&1; sleep 3; }
+WAYLAND_DISPLAY=$SOCK QT_QPA_PLATFORM=wayland spectacle -b -n -f -o "$OUT" >/dev/null 2>&1
 sleep 1
-kill "${PIDS[@]}" 2>/dev/null; sleep 1; kill $K 2>/dev/null; sleep 1; kill -9 "${PIDS[@]}" $K 2>/dev/null
-# alles beenden, was am Bus dieser Testsitzung hängt (vom Bus gestartete Dienste
-# überleben sonst dbus-run-session und halten z. B. die Aktivitäten-Datenbank offen)
-for p in $(pgrep -u "$(id -u)"); do
-    [ "$p" = "$$" ] && continue
-    tr '\0' '\n' < /proc/$p/environ 2>/dev/null | grep -qxF "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS" && kill "$p" 2>/dev/null
-done
-sleep 1
-rm -rf "$CFG" "$DATA" "$HOMEDATA"
+# Aufräumen übernimmt cleanup (trap EXIT)

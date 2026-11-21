@@ -15,8 +15,35 @@
 #include <QColor>
 #include <QVariantList>
 
+#include <memory>
+
+class KPluginMetaData;
+class QWidget;
+
 namespace Schiefer
 {
+
+// Titelleistenfarben aus [WM] in kdeglobals, von allen Dekorationen geteilt:
+// kdeglobals wird pro Änderung nur einmal neu gelesen, nicht von jedem Fenster.
+class ColorCache : public QObject
+{
+    Q_OBJECT
+public:
+    static std::shared_ptr<ColorCache> instance();
+    ColorCache();
+
+    // ungültig, wenn der Eintrag fehlt (dann Rückfall auf die Fensterpalette)
+    QColor activeBg, activeFg, inactiveBg, inactiveFg;
+
+Q_SIGNALS:
+    void changed();
+
+private Q_SLOTS:
+    void notifyChange(int type, int arg);
+
+private:
+    void read();
+};
 
 class Decoration : public KDecoration3::Decoration
 {
@@ -35,6 +62,11 @@ public:
     qreal frameWidth() const;   // Rahmenbreite (0 bei maximiert)
     qreal titleHeight() const;  // Höhe der Titelzeile = Knopfgröße
 
+    // Skalierung und Kantenstärken in ganzen Gerätepixeln (logische Werte auf das Raster gerundet)
+    qreal scale() const;
+    int devicePixels(qreal logical) const; // mindestens 1
+    qreal snap(qreal logical) const;
+
 public Q_SLOTS:
     bool init() override;
 
@@ -46,10 +78,14 @@ private Q_SLOTS:
 private:
     void readColors();
     bool isMaximized() const;
+    // linker/rechter Abstand der Titelzeile: 0, wenn die Seite am Bildschirmrand keinen Rand hat
+    qreal leftInset() const;
+    qreal rightInset() const;
 
     KDecoration3::DecorationButtonGroup *m_leftButtons = nullptr;
     KDecoration3::DecorationButtonGroup *m_rightButtons = nullptr;
 
+    std::shared_ptr<ColorCache> m_colors;
     QColor m_activeBg, m_activeFg, m_inactiveBg, m_inactiveFg;
 };
 
@@ -58,8 +94,9 @@ class Button : public KDecoration3::DecorationButton
     Q_OBJECT
 public:
     Button(KDecoration3::DecorationButtonType type, Decoration *decoration, QObject *parent = nullptr);
-    // für die Plugin-Factory (Vorschau in den Systemeinstellungen)
-    Button(QObject *parent, const QVariantList &args);
+    // für die Plugin-Factory (Vorschau in den Systemeinstellungen): args = {Knopftyp, Dekoration};
+    // bei fehlenden/falschen Argumenten nullptr statt Absturz
+    static QObject *createFromArgs(QWidget *parentWidget, QObject *parent, const KPluginMetaData &metaData, const QVariantList &args);
 
     static KDecoration3::DecorationButton *create(KDecoration3::DecorationButtonType type, KDecoration3::Decoration *decoration, QObject *parent);
 

@@ -6,25 +6,47 @@ function exists(id) { return applicationExists(id + ".desktop"); }
 function pick() { for (var i = 0; i < arguments.length; ++i) if (exists(arguments[i])) return app(arguments[i]); return ""; }
 function only() { var r = []; for (var i = 0; i < arguments.length; ++i) if (exists(arguments[i])) r.push(app(arguments[i])); return r; }
 
-// Einstellungen der Einzel-Widgets merken, damit ein erneuter Aufbau sie nicht verwirft
+// Einstellungen aller Widgets der Typen in keepTypes merken, damit ein erneuter Aufbau sie nicht
+// verwirft: je Typ alle Instanzen in Reihenfolge (neue Widgets desselben Typs bekommen sie der Reihe
+// nach zurück). Schubladen werden stattdessen über ihren Titel (bei leerem Titel über die Ansicht
+// „face“) zugeordnet; gibt es keine passende alte Schublade, gelten die Vorgaben dieses Skripts.
 var kept = {};
-var keepTypes = ["org.kde.schiefer.tiles", "org.kde.plasma.systemtray", "org.kde.schiefer.iconbox", "org.kde.schiefer.console"];
+var keptDrawers = [];
+var DRAWER = "org.kde.schiefer.drawer";
+var keepTypes = ["org.kde.schiefer.tiles", "org.kde.plasma.systemtray", "org.kde.schiefer.iconbox", "org.kde.schiefer.console", DRAWER];
 panels().forEach(function (p) {
     if (["bottom", "left", "right"].indexOf(p.location) < 0) return;
     p.widgets().forEach(function (w) {
-        if (keepTypes.indexOf(w.type) < 0 || kept[w.type]) return;
+        if (keepTypes.indexOf(w.type) < 0) return;
         w.currentConfigGroup = ["General"];
         var cfg = {};
         w.configKeys.forEach(function (k) { cfg[k] = w.readConfig(k); });
-        kept[w.type] = cfg;
+        if (w.type == DRAWER) {
+            keptDrawers.push(cfg);
+        } else {
+            if (!kept[w.type]) kept[w.type] = [];
+            kept[w.type].push(cfg);
+        }
     });
 });
-function restore(w) {
-    var cfg = kept[w.type];
-    if (!cfg) return w;
+function apply(w, cfg) {
     w.currentConfigGroup = ["General"];
     for (var k in cfg) w.writeConfig(k, cfg[k]);
+}
+function restore(w) {
+    var q = kept[w.type];
+    if (q && q.length) apply(w, q.shift());
     return w;
+}
+// alte Schublade zu Titel/Ansicht suchen und aus der Liste nehmen; liefert null, wenn keine passt
+function takeDrawer(face, title) {
+    for (var i = 0; i < keptDrawers.length; ++i) {
+        var c = keptDrawers[i];
+        var t = c.title ? String(c.title) : "";
+        var f = c.face ? String(c.face) : "launcher";
+        if (title ? t == title : (t == "" && f == face)) return keptDrawers.splice(i, 1)[0];
+    }
+    return null;
 }
 
 panels().forEach(function (p) { if (["bottom", "left", "right"].indexOf(p.location) >= 0) p.remove(); });
@@ -51,6 +73,8 @@ function drawer(face, main, list, title) {
     if (main) w.writeConfig("mainUrl", main);
     if (list.length) w.writeConfig("drawerUrls", list);
     if (title) w.writeConfig("title", title);
+    var old = takeDrawer(face, title);
+    if (old) apply(w, old);
     return w;
 }
 
@@ -60,7 +84,7 @@ drawer("date", pick("org.kde.merkuro.calendar", "org.kde.korganizer"), only("org
 drawer("launcher", pick("org.kde.dolphin"), only("org.kde.krusader", "org.kde.kfind", "org.kde.ark", "org.kde.filelight"), "Dateien");
 // Ordner-Schublade: Inhalt des Schreibtischs
 var desk = drawer("folder", "", [], "");
-desk.writeConfig("folderUrl", "file://" + userDataPath("desktop"));
+if (!desk.readConfig("folderUrl")) desk.writeConfig("folderUrl", "file://" + encodeURI(userDataPath("desktop")));
 drawer("launcher", pick("org.kde.kate", "org.kde.kwrite"), only("org.kde.kwrite", "org.kde.okular", "org.kde.kcharselect", "org.kde.kdiff3"), "Texte");
 drawer("launcher", pick("org.kde.konsole"), only("org.kde.spectacle", "org.kde.plasma-systemmonitor"), "Werkzeuge");
 

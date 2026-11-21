@@ -13,10 +13,15 @@ SLOT="0"
 KEYWORDS="amd64 arm64"
 RESTRICT="fetch mirror test"
 
-RDEPEND="kde-frameworks/breeze-icons:6"
+# Die Icons werden beim Bauen aus breeze-icons erzeugt und sind danach eine Momentaufnahme.
+# Nach breeze-icons-Updates sollte das Paket neu gebaut werden: emerge -1 schiefer-icons
+# breeze-icons hat den Subslot 6/<Frameworks-Minor> (frameworks.kde.org.eclass); der Slot-Operator
+# ":6=" in RDEPEND lässt Portage dieses Paket bei jedem Minor-Sprung automatisch mitbauen.
+# (In BDEPEND ist ":=" nicht erlaubt, daher dort ohne Operator.)
+RDEPEND="kde-frameworks/breeze-icons:6="
 BDEPEND="
 	${PYTHON_DEPS}
-	${RDEPEND}
+	kde-frameworks/breeze-icons:6
 	$(python_gen_any_dep '
 		dev-python/numpy[${PYTHON_USEDEP}]
 	')
@@ -34,6 +39,7 @@ src_compile() {
 	einfo "Färbe die Icons aus /usr/share/icons/breeze um …"
 	"${EPYTHON}" make_theme.py --src "${EPREFIX}/usr/share/icons/breeze" \
 		--out "${WORKDIR}/icons/schiefer" --name Schiefer -j "$(makeopts_jobs)" || die
+	# make_theme.py beendet sich bei Fehlern mit Exit-Code 1 (dann bricht || die den Bau ab)
 	rm -f "${WORKDIR}/icons/schiefer/.schiefer-generated" || die
 }
 
@@ -41,4 +47,11 @@ src_install() {
 	dodir /usr/share/icons
 	# cp -a erhält die Symlinks des Themes
 	cp -a "${WORKDIR}/icons/schiefer" "${ED}/usr/share/icons/" || die
+}
+
+pkg_postinst() {
+	xdg_pkg_postinst
+	elog "Schiefer-Icons sind eine Momentaufnahme von breeze-icons."
+	elog "Nach Updates von kde-frameworks/breeze-icons bitte neu bauen:"
+	elog "  emerge -1 schiefer-icons"
 }

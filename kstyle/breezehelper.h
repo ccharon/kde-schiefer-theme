@@ -174,7 +174,8 @@ public:
     void renderFocusRect(QPainter *, const QRectF &, const QBrush &, const QColor &outline = QColor(), Sides = {}) const;
 
     //* focus line
-    void renderFocusLine(QPainter *, const QRectF &, const QColor &) const;
+    // Schiefer: bounds = Bereich, den der Aufrufer neu zeichnet; der Rahmen wird hineingeklemmt
+    void renderFocusLine(QPainter *, const QRectF &, const QColor &, const QRect &bounds = QRect()) const;
 
     //* generic frame
     void renderFrame(QPainter *, const QRectF &, const QColor &color, const QColor &outline = QColor()) const;
@@ -187,8 +188,9 @@ public:
     QColor bevelDark(const QColor &base) const;
     //* Lichtkante: oben/links hell, unten/rechts dunkel (versenkt: umgekehrt); Ecken diagonal geteilt
     void renderBevel(QPainter *, const QRectF &, const QColor &base, bool sunken, int width = 2) const;
-    //* erhabene/versenkte Fläche: füllen + Lichtkante
-    void renderBevelPanel(QPainter *, const QRectF &, const QColor &fill, const QColor &base, bool sunken, int width = 2) const;
+    //* erhabene/versenkte Fläche: füllen + Lichtkante; inset = um so viele Linienbreiten nach innen
+    //* (in Gerätepixeln gerechnet, damit z. B. der Ring des Standardknopfs bei 150 % gleich breit bleibt)
+    void renderBevelPanel(QPainter *, const QRectF &, const QColor &fill, const QColor &base, bool sunken, int width = 2, int inset = 0) const;
     //* Ätzlinie (Gruppenrahmen): dunkel+hell doppelt
     void renderEtchedFrame(QPainter *, const QRectF &, const QColor &base) const;
     //* Motif-Schiebereglerdaumen mit Mittelrille

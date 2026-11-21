@@ -77,3 +77,35 @@ emerge -av x11-themes/schiefer
 ```
 Anderer Rechner (z. B. MacBook mit Gentoo Asahi, arm64): `tools/make-dist.sh`, dann `dist/` hinüberkopieren
 und dort `dist/install-overlay.sh` aufrufen.
+
+## Plasma-Interna des Docks – nach jedem Plasma-Update prüfen
+
+Die System-Schublade (`org.kde.schiefer.drawer`, Ansicht „system“) und die Statuskacheln
+(`org.kde.schiefer.tiles`) steuern einen ausgeblendeten Plasma-Systray fern
+(`dock/common/schiefertray.cpp`). Dafür gibt es keine öffentliche API; die Brücke greift über
+Qt-Metaobjekte auf folgende Interna zu (Pfade relativ zu `src/plasma-workspace-6.7.6/applets/systemtray/`
+bzw. `src/libplasma-6.7.6/src/`):
+
+| Zugriff in der Brücke | Definiert in | Stand 6.7.6 |
+|---|---|---|
+| Plugin-ID `org.kde.plasma.systemtray` | `metadata.json` | – |
+| `property("systemTrayModel")` | `systemtray.h` | `Q_PROPERTY(QAbstractItemModel *systemTrayModel READ sortedSystemTrayModel CONSTANT)`; das Modell entsteht beim ersten Lesen (`systemtray.cpp`, `systemTrayModel()`), braucht aber `init()` |
+| Rollen `itemType`, `itemId`, `effectiveStatus`, `status`, `displayText`, `decoration`, `applet`, `DataEngineSource`, `ToolTipTitle`, `ToolTipSubTitle`, `AttentionIcon(Name)` (QML) | `systemtraymodel.cpp` (`roleNames()`); `applet` liefert `PlasmaQuick::AppletQuickItem*` | – |
+| `invokeMethod("activate", QString, QPoint, QQuickItem*)` | `systemtray.h` | `Q_INVOKABLE void activate(const QString &service, QPoint pos, QQuickItem *statusNotifierIcon)` |
+| `invokeMethod("openContextMenu", QString, QPoint, QQuickItem*)` | `systemtray.h` | `Q_INVOKABLE void openContextMenu(const QString &service, QPoint pos, QQuickItem *statusNotifierIcon)` |
+| `invokeMethod("scroll", QString, int, QString)` | `systemtray.h` | `Q_INVOKABLE void scroll(const QString &service, int delta, const QString &direction)` („Horizontal“/„Vertical“) |
+| Popup mit `objectName` `"popupWindow"` | `qml/main.qml` | `PlasmaCore.AppletPopup { id: dialog; objectName: "popupWindow"; visualParent: root }` |
+| Property `visualParent` des Popups | libplasma `plasmaquick/popupplasmawindow.h` | `Q_PROPERTY(QQuickItem *visualParent …)`, intern `QPointer` |
+| `Q_EMIT applet->activated()` schaltet das Popup um | `qml/main.qml` | `Connections { target: Plasmoid; function onActivated() { systemTrayState.expanded = !… } }` |
+| Property `expanded` von `model.applet` | libplasma `plasmaquick/appletquickitem.h` | `Q_PROPERTY(bool expanded …)` |
+| `internalAction("configure")` | libplasma `plasma/private/applet_p.cpp` | Standardaktion jedes Applets |
+| Systray setzt beim Auf-/Zuklappen selbst `status` (die Brücke setzt es zurück auf `HiddenStatus`) | `qml/SystemTrayState.qml` (`onExpandedChanged` → `Plasmoid.status`) | – |
+
+Schlägt einer dieser Zugriffe fehl, meldet die Brücke das **einmal** pro Instanz in der
+Logging-Kategorie `schiefer.dock`, z. B.
+`schiefer.dock: Systray-Brücke: QMetaObject::invokeMethod("activate") am Systray ist fehlgeschlagen …`.
+Prüfen nach einem Update: Signaturen oben mit der neuen Quelle vergleichen
+(`grep -n "Q_INVOKABLE\|Q_PROPERTY" systemtray.h`, `grep -n popupWindow qml/main.qml`), dann im
+isolierten Test (`README.md`, Dock-Beispiel mit `SCHIEFER_DOCK_OPEN=System` bzw.
+`SCHIEFER_DOCK_TRAY=org.kde.plasma.volume` und `BR_LOG=…`) das Log auf `schiefer.dock` durchsuchen.
+Mit `QT_LOGGING_RULES="schiefer.dock.debug=true"` zeigt die Brücke außerdem jedes Umhängen des Popups.

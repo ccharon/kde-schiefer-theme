@@ -9,9 +9,13 @@
 #include <KDirModel>
 #include <KFileItem>
 #include <KIO/Global>
+#include <KLocalizedString>
 
 #include <QDir>
+#include <QFile>
 #include <QStandardPaths>
+
+#include <pwd.h>
 
 SchieferFolder::SchieferFolder(QObject *parent)
     : KDirSortFilterProxyModel(parent)
@@ -25,6 +29,34 @@ SchieferFolder::SchieferFolder(QObject *parent)
     connect(this, &QAbstractItemModel::rowsInserted, this, &SchieferFolder::countChanged);
     connect(this, &QAbstractItemModel::rowsRemoved, this, &SchieferFolder::countChanged);
     connect(this, &QAbstractItemModel::modelReset, this, &SchieferFolder::countChanged);
+    // KDirModel meldet geänderte Dateien per dataChanged, gelöschte per rowsRemoved
+    const auto dropCache = [this]() {
+        m_desktopCache.clear();
+    };
+    connect(m_dirModel, &QAbstractItemModel::dataChanged, this, dropCache);
+    connect(m_dirModel, &QAbstractItemModel::rowsRemoved, this, dropCache);
+    connect(m_dirModel, &QAbstractItemModel::modelReset, this, dropCache);
+}
+
+// „~“, „~/…“, „~name/…“ und relative Pfade (relativ zum persönlichen Ordner) in eine URL wandeln
+static QUrl urlFromUserPath(const QString &input)
+{
+    QString path = input;
+    if (path == QLatin1String("~") || path.startsWith(QLatin1String("~/"))) {
+        path = QDir::homePath() + path.mid(1);
+    } else if (path.startsWith(QLatin1Char('~'))) {
+        const int slash = path.indexOf(QLatin1Char('/'));
+        const QString user = path.mid(1, slash < 0 ? -1 : slash - 1);
+        if (const passwd *pw = getpwnam(user.toLocal8Bit().constData()); pw && pw->pw_dir) {
+            path = QFile::decodeName(pw->pw_dir) + (slash < 0 ? QString() : path.mid(slash));
+        } else {
+            // unbekannter Benutzer: als gewöhnlichen (relativen) Namen behandeln
+            path = QDir::home().filePath(path);
+        }
+    } else if (QDir::isRelativePath(path)) {
+        path = QDir::home().filePath(path);
+    }
+    return QUrl::fromLocalFile(QDir::cleanPath(path));
 }
 
 QUrl SchieferFolder::url() const
@@ -35,18 +67,15 @@ QUrl SchieferFolder::url() const
 void SchieferFolder::setUrl(const QUrl &rawUrl)
 {
     QUrl url = rawUrl;
-    // „~/…“ und nackte Pfade zulassen
-    if (url.scheme().isEmpty()) {
-        QString path = url.path();
-        if (path.startsWith(QLatin1Char('~'))) {
-            path = QDir::homePath() + path.mid(1);
-        }
-        url = QUrl::fromLocalFile(path);
+    // „~/…“ und nackte Pfade zulassen (QUrl hat den Text dann unverändert als Pfad)
+    if (url.scheme().isEmpty() && !url.isEmpty()) {
+        url = urlFromUserPath(url.path());
     }
     if (url == m_url) {
         return;
     }
     m_url = url;
+    m_desktopCache.clear();
     if (m_url.isValid()) {
         m_dirModel->dirLister()->openUrl(m_url);
     } else {
@@ -73,7 +102,7 @@ QString SchieferFolder::folderName() const
             return QDir(path).dirName();
         }
         if (path == QDir::homePath()) {
-            return QStringLiteral("Persönlicher Ordner");
+            return i18nc("@label Name des persönlichen Ordners (~)", "Persönlicher Ordner");
         }
     }
     const QString name = m_url.fileName();
@@ -99,6 +128,18 @@ QHash<int, QByteArray> SchieferFolder::roleNames() const
     };
 }
 
+const SchieferFolder::DesktopInfo &SchieferFolder::desktopInfo(const KFileItem &item) const
+{
+    auto it = m_desktopCache.constFind(item.url());
+    if (it == m_desktopCache.constEnd()) {
+        const KDesktopFile f(item.localPath());
+        const QString generic = f.readGenericName();
+        // Starter: Beschreibung statt „Desktop-Datei“
+        it = m_desktopCache.insert(item.url(), {f.readName(), f.readIcon(), generic.isEmpty() ? f.readComment() : generic});
+    }
+    return it.value();
+}
+
 QVariant SchieferFolder::data(const QModelIndex &index, int role) const
 {
     if (role < NameRole) {
@@ -113,7 +154,7 @@ QVariant SchieferFolder::data(const QModelIndex &index, int role) const
     switch (role) {
     case NameRole:
         if (desktopFile) {
-            const QString n = KDesktopFile(item.localPath()).readName();
+            const QString &n = desktopInfo(item).name;
             if (!n.isEmpty()) {
                 return n;
             }
@@ -121,7 +162,7 @@ QVariant SchieferFolder::data(const QModelIndex &index, int role) const
         return item.text();
     case IconRole:
         if (desktopFile) {
-            const QString i = KDesktopFile(item.localPath()).readIcon();
+            const QString &i = desktopInfo(item).icon;
             if (!i.isEmpty()) {
                 return i;
             }
@@ -136,10 +177,7 @@ QVariant SchieferFolder::data(const QModelIndex &index, int role) const
             return QString();
         }
         if (desktopFile) {
-            // Starter: Beschreibung statt „Desktop-Datei“
-            const KDesktopFile f(item.localPath());
-            const QString g = f.readGenericName();
-            return g.isEmpty() ? f.readComment() : g;
+            return desktopInfo(item).detail;
         }
         return item.mimeComment();
     }

@@ -82,12 +82,19 @@ PlasmoidItem {
         if (at < 0 || at > list.length) list.push(url); else list.splice(at, 0, url);
         Plasmoid.configuration.drawerUrls = list;
     }
+    // Indizes kommen aus Delegaten, die beim Umbau des Modells schon veraltet sein können;
+    // splice(-1, 1) würde sonst still den letzten Eintrag löschen
+    function validIndex(index) {
+        return Number.isInteger(index) && index >= 0 && index < drawerUrls.length;
+    }
     function removeFromDrawer(index) {
+        if (!validIndex(index)) return;
         const list = drawerUrls.slice();
         list.splice(index, 1);
         Plasmoid.configuration.drawerUrls = list;
     }
     function moveInDrawer(from, to) {
+        if (!validIndex(from) || !validIndex(to) || from === to) return;
         const list = drawerUrls.slice();
         const [u] = list.splice(from, 1);
         list.splice(to, 0, u);
@@ -95,6 +102,7 @@ PlasmoidItem {
     }
     // Eintrag aus der Schublade wird Hauptsymbol, das alte Hauptsymbol rutscht an seine Stelle
     function promote(index) {
+        if (!validIndex(index)) return;
         const list = drawerUrls.slice();
         const u = list[index];
         if (mainUrl) list[index] = mainUrl; else list.splice(index, 1);
@@ -105,6 +113,12 @@ PlasmoidItem {
     function launch(url) {
         popup.visible = false;
         helper.openUrl(url);
+        launchFeedback.restart();
+    }
+    // Eintrag der Ordner-Schublade: öffnen, aber keine Programme/Skripte ausführen
+    function openEntry(url) {
+        popup.visible = false;
+        helper.openFile(url);
         launchFeedback.restart();
     }
 
@@ -270,7 +284,8 @@ PlasmoidItem {
             acceptedButtons: Qt.LeftButton
             onClicked: {
                 if (root.isFolder) {
-                    if (root.folderUrl) root.launch(root.folderUrl); else folderDialog.open();
+                    // folder.url: schon aufgelöst („~/…“, relative Pfade)
+                    if (root.folderUrl) root.launch(folder.url); else folderDialog.open();
                 } else if (root.mainUrl) root.launch(root.mainUrl);
                 else if (root.face === "launcher") helper.chooseLauncher("main");
                 else popup.visible = !popup.visible;

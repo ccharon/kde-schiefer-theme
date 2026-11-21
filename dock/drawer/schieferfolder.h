@@ -6,10 +6,12 @@
 #pragma once
 
 #include <KDirSortFilterProxyModel>
+#include <QHash>
 #include <QUrl>
 #include <qqmlregistration.h>
 
 class KDirModel;
+class KFileItem;
 
 class SchieferFolder : public KDirSortFilterProxyModel
 {
@@ -47,6 +49,16 @@ Q_SIGNALS:
     void countChanged();
 
 private:
+    // Name, Symbol und Beschreibung eines Starters (.desktop), einmal gelesen
+    struct DesktopInfo {
+        QString name;
+        QString icon;
+        QString detail;
+    };
+    const DesktopInfo &desktopInfo(const KFileItem &item) const;
+
     KDirModel *m_dirModel;
     QUrl m_url;
+    // gelöscht, sobald sich die Quelle ändert (Datei bearbeitet, entfernt, neu gelistet)
+    mutable QHash<QUrl, DesktopInfo> m_desktopCache;
 };

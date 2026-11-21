@@ -21,14 +21,36 @@ PlasmoidItem {
 
     readonly property bool vertical: Plasmoid.formFactor !== PlasmaCore.Types.Horizontal
     readonly property int sp: 2
-    readonly property int tile: Math.max(Kirigami.Units.iconSizes.small + 8, (vertical ? width : height))
+    // Rand zwischen Kachelgruppe und sichtbarer Leistenkante, ringsum gleich
+    readonly property int gap: fit.gap
+
+    // Lage im Leistenfenster (PanelFit): die Kacheln sitzen mittig zwischen den sichtbaren
+    // Kanten, die gemeldete Länge ist um Plasmas überschüssiges Polster gekürzt
+    PanelFit {
+        id: fit
+        target: root
+        vertical: root.vertical
+    }
+    readonly property bool alone: fit.alone
+    readonly property int thickness: fit.thickness
+    readonly property int tile: Math.max(Kirigami.Units.iconSizes.small + 8, thickness - 2 * gap)
+    // Abstand der Kachelgruppe zur oberen linken Ecke des Applets
+    // längs: ab Leistenanfang, oder mit anderen Applets in der Leiste mittig im eigenen Platz
+    readonly property int offsetAlong: alone ? (vertical ? fit.innerY : fit.innerX)
+                                             : Math.floor(((vertical ? height : width) - contentLength) / 2)
+    readonly property int offsetX: vertical ? fit.edgeL + Math.floor((thickness - tile) / 2) - fit.winPos.x : offsetAlong
+    readonly property int offsetY: vertical ? offsetAlong : fit.edgeT + Math.floor((thickness - tile) / 2) - fit.winPos.y
+
     readonly property int iconMargin: Math.round(tile * (1 - Plasmoid.configuration.iconScale / 100) / 2)
     // höchstens maxTiles Kacheln (0 = alle aktiven), der Rest kommt in die Liste hinter dem Pfeil
     readonly property int maxTiles: Plasmoid.configuration.maxTiles
     readonly property int shownTiles: maxTiles > 0 ? Math.min(maxTiles, trayActive.count) : trayActive.count
     readonly property int overflowCount: trayActive.count - shownTiles + trayPassive.count
     readonly property int tileCount: shownTiles + (moreTile.visible ? 1 : 0)
-    readonly property int length: Math.max(1, tileCount) * (tile + sp) - sp
+    readonly property int contentLength: Math.max(1, tileCount) * (tile + sp) - sp
+    // gewünschte Fensterlänge: Kante, Rand, Kacheln, Rand, Kante – abzüglich Plasmas Polster
+    readonly property int length: alone ? fit.lengthFor(contentLength)
+                                        : contentLength
 
     preferredRepresentation: fullRepresentation
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
@@ -81,7 +103,10 @@ PlasmoidItem {
 
     Flow {
         id: flow
-        anchors.fill: parent
+        x: root.offsetX
+        y: root.offsetY
+        width: root.vertical ? root.tile : root.contentLength
+        height: root.vertical ? root.contentLength : root.tile
         flow: root.vertical ? Flow.TopToBottom : Flow.LeftToRight
         spacing: root.sp
 

@@ -842,7 +842,7 @@ int Style::pixelMetric(PixelMetric metric, const QStyleOption *option, const QWi
     case PM_SliderControlThickness:
         return Metrics::Slider_ControlThickness;
     case PM_SliderLength:
-        return Metrics::Slider_ControlThickness + 10; // Schiefer: länglicher Motif-Daumen
+        return Metrics::Slider_RetroThumbLength; // Schiefer: länglicher Motif-Daumen
 
     // checkboxes and radio buttons
     case PM_IndicatorWidth:
@@ -3268,7 +3268,7 @@ QRect Style::sliderSubControlRect(const QStyleOptionComplex *option, SubControl 
     switch (subControl) {
     case SC_SliderHandle: {
         // Schiefer: länglicher Daumen (entlang der Rinne länger)
-        constexpr int len = Metrics::Slider_ControlThickness + 10;
+        constexpr int len = Metrics::Slider_RetroThumbLength;
         QRect ret(horizontal ? centerRect(rect, len, Metrics::Slider_ControlThickness) : centerRect(rect, Metrics::Slider_ControlThickness, len));
         const int sliderPos = sliderPositionFromValue(sliderOption->minimum,
                                                       sliderOption->maximum,
@@ -5758,7 +5758,9 @@ bool Style::drawCheckBoxLabelControl(const QStyleOption *option, QPainter *paint
     }
 
     // render focus
-    _helper->renderFocusLine(painter, focusRect, focusColor);
+    // Schiefer: im neu gezeichneten Bereich bleiben (QCheckBox/QRadioButton zeichnen beim Fokuswechsel
+    // das ganze Widget neu; option->rect ist hier nur der Textbereich und wäre zu eng)
+    _helper->renderFocusLine(painter, focusRect, focusColor, widget ? widget->rect() : option->rect);
 
     return true;
 }
@@ -5920,7 +5922,7 @@ bool Style::drawMenuBarItemControl(const QStyleOption *option, QPainter *painter
                 outlineColor = _helper->hoverColor(palette);
             }
 
-            _helper->renderFocusLine(painter, iconRect, outlineColor);
+            _helper->renderFocusLine(painter, iconRect, outlineColor, rect); // Schiefer: im Eintrag bleiben
         }
 
     } else {
@@ -5941,7 +5943,7 @@ bool Style::drawMenuBarItemControl(const QStyleOption *option, QPainter *painter
                 outlineColor = _helper->hoverColor(palette);
             }
 
-            _helper->renderFocusLine(painter, textRect, outlineColor);
+            _helper->renderFocusLine(painter, textRect, outlineColor, option->rect); // Schiefer: im Eintrag bleiben
         }
     }
 
@@ -6187,7 +6189,7 @@ bool Style::drawMenuItemControl(const QStyleOption *option, QPainter *painter, c
                 outlineColor = _helper->hoverColor(palette);
             }
 
-            _helper->renderFocusLine(painter, textRect, outlineColor);
+            _helper->renderFocusLine(painter, textRect, outlineColor, option->rect); // Schiefer: im Eintrag bleiben
         }
     }
 
@@ -7194,6 +7196,7 @@ bool Style::drawTabBarTabLabelControl(const QStyleOption *option, QPainter *pain
 
     // text rect
     auto textRect(subElementRect(SE_TabBarTabText, option, widget));
+    QRect focusBounds(rect); // Schiefer: Fokusrahmen im Reiter halten
 
     if (verticalTabs) {
         // properly rotate painter
@@ -7214,6 +7217,7 @@ bool Style::drawTabBarTabLabelControl(const QStyleOption *option, QPainter *pain
         transform.translate(newX, newY);
         transform.rotate(newRot);
         painter->setTransform(transform, true);
+        focusBounds = transform.inverted().mapRect(rect); // Schiefer: in gedrehten Koordinaten
     }
 
     // adjust text rect based on font metrics
@@ -7228,7 +7232,7 @@ bool Style::drawTabBarTabLabelControl(const QStyleOption *option, QPainter *pain
     }
 
     // render focus line
-    _helper->renderFocusLine(painter, textRect, focusColor);
+    _helper->renderFocusLine(painter, textRect, focusColor, focusBounds); // Schiefer: im Reiter bleiben
 
     if (verticalTabs) {
         painter->restore();
@@ -7771,7 +7775,7 @@ bool Style::drawGroupBoxComplexControl(const QStyleOptionComplex *option, QPaint
     }
 
     // render focus
-    _helper->renderFocusLine(painter, textRect, focusColor);
+    _helper->renderFocusLine(painter, textRect, focusColor, widget ? widget->rect() : option->rect); // Schiefer: im Widget bleiben
 
     return true;
 }

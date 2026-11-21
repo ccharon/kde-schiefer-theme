@@ -7,7 +7,10 @@
 
 #include <KDesktopFile>
 #include <KFileItem>
+#include <KIO/ApplicationLauncherJob>
+#include <KIO/JobUiDelegateFactory>
 #include <KIO/OpenUrlJob>
+#include <KLocalizedString>
 #include <KNotificationJobUiDelegate>
 #include <KOpenWithDialog>
 #include <KService>
@@ -59,7 +62,7 @@ QVariantMap SchieferHelper::launcherData(const QUrl &rawUrl) const
     } else if (url.scheme() == QLatin1String("trash")) {
         name = KDesktopFile(QStringLiteral("trash.desktop")).readName();
         if (name.isEmpty() || name == QLatin1String("trash")) {
-            name = QStringLiteral("Papierkorb");
+            name = i18nc("@label Name des Papierkorbs im Dock", "Papierkorb");
         }
         icon = QStringLiteral("user-trash");
     } else if (url.isValid()) {
@@ -81,6 +84,30 @@ void SchieferHelper::openUrl(const QUrl &url)
     auto *job = new KIO::OpenUrlJob(resolve(url));
     job->setUiDelegate(new KNotificationJobUiDelegate(KJobUiDelegate::AutoHandlingEnabled));
     job->setRunExecutables(true);
+    job->start();
+}
+
+void SchieferHelper::openFile(const QUrl &url)
+{
+    // Starter (Type=Application) wie Plasmas Ordneransicht starten: ApplicationLauncherJob prüft
+    // isAuthorizedDesktopFile() und fragt bei fremden Dateien ohne Ausführbar-Bit nach.
+    // Type=Link und alles andere geht an OpenUrlJob ohne setRunExecutables – ein Link auf ein
+    // Programm oder ein ausführbares Skript wird so nur geöffnet, nicht gestartet.
+    if (url.isLocalFile() && KDesktopFile::isDesktopFile(url.toLocalFile())) {
+        const KDesktopFile f(url.toLocalFile());
+        if (f.hasApplicationType()) {
+            KService::Ptr service(new KService(url.toLocalFile()));
+            if (service->isValid() && !service->exec().isEmpty()) {
+                auto *job = new KIO::ApplicationLauncherJob(service);
+                job->setUiDelegate(KIO::createDefaultJobUiDelegate(KJobUiDelegate::AutoHandlingEnabled, nullptr));
+                job->start();
+                return;
+            }
+        }
+    }
+    auto *job = new KIO::OpenUrlJob(url);
+    job->setUiDelegate(KIO::createDefaultJobUiDelegate(KJobUiDelegate::AutoHandlingEnabled, nullptr));
+    job->setRunExecutables(false);
     job->start();
 }
 

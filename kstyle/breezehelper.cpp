@@ -30,10 +30,58 @@
 #include <QWindow>
 
 #include <QDialog>
+#include <QtMath>
 #include <algorithm>
 
 namespace Schiefer
 {
+// Schiefer: Lichtkanten im Gerätepixelraster (fraktionale Skalierung)
+namespace
+{
+// Skalierungsfaktor logisch -> Gerät, falls nur verschoben und gleichmäßig um einen gebrochenen
+// Faktor (z. B. 1,25 oder 1,5) skaliert wird; sonst 0. Dann wird wie bisher in logischen Pixeln
+// gezeichnet: bei ganzzahligen Faktoren (1, 2, 3) sind die Kanten ohnehin gleichmäßig und bleiben pixelgleich.
+qreal bevelDeviceScale(const QPainter *painter)
+{
+    const QTransform t = painter->deviceTransform();
+    if (t.type() > QTransform::TxScale || t.m11() <= 0 || !qFuzzyCompare(t.m11(), t.m22()) || qFuzzyCompare(t.m11(), qreal(qRound(t.m11())))) {
+        return 0;
+    }
+    return t.m11();
+}
+
+// Kante wie fillRect ohne AA (x,5 wird aufgerundet, wie auch die Widget-Clips), Toleranz gegen Rundungsfehler
+int snapToDevice(qreal v)
+{
+    return qFloor(v + 0.5 + 1e-4);
+}
+
+// ganzzahliges logisches Rechteck in Gerätepixel; Painter danach auf Gerätekoordinaten umstellen
+QRect beginDevicePixels(QPainter *painter, const QRect &logical)
+{
+    const QTransform t = painter->deviceTransform();
+    const QRectF m = t.mapRect(QRectF(logical));
+    painter->setWorldTransform(t.inverted() * painter->worldTransform());
+    return QRect(QPoint(snapToDevice(m.left()), snapToDevice(m.top())), QPoint(snapToDevice(m.right()) - 1, snapToDevice(m.bottom()) - 1));
+}
+
+// eigentliche Lichtkante, je Linie 1 Pixel im aktuellen Koordinatensystem
+void fillBevel(QPainter *painter, const QRect &rect, const QColor &hi, const QColor &lo, int width)
+{
+    for (int i = 0; i < width; ++i) {
+        const int x = rect.left() + i, y = rect.top() + i;
+        const int w = rect.width() - 2 * i, h = rect.height() - 2 * i;
+        if (w <= 0 || h <= 0) {
+            break;
+        }
+        painter->fillRect(QRect(x, y, w, 1), hi); // oben
+        painter->fillRect(QRect(x, y, 1, h), hi); // links
+        painter->fillRect(QRect(x + 1, y + h - 1, w - 1, 1), lo); // unten
+        painter->fillRect(QRect(x + w - 1, y + 1, 1, h - 1), lo); // rechts
+    }
+}
+}
+
 //* contrast for arrow and treeline rendering
 static const qreal arrowShade = 0.15;
 
@@ -404,9 +452,21 @@ void Helper::renderFocusRect(QPainter *painter, const QRectF &rect, const QBrush
 }
 
 //______________________________________________________________________________
-void Helper::renderFocusLine(QPainter *painter, const QRectF &rect, const QColor &color) const
+void Helper::renderFocusLine(QPainter *painter, const QRectF &rect, const QColor &color, const QRect &bounds) const
 {
     if (!color.isValid()) {
+        return;
+    }
+
+    // Schiefer: Motif-Fokusrahmen um den Text statt Unterstrich.
+    // Belegte Pixel: 3 px links/rechts, 1 px oben/unten um den Text. Der Rahmen wird in den
+    // Bereich des Aufrufers geklemmt (nach innen gelegt statt abgeschnitten), damit beim
+    // Fokuswechsel keine Reste außerhalb des neu gezeichneten Rechtecks stehen bleiben.
+    QRect frame = rect.toAlignedRect().adjusted(-3, -1, 3, 1);
+    if (bounds.isValid()) {
+        frame = frame.intersected(bounds);
+    }
+    if (frame.width() < 2 || frame.height() < 2) {
         return;
     }
 
@@ -414,9 +474,7 @@ void Helper::renderFocusLine(QPainter *painter, const QRectF &rect, const QColor
     painter->setRenderHint(QPainter::Antialiasing, false);
     painter->setBrush(Qt::NoBrush);
     painter->setPen(color);
-
-    // Schiefer: Motif-Fokusrahmen um den Text statt Unterstrich
-    painter->drawRect(rect.toAlignedRect().adjusted(-3, -1, 2, 0));
+    painter->drawRect(frame.adjusted(0, 0, -1, -1)); // drawRect(QRect) zeichnet eine Spalte/Zeile mehr
     painter->restore();
 }
 
@@ -521,26 +579,40 @@ void Helper::renderBevel(QPainter *painter, const QRectF &rectF, const QColor &b
     }
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
-    for (int i = 0; i < width; ++i) {
-        const int x = rect.left() + i, y = rect.top() + i;
-        const int w = rect.width() - 2 * i, h = rect.height() - 2 * i;
-        if (w <= 0 || h <= 0) {
-            break;
-        }
-        painter->fillRect(QRect(x, y, w, 1), hi); // oben
-        painter->fillRect(QRect(x, y, 1, h), hi); // links
-        painter->fillRect(QRect(x + 1, y + h - 1, w - 1, 1), lo); // unten
-        painter->fillRect(QRect(x + w - 1, y + 1, 1, h - 1), lo); // rechts
+    // Schiefer: bei fraktionaler Skalierung in Gerätepixeln, Kantenbreite = round(width * Faktor)
+    if (const qreal scale = bevelDeviceScale(painter)) {
+        fillBevel(painter, beginDevicePixels(painter, rect), hi, lo, qMax(1, qRound(width * scale)));
+    } else {
+        fillBevel(painter, rect, hi, lo, width);
     }
     painter->restore();
 }
 
-void Helper::renderBevelPanel(QPainter *painter, const QRectF &rect, const QColor &fill, const QColor &base, bool sunken, int width) const
+void Helper::renderBevelPanel(QPainter *painter, const QRectF &rectF, const QColor &fill, const QColor &base, bool sunken, int width, int inset) const
 {
+    // Schiefer: Einzug und Kante bei fraktionaler Skalierung in ganzen Gerätepixeln
+    if (const qreal scale = bevelDeviceScale(painter)) {
+        QColor hi = bevelLight(base), lo = bevelDark(base);
+        if (sunken) {
+            std::swap(hi, lo);
+        }
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing, false);
+        const int d = qRound(inset * scale);
+        const QRect r = beginDevicePixels(painter, rectF.toAlignedRect()).adjusted(d, d, -d, -d);
+        if (fill.isValid() && !r.isEmpty()) {
+            painter->fillRect(r, fill);
+        }
+        fillBevel(painter, r, hi, lo, qMax(1, qRound(width * scale)));
+        painter->restore();
+        return;
+    }
+
+    const QRect rect = rectF.toAlignedRect().adjusted(inset, inset, -inset, -inset);
     if (fill.isValid()) {
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing, false);
-        painter->fillRect(rect.toAlignedRect(), fill);
+        painter->fillRect(rect, fill);
         painter->restore();
     }
     renderBevel(painter, rect, base, sunken, width);
@@ -549,6 +621,17 @@ void Helper::renderBevelPanel(QPainter *painter, const QRectF &rect, const QColo
 void Helper::renderEtchedFrame(QPainter *painter, const QRectF &rectF, const QColor &base) const
 {
     const QRect r = rectF.toAlignedRect();
+    // Schiefer: bei fraktionaler Skalierung beide Linien gleich breit in Gerätepixeln
+    if (const qreal scale = bevelDeviceScale(painter)) {
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing, false);
+        const QRect d = beginDevicePixels(painter, r);
+        const int w = qMax(1, qRound(scale));
+        fillBevel(painter, d.adjusted(0, 0, -w, -w), bevelDark(base), bevelLight(base), w);
+        fillBevel(painter, d.adjusted(w, w, 0, 0), bevelLight(base), bevelDark(base), w);
+        painter->restore();
+        return;
+    }
     // versenkte 1-px-Kante außen, erhabene 1-px-Kante innen -> geätzte Rille
     renderBevel(painter, r.adjusted(0, 0, -1, -1), base, true, 1);
     renderBevel(painter, r.adjusted(1, 1, 0, 0), base, false, 1);
@@ -698,10 +781,12 @@ void Helper::renderButtonFrame(QPainter *painter,
     if (defaultButton && !flat) {
         painter->setPen(Qt::NoPen);
         renderBevel(painter, r, base, true, 1);
-        r.adjust(1, 1, -1, -1);
     }
 
-    renderBevelPanel(painter, r, fill, base, sunken, flat ? 1 : 2);
+    // Schiefer: Einzug für den Ring über inset (in Gerätepixeln gleich breit wie der Ring)
+    const int ring = (defaultButton && !flat) ? 1 : 0;
+    renderBevelPanel(painter, r, fill, base, sunken, flat ? 1 : 2, ring);
+    r.adjust(ring, ring, -ring, -ring);
 
     // Tastaturfokus: dunkles Rechteck innen
     if (visualFocus && enabled) {
@@ -1104,7 +1189,14 @@ void Helper::renderRetroSliderThumb(QPainter *painter, const QRectF &rect, const
     } else {
         r.adjust(2, 0, -2, 0);
     }
+    if (r.isEmpty()) {
+        return; // Schiefer: zu klein
+    }
     renderBevelPanel(painter, r, color, color, false, 2);
+    // geätzte Mittellinie nur, wenn innerhalb der Kanten Platz ist
+    if ((horizontal ? r.height() : r.width()) <= 4) {
+        return;
+    }
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
     const QPoint c = r.center();
@@ -1222,6 +1314,9 @@ void Helper::renderStaticTabBarTab(QPainter *painter,
         else if (west) r.adjust(2, 0, 0, 0);
         else if (east) r.adjust(0, 0, -2, 0);
     }
+    if (r.width() < 4 || r.height() < 4) {
+        return; // Schiefer: zu klein für zwei Kanten
+    }
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
     painter->fillRect(r, selected ? base : KColorUtils::mix(base, Qt::black, 0.07));
@@ -1274,6 +1369,9 @@ void Helper::renderTabBarTab(QPainter *painter,
         else if (south) r.adjust(0, 0, 0, -2);
         else if (west) r.adjust(2, 0, 0, 0);
         else if (east) r.adjust(0, 0, -2, 0);
+    }
+    if (r.width() < 4 || r.height() < 4) {
+        return; // Schiefer: zu klein für zwei Kanten
     }
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
@@ -1755,7 +1853,10 @@ void Helper::renderOptionMenuIndicator(QPainter *painter, const QRectF &rect, co
 {
     // Motif-Optionsmenü: kleiner erhabener Balken statt Pfeil
     const QRect r = rect.toAlignedRect();
-    const int w = 12, h = 7;
+    const int w = qMin(12, r.width()), h = qMin(7, r.height()); // Schiefer: nie größer als rect
+    if (w < 4 || h < 4) {
+        return;
+    }
     const QRect bar(r.left() + (r.width() - w) / 2, r.top() + (r.height() - h) / 2, w, h);
     renderBevelPanel(painter, bar, enabled ? base : QColor(), base, false, 2);
 }
@@ -1764,6 +1865,9 @@ void Helper::renderOptionMenuIndicator(QPainter *painter, const QRectF &rect, co
 void Helper::renderRetroDial(QPainter *painter, const QRectF &rect, const QPalette &palette, qreal angle, bool hasFocus, bool enabled) const
 {
     const qreal size = qMin(rect.width(), rect.height()) - 2;
+    if (size < 6) {
+        return; // Schiefer: zu klein für Mulde und Ring
+    }
     const QRectF outer(rect.center().x() - size / 2, rect.center().y() - size / 2, size, size);
     const QColor base = palette.color(QPalette::Window);
     painter->save();
@@ -1783,8 +1887,12 @@ void Helper::renderRetroDial(QPainter *painter, const QRectF &rect, const QPalet
     painter->setPen(pen);
     painter->drawArc(ring, 225 * 16, 180 * 16);
 
-    // erhabener Knopf
+    // erhabener Knopf (bei sehr kleinem Regler nur die Mulde)
     const QRectF knob = outer.adjusted(6, 6, -6, -6);
+    if (knob.width() < 8) {
+        painter->restore();
+        return;
+    }
     painter->setPen(Qt::NoPen);
     painter->setBrush(KColorUtils::mix(palette.color(QPalette::Button), Qt::white, 0.12));
     painter->drawEllipse(knob);

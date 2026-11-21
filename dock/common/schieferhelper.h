@@ -19,7 +19,11 @@ public:
 
     // name, icon, genericName eines Starters (.desktop, applications:-URL oder Datei)
     Q_INVOKABLE QVariantMap launcherData(const QUrl &url) const;
+    // Starter öffnen: führt auch Programme und Skripte aus (wie ein Klick im Startmenü)
     Q_INVOKABLE void openUrl(const QUrl &url);
+    // Eintrag der Ordner-Schublade öffnen: Dateien nur mit ihrem Programm, nichts ausführen;
+    // .desktop-Starter laufen über KIOs Vertrauensprüfung (Ausführbar-Bit oder Standardort)
+    Q_INVOKABLE void openFile(const QUrl &url);
     // „Programm wählen“-Dialog; Ergebnis über launcherChosen()
     Q_INVOKABLE void chooseLauncher(const QString &tag);
 

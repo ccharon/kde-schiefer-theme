@@ -33,7 +33,7 @@ PlasmoidItem {
     readonly property string currentActivity: activityInfo.currentActivity
 
     readonly property bool showTitle: cfg.showTitle
-    readonly property int titleHeight: showTitle ? titleLabel.implicitHeight + 2 * pad + 4 : 0
+    readonly property int titleHeight: showTitle ? titleLabel.implicitHeight + pad + 4 : 0
 
     // Symbolansicht: Bildgröße aus der Spaltenbreite, Zelle = Bild + zwei Textzeilen
     readonly property int laneWidth: Math.floor((sections.width) / lanes)
@@ -41,6 +41,17 @@ PlasmoidItem {
     readonly property int cellLength: iconSize + 10 + 2 * pad + 2 * Math.ceil(fontMetrics.height) + 8
 
     readonly property int contentLength: sections.implicitHeight
+    // Länge von Titel und Mulde samt Kanten, ohne äußeren Rand
+    readonly property int naturalLength: (showTitle ? titleHeight + 2 : 0) + 4 + Math.max(contentLength, emptyLabel.implicitHeight + 2 * pad)
+    readonly property int minimumLength: (showTitle ? titleHeight + 2 : 0) + 4 + Kirigami.Units.gridUnit * 2
+
+    // Lage im Leistenfenster (PanelFit): Titel und Mulde halten wie die Statuskacheln
+    // ringsum 3 px Abstand zu den sichtbaren Leistenkanten
+    PanelFit {
+        id: fit
+        target: root
+        vertical: root.vertical
+    }
     readonly property int totalCount: {
         let n = 0;
         for (let i = 0; i < sectionRepeater.count; ++i) n += sectionRepeater.itemAt(i)?.count ?? 0;
@@ -53,8 +64,8 @@ PlasmoidItem {
 
     Layout.fillWidth: vertical
     Layout.fillHeight: !vertical
-    Layout.preferredHeight: vertical ? titleHeight + Math.max(contentLength, emptyLabel.implicitHeight + 2 * pad) + 4 * pad : -1
-    Layout.minimumHeight: vertical ? titleHeight + Kirigami.Units.gridUnit * 3 : -1
+    Layout.preferredHeight: vertical ? (fit.alone ? fit.lengthFor(naturalLength) : naturalLength + 2 * pad) : -1
+    Layout.minimumHeight: vertical ? (fit.alone ? fit.lengthFor(minimumLength) : minimumLength + 2 * pad) : -1
     Layout.preferredWidth: vertical ? -1 : Kirigami.Units.gridUnit * 14
     Layout.minimumWidth: vertical ? -1 : Kirigami.Units.gridUnit * 8
 
@@ -100,12 +111,22 @@ PlasmoidItem {
         windowMenu.openRelative();
     }
 
+    // Fläche für Titel und Mulde: allein in der Leiste die Innenfläche des Fensters
+    // (über das Applet hinaus), sonst das Applet abzüglich Rand
+    Item {
+        id: area
+        x: fit.alone ? fit.innerX : root.pad
+        y: fit.alone ? fit.innerY : root.pad
+        width: fit.alone ? fit.innerWidth : root.width - 2 * root.pad
+        height: fit.alone ? fit.innerHeight : root.height - 2 * root.pad
+    }
+
     // ---------- Titelleiste wie die Kopfzeile von mwms Icon-Box-Fenster ----------
     Item {
         id: title
         visible: root.showTitle
-        anchors { left: parent.left; right: parent.right; top: parent.top; margins: root.pad }
-        height: root.titleHeight - root.pad
+        anchors { left: area.left; right: area.right; top: area.top }
+        height: root.titleHeight
         Bevel { anchors.fill: parent; base: Kirigami.Theme.highlightColor }
         PlasmaComponents3.Label {
             id: titleLabel
@@ -123,10 +144,9 @@ PlasmoidItem {
     Bevel {
         id: well
         anchors {
-            left: parent.left; right: parent.right; bottom: parent.bottom
-            top: root.showTitle ? title.bottom : parent.top
-            margins: root.pad
-            topMargin: root.showTitle ? 2 : root.pad
+            left: area.left; right: area.right; bottom: area.bottom
+            top: root.showTitle ? title.bottom : area.top
+            topMargin: root.showTitle ? 2 : 0
         }
         sunken: true
         depth: 1

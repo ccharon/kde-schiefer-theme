@@ -3,7 +3,8 @@
  *
  * Die System-Schublade zeigt die Einträge des Systrays selbst an. Der Systray bleibt
  * dafür im selben Panel, wird aber ausgeblendet (HiddenStatus); seine Popups hängen
- * wir an die Schublade um. Zugriff nur über Properties/Q_INVOKABLEs, ohne private Header.
+ * wir an die Schublade um. Zugriff nur über Properties/Q_INVOKABLEs, ohne private Header –
+ * welche Plasma-Interna das sind, steht in UPSTREAM.md („Plasma-Interna des Docks“).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #pragma once
@@ -12,6 +13,8 @@
 #include <QObject>
 #include <QPointer>
 #include <QQuickItem>
+#include <QSet>
+#include <QTimer>
 #include <qqmlregistration.h>
 
 #include <Plasma/Plasma>
@@ -71,7 +74,15 @@ private:
     void findTray();
     void setTray(Plasma::Applet *tray);
     void applyHidden();
-    void retargetPopup();
+    // Popup an m_anchor hängen; warn: fehlendes Popup melden (beim Klick, nicht beim Start)
+    void retargetPopup(bool warn = false);
+    // ursprüngliches visualParent des Systray-Popups wiederherstellen
+    void restorePopup();
+    QObject *findPopup() const;
+    // wartet kurz, falls Modell oder Popup des Systrays beim Fund noch fehlen
+    void retryTick();
+    bool checkInvoke(bool ok, const char *method);
+    void warnOnce(const char *key, const QString &message);
     QPoint globalCenter(QQuickItem *item) const;
 
     QPointer<Plasma::Applet> m_applet;
@@ -81,4 +92,14 @@ private:
     bool m_hideTray = true;
     bool m_trayHiddenByUs = false;
     Plasma::Types::ItemStatus m_trayOldStatus = Plasma::Types::PassiveStatus;
+
+    // umgehängtes Popup und sein visualParent vor dem Umhängen (das Systray-Item)
+    QPointer<QObject> m_popup;
+    QPointer<QQuickItem> m_popupOrigParent;
+    QPointer<QQuickItem> m_popupSetTo;
+
+    QTimer m_retry;
+    int m_retryCount = 0;
+    bool m_hadModel = false;
+    QSet<QByteArray> m_warned;
 };

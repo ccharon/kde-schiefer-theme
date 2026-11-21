@@ -11,9 +11,13 @@ stop-color …). Form, Kantenglättung und Schärfe sind damit genau wie bei Bre
 Größe. Farbabbildung „weich“: leicht entsättigen und jede Farbe zur Hälfte an den nächsten
 Ton einer gedämpften CDE/Motif-Palette annähern – die Programme behalten ihre Erkennungsfarbe.
 Einfarbige Icons, die dem Farbschema folgen, werden standardmäßig ausgelassen -> dafür greift
-Breeze (Inherits=breeze). Symlinks werden nachgebildet.
+Breeze (Inherits=breeze). Symlinks (auch auf Größenordner wie 16@2x -> 16) werden nachgebildet.
+
+Das Ergebnis entsteht erst in einem temporären Ordner neben dem Ziel und ersetzt das Ziel erst
+am Ende (rename); bei Fehler oder Abbruch bleibt das alte Ziel unberührt. Exit-Code 1, wenn
+Dateien nicht umgefärbt werden konnten oder gar keine SVG entstand (--allow-errors: trotzdem 0).
 """
-import argparse, colorsys, configparser, os, re, shutil, sys, time
+import argparse, colorsys, configparser, os, re, shutil, signal, sys, time
 from functools import lru_cache
 from multiprocessing import Pool
 import numpy as np
@@ -126,6 +130,54 @@ def work(job):
     except Exception as e:  # noqa: BLE001 – Fehler sammeln, nicht abbrechen
         return "error", src, repr(e)
 
+# --- Hilfen ------------------------------------------------------------------------------
+def check_src(src):
+    """Quelle prüfen; liefert Fehlertext oder None."""
+    if not os.path.exists(src):
+        return f"Quelle {src} existiert nicht."
+    if not os.path.isdir(src):
+        return f"Quelle {src} ist kein Verzeichnis."
+    if os.path.isfile(os.path.join(src, "index.theme")):
+        return None
+    try:
+        cats = os.listdir(src)
+    except OSError as e:
+        return f"Quelle {src} nicht lesbar: {e}"
+    for cat in cats:
+        cdir = os.path.join(src, cat)
+        try:
+            if os.path.isdir(cdir) and any(parse_sizedir(d) for d in os.listdir(cdir)):
+                return None
+        except OSError:
+            continue
+    return f"Quelle {src} sieht nicht wie ein Icon-Theme aus (weder index.theme noch Kategorien mit Größenordnern)."
+
+def link_target(p, dst, src, tmp):
+    """Symlink-Ziel für die Nachbildung: relativ, auf das Gegenstück im Theme (tmp).
+    Absolute Ziele innerhalb von src werden umgeschrieben; Ziele außerhalb -> None (überspringen)."""
+    t = os.readlink(p)
+    absolute = t if os.path.isabs(t) else os.path.join(os.path.dirname(p), t)
+    absolute = os.path.normpath(absolute)
+    if absolute != src and not absolute.startswith(src + os.sep):
+        return None
+    mapped = os.path.join(tmp, os.path.relpath(absolute, src))
+    return os.path.relpath(mapped, os.path.dirname(dst))
+
+def swap_in(tmp, out):
+    """Altes Ziel beiseite, neues hin, altes löschen. Schlägt das Einsetzen fehl, kommt das alte zurück."""
+    old = None
+    if os.path.lexists(out):
+        old = f"{out}.old-{os.getpid()}"
+        os.rename(out, old)
+    try:
+        os.rename(tmp, out)
+    except BaseException:
+        if old:
+            os.rename(old, out)
+        raise
+    if old:
+        shutil.rmtree(old, ignore_errors=True)
+
 # --- Hauptprogramm -----------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -139,20 +191,47 @@ def main():
                     help="„wenig Farben“: Palette + Schachbrett-Dithering als Vektor-Muster (siehe dither.py)")
     ap.add_argument("-j", "--jobs", type=int, default=os.cpu_count())
     ap.add_argument("--force", action="store_true", help="vorhandenes (von diesem Skript erzeugtes) Theme ersetzen")
+    ap.add_argument("--allow-errors", action="store_true",
+                    help="Exit-Code 0 und Theme übernehmen, auch wenn einzelne Dateien nicht umgefärbt werden konnten")
+    ap.add_argument("--error-log", metavar="DATEI", help="Fehlerliste zusätzlich in diese Datei schreiben")
     a = ap.parse_args()
 
     src, out = os.path.abspath(a.src), os.path.abspath(os.path.expanduser(a.out))
-    if os.path.exists(out):
+
+    # 1. Eingaben prüfen – bevor irgendetwas angefasst wird
+    msg = check_src(src)
+    if msg:
+        sys.exit(msg)
+    if os.path.lexists(out):
         if not a.force:
             sys.exit(f"{out} existiert schon – mit --force ersetzen.")
         if not os.path.exists(os.path.join(out, MARKER)):
             sys.exit(f"{out} wurde nicht von diesem Skript erzeugt – lösche ich nicht.")
-        shutil.rmtree(out)
-    os.makedirs(out)
-    open(os.path.join(out, MARKER), "w").close()
+
+    # 2. In temporären Ordner neben dem Ziel erzeugen (gleiches Dateisystem -> atomares rename)
+    owner = os.getpid()
+    tmp = f"{out}.tmp-{owner}"
+    signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
+    try:
+        rc = build(a, src, out, tmp)
+    except KeyboardInterrupt:
+        print("\nAbgebrochen – Ziel bleibt unverändert.", file=sys.stderr)
+        rc = 130
+    except OSError as e:
+        print(f"Fehler: {e} – Ziel bleibt unverändert.", file=sys.stderr)
+        rc = 1
+    finally:
+        if os.getpid() == owner and os.path.lexists(tmp):
+            shutil.rmtree(tmp, ignore_errors=True)
+    sys.exit(rc)
+
+def build(a, src, out, tmp):
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    os.makedirs(tmp)
+    open(os.path.join(tmp, MARKER), "w").close()
 
     # Aufträge sammeln
-    jobs, links = [], []
+    jobs, links, dirlinks = [], [], []
     for cat in sorted(os.listdir(src)):
         if cat in SKIP_CATEGORIES or (a.only and cat not in a.only):
             continue
@@ -164,18 +243,22 @@ def main():
             ddir = os.path.join(cdir, sd)
             if not sz or not os.path.isdir(ddir):
                 continue
+            if os.path.islink(ddir):      # z. B. 16@2x -> 16: als Symlink nachbilden, nicht durchlaufen
+                dirlinks.append((ddir, os.path.join(tmp, cat, sd)))
+                continue
             for root, _, files in os.walk(ddir):
                 for f in files:
                     if not f.endswith(".svg"):
                         continue
                     p = os.path.join(root, f)
-                    dst = os.path.join(out, os.path.relpath(p, src))
+                    dst = os.path.join(tmp, os.path.relpath(p, src))
                     if os.path.islink(p):
                         links.append((p, dst))
                     else:
                         jobs.append((p, dst, sz[0], a.include_symbolic, a.dither))
 
-    print(f"Quelle:  {src}\nZiel:    {out}\nDateien: {len(jobs)} SVGs, {len(links)} Symlinks, {a.jobs} Prozesse\n")
+    print(f"Quelle:  {src}\nZiel:    {out}\nDateien: {len(jobs)} SVGs, {len(links)} Symlinks, "
+          f"{len(dirlinks)} Ordner-Symlinks, {a.jobs} Prozesse\n")
     t0 = time.time()
     stats = {"ok": 0, "symbolic": 0, "error": 0}
     errors, done_src = [], set()
@@ -183,7 +266,7 @@ def main():
         for i, (st, s, msg) in enumerate(pool.imap_unordered(work, jobs, chunksize=64), 1):
             stats[st] += 1
             if st == "ok":
-                done_src.add(s)
+                done_src.add(os.path.realpath(s))
             elif st == "error":
                 errors.append(f"{s}: {msg}")
             if i % 500 == 0 or i == len(jobs):
@@ -192,23 +275,38 @@ def main():
                       f"Fehler {stats['error']} ", end="", flush=True)
     print()
 
-    # Symlinks nachbilden, wenn ihr endgültiges Ziel erzeugt wurde
-    nlinks = 0
+    # Datei-Symlinks nachbilden, wenn ihr endgültiges Ziel erzeugt wurde
+    nlinks, skipped_links = 0, []
     for p, dst in links:
         if os.path.realpath(p) not in done_src:
             continue
+        t = link_target(p, dst, src, tmp)
+        if t is None:
+            skipped_links.append(p)       # zeigt aus dem Theme heraus (z. B. absolut nach Breeze)
+            continue
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         try:
-            os.symlink(os.readlink(p), dst)
+            os.symlink(t, dst)
             nlinks += 1
         except FileExistsError:
             pass
+
+    # Ordner-Symlinks nachbilden, wenn der Zielordner erzeugt wurde
+    ndl, linked_dirs = 0, []
+    for p, dst in dirlinks:
+        t = link_target(p, dst, src, tmp)
+        if t is None or not os.path.isdir(os.path.join(os.path.dirname(dst), t)):
+            continue
+        os.symlink(t, dst)
+        ndl += 1
+        linked_dirs.append(os.path.relpath(dst, tmp))
 
     # index.theme: Abschnitte der vorhandenen Ordner aus Breeze übernehmen (Scalable, Min/MaxSize …)
     cp = configparser.ConfigParser(interpolation=None, strict=False)
     cp.optionxform = str
     cp.read(os.path.join(src, "index.theme"), encoding="utf-8")
-    present = {os.path.relpath(r, out) for r, _, fs in os.walk(out) if any(f.endswith(".svg") for f in fs)}
+    present = {os.path.relpath(r, tmp) for r, _, fs in os.walk(tmp) if any(f.endswith(".svg") for f in fs)}
+    present |= set(linked_dirs)
     dirs = [d for d in cp.get("Icon Theme", "Directories", fallback="").split(",") if d in present]
     sdirs = [d for d in cp.get("Icon Theme", "ScaledDirectories", fallback="").split(",") if d in present]
     # Ordner, die index.theme nicht nennt, trotzdem eintragen
@@ -227,16 +325,31 @@ def main():
         else:
             base, scale = parse_sizedir(d.split("/")[-1])
             lines += [f"[{d}]", f"Size={base}", f"Scale={scale}", "Type=Scalable", ""]
-    with open(os.path.join(out, "index.theme"), "w", encoding="utf-8") as f:
+    with open(os.path.join(tmp, "index.theme"), "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 
+    # Fehler: nach stderr (und optional in Datei), nie ins Theme
+    for p in skipped_links:
+        errors.append(f"{p}: Symlink zeigt aus dem Theme heraus – übersprungen")
     if errors:
-        with open(os.path.join(out, "errors.log"), "w") as f:
-            f.write("\n".join(errors) + "\n")
-    print(f"\nFertig in {time.time() - t0:.0f}s: {stats['ok']} SVGs, {nlinks} Symlinks, "
-          f"{stats['symbolic']} einfarbige übersprungen (-> Breeze), {stats['error']} Fehler"
-          + (f" (siehe {out}/errors.log)" if errors else ""))
-    print(f"Theme: {a.name}  ->  Systemeinstellungen › Farben & Designs › Symbole")
+        print(f"\n{len(errors)} Fehler:", file=sys.stderr)
+        print("\n".join(errors), file=sys.stderr)
+        if a.error_log:
+            with open(a.error_log, "w") as f:
+                f.write("\n".join(errors) + "\n")
+    print(f"\nErzeugt in {time.time() - t0:.0f}s: {stats['ok']} SVGs, {nlinks} Datei-Symlinks, {ndl} Ordner-Symlinks, "
+          f"{stats['symbolic']} einfarbige übersprungen (-> Breeze), {len(errors)} Fehler")
+    if stats["ok"] == 0:
+        print("Fehler: keine einzige SVG erzeugt – Ziel bleibt unverändert.", file=sys.stderr)
+        return 1
+    if errors and not a.allow_errors:
+        print("Fehler beim Umfärben – Ziel bleibt unverändert (--allow-errors übernimmt das Ergebnis trotzdem).",
+              file=sys.stderr)
+        return 1
+
+    swap_in(tmp, out)
+    print(f"Theme: {a.name}  ->  {out}\nSystemeinstellungen › Farben & Designs › Symbole")
+    return 0
 
 if __name__ == "__main__":
     main()

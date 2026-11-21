@@ -209,7 +209,7 @@ Item {
                     id: fileMouse
                     anchors.fill: parent
                     hoverEnabled: true
-                    onClicked: content.drawer.launch(fileEntry.url)
+                    onClicked: content.drawer.openEntry(fileEntry.url)
                 }
             }
         }
