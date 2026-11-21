@@ -26,7 +26,7 @@ Rectangle {
         field: viewSet.Kirigami.Theme.backgroundColor
         active: Kirigami.Theme.highlightColor
         activeText: Kirigami.Theme.highlightedTextColor
-        font: Kirigami.Theme.defaultFont
+        baseFont: Kirigami.Theme.defaultFont
     }
     KCoreAddons.KUser { id: kuser }
 

@@ -53,6 +53,7 @@ Item {
         fill: b.down ? b.pal.edges(b.pal.bg).select : (ma.containsMouse ? b.pal.hover(b.pal.bg) : b.pal.bg)
 
         Text {
+            renderType: b.pal.renderType
             id: label
             anchors.centerIn: parent
             anchors.horizontalCenterOffset: b.down ? 1 : 0

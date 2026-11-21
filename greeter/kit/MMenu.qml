@@ -87,13 +87,14 @@ Item {
                         }
                     }
                     Text {
+                        renderType: menu.pal.renderType
                         id: txt
                         x: row.modelData.type === "title" ? Math.round(menu.pal.u * 0.5) : 2 * menu.pal.u
                         anchors.verticalCenter: parent.verticalCenter
                         visible: row.modelData.type !== "sep"
                         text: row.modelData.text || ""
                         font.family: menu.pal.font.family
-                        font.pointSize: menu.pal.font.pointSize > 0 ? menu.pal.font.pointSize : 10
+                        font.pointSize: menu.pal.font.pointSize
                         font.bold: row.modelData.type === "title"
                         color: menu.pal.fg
                         opacity: row.modelData.enabled === false ? 0.5 : 1

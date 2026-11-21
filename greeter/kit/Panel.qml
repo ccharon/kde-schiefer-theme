@@ -30,6 +30,7 @@ Item {
         width: p.width - 2 * p.frame; height: p.titleH
         base: p.pal.active
         Text {
+            renderType: p.pal.renderType
             anchors.centerIn: parent
             text: p.title
             font: p.pal.font

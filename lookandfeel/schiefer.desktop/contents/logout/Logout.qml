@@ -65,7 +65,7 @@ Item {
         active: Kirigami.Theme.highlightColor
         activeText: Kirigami.Theme.highlightedTextColor
         alert: Kirigami.Theme.negativeTextColor
-        font: Kirigami.Theme.defaultFont
+        baseFont: Kirigami.Theme.defaultFont
     }
     KCoreAddons.KUser { id: kuser }
     SessionsModel { id: otherSessions; includeUnusedSessions: false; includeOwnSession: false }
@@ -116,6 +116,7 @@ Item {
                     spacing: Math.round(pal.u / 3)
                     Layout.fillWidth: true
                     Text {
+                        renderType: pal.renderType
                         font.family: pal.font.family
                         font.pixelSize: Math.round(pal.u * 1.1)
                         font.bold: true
@@ -125,6 +126,7 @@ Item {
                             : T.t("%1?", "%1?").arg(root.actionText)
                     }
                     Text {
+                        renderType: pal.renderType
                         visible: countDownTimer.running
                         font: pal.font
                         color: pal.fg
@@ -138,6 +140,7 @@ Item {
                         }
                     }
                     Text {
+                        renderType: pal.renderType
                         visible: otherSessions.count > 0 && (sdtype !== ShutdownType.ShutdownTypeNone || root.showAllOptions)
                         font: pal.font
                         color: pal.alert
@@ -147,6 +150,7 @@ Item {
                                   "Other users are logged in (%1). They may lose work if the computer shuts down or restarts.").arg(otherSessions.count)
                     }
                     Text {
+                        renderType: pal.renderType
                         visible: softwareUpdatePending
                         font.family: pal.font.family
                         font.pointSize: pal.font.pointSize
@@ -155,6 +159,7 @@ Item {
                         text: T.t("Aktualisierungen werden dabei installiert.", "Updates will be installed.")
                     }
                     Text {
+                        renderType: pal.renderType
                         visible: rebootToFirmwareSetup || rebootToBootLoaderMenu || rebootToBootLoaderEntry != ""
                         font.family: pal.font.family
                         font.pointSize: pal.font.pointSize

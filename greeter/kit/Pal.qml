@@ -19,7 +19,18 @@ QtObject {
     property color panelText: "#000000"
     property color alert: "#a02828"
     property color lamp: "#e0a030"        // Startlampe wie am Dock
-    property font font: Qt.application.font
+    // Schrift: Grundschrift des Systems (Sperre/Abmelden: Kirigami, SDDM: sddm.conf, dort oft nur 8 pt),
+    // für die Tafeln in Bildschirmmitte vergrößert; fontPoints > 0 setzt die Größe fest (SDDM: theme.conf).
+    property font baseFont: Qt.application.font
+    property real fontPoints: 0
+    readonly property real basePoints: baseFont.pointSize > 0 ? baseFont.pointSize : (baseFont.pixelSize > 0 ? baseFont.pixelSize * 0.75 : 10)
+    readonly property font font: Qt.font({
+        family: baseFont.family,
+        pointSize: fontPoints > 0 ? fontPoints : Math.max(12, Math.round(basePoints * 1.25)),
+        weight: baseFont.weight
+    })
+    // Gerasterte Schrift mit Hinting wie in Plasma statt Distanzfeld (das wirkt klein und bei Faktor 1 kratzig)
+    readonly property int renderType: Text.NativeRendering
 
     property FontMetrics metrics: FontMetrics { font: pal.font }
     readonly property int u: Math.max(12, Math.round(metrics.height))   // Grundmaß = Zeilenhöhe

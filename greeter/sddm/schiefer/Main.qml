@@ -24,6 +24,7 @@ Item {
         activeText: config.activeTextColor || "#ffffff"
         fg: config.textColor || "#000000"
         fieldText: fg
+        fontPoints: Number(config.fontSize) || 0
     }
 
     property string stage: "user"             // "user" | "pass" | "busy"
@@ -140,6 +141,7 @@ Item {
             Etch { base: pal.bg; Layout.fillWidth: true }
 
             Text {
+                renderType: pal.renderType
                 Layout.alignment: Qt.AlignHCenter
                 font: pal.font
                 color: pal.fg
@@ -164,6 +166,7 @@ Item {
                 spacing: Math.round(pal.u / 2)
                 Lamp { pal: pal; busy: root.stage === "busy"; visible: busy; Layout.alignment: Qt.AlignVCenter }
                 Text {
+                    renderType: pal.renderType
                     font: pal.font
                     color: root.message !== "" ? pal.alert : pal.fg
                     text: {
@@ -197,6 +200,7 @@ Item {
         width: statusLine.implicitWidth + 2 * pal.u
         height: statusLine.implicitHeight + Math.round(pal.u * 0.6)
         Text {
+            renderType: pal.renderType
             id: statusLine
             anchors.centerIn: parent
             font: pal.font

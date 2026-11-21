@@ -33,6 +33,7 @@ Bevel {
     }
 
     TextInput {
+        renderType: f.pal.renderType
         id: input
         anchors.fill: parent
         anchors.leftMargin: 6; anchors.rightMargin: 6

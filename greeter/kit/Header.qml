@@ -21,8 +21,9 @@ RowLayout {
         spacing: 0
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
-        Text { text: head.greeting; visible: text !== ""; font: head.pal.font; color: head.pal.fg }
+        Text { renderType: head.pal.renderType; text: head.greeting; visible: text !== ""; font: head.pal.font; color: head.pal.fg }
         Text {
+            renderType: head.pal.renderType
             text: head.host
             color: head.pal.fg
             font.family: head.pal.font.family
@@ -31,7 +32,7 @@ RowLayout {
             elide: Text.ElideRight
             Layout.fillWidth: true
         }
-        Text { text: head.subtitle; visible: text !== ""; font: head.pal.font; color: head.pal.fg; opacity: 0.8; elide: Text.ElideRight; Layout.fillWidth: true }
+        Text { renderType: head.pal.renderType; text: head.subtitle; visible: text !== ""; font: head.pal.font; color: head.pal.fg; opacity: 0.8; elide: Text.ElideRight; Layout.fillWidth: true }
     }
     ColumnLayout {
         visible: head.showClock
@@ -39,6 +40,7 @@ RowLayout {
         Layout.alignment: Qt.AlignTop
         SevenSeg { pal: head.pal; now: head.now; Layout.alignment: Qt.AlignHCenter }
         Text {
+            renderType: head.pal.renderType
             Layout.alignment: Qt.AlignHCenter
             text: head.now.toLocaleDateString(Qt.locale(), "ddd, d. MMM yyyy")
             font: head.pal.font

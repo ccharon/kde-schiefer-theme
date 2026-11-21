@@ -34,7 +34,7 @@ Item {
         panel: compSet.Kirigami.Theme.backgroundColor
         panelText: Kirigami.Theme.textColor          // wie das Dock: Schema-Textfarbe auf dem Frontpanel (lesbarer als die Motif-Formel)
         alert: Kirigami.Theme.negativeTextColor
-        font: Kirigami.Theme.defaultFont
+        baseFont: Kirigami.Theme.defaultFont
     }
 
     KCoreAddons.KUser { id: kuser }
@@ -154,12 +154,14 @@ Item {
                     Layout.alignment: Qt.AlignHCenter
                 }
                 Text {
+                    renderType: pal.renderType
                     Layout.alignment: Qt.AlignHCenter
                     text: ui.now.toLocaleDateString(Qt.locale(), "dddd, d. MMMM yyyy")
                     font: pal.font
                     color: pal.panelText
                 }
                 Text {
+                    renderType: pal.renderType
                     Layout.alignment: Qt.AlignHCenter
                     text: T.t("%1 – gesperrt", "%1 – locked").arg(kuser.host)
                     font.family: pal.font.family
@@ -192,6 +194,7 @@ Item {
                 Etch { base: pal.bg; Layout.fillWidth: true }
 
                 Text {
+                    renderType: pal.renderType
                     Layout.alignment: Qt.AlignHCenter
                     font: pal.font
                     color: pal.fg
@@ -218,6 +221,7 @@ Item {
                     spacing: Math.round(pal.u / 2)
                     Lamp { pal: pal; busy: graceLockTimer.running; visible: busy }
                     Text {
+                        renderType: pal.renderType
                         font: pal.font
                         color: root.notification !== "" ? pal.alert : pal.fg
                         horizontalAlignment: Text.AlignHCenter
