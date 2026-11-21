@@ -22,3 +22,7 @@ theme=
 
 [kwinrc][WindowSwitcher]
 LayoutName=schiefer
+
+[ksplashrc][KSplash]
+Engine=KSplashQML
+Theme=schiefer.desktop

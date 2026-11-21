@@ -24,6 +24,7 @@ FILES=(
     kwin/tabbox
     tools/schiefer-config
     dock
+    greeter
 )
 # erst prüfen, dann dist/ löschen
 for f in "${FILES[@]}" packaging/x11-themes tools/install-overlay.sh; do

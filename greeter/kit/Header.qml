@@ -1,0 +1,48 @@
+/*
+ * Kopf aller Schiefer-Bildschirme: Emblem, Begrüßung, Rechnername groß, Betriebssystem;
+ * rechts wahlweise die Siebensegment-Uhr mit Datum.
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+import QtQuick
+import QtQuick.Layouts
+
+RowLayout {
+    id: head
+    required property Pal pal
+    property string greeting
+    property string host
+    property string subtitle
+    property bool showClock: true
+    property date now: new Date()
+    spacing: pal.u
+
+    Emblem { pal: head.pal; Layout.alignment: Qt.AlignTop }
+    ColumnLayout {
+        spacing: 0
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignVCenter
+        Text { text: head.greeting; visible: text !== ""; font: head.pal.font; color: head.pal.fg }
+        Text {
+            text: head.host
+            color: head.pal.fg
+            font.family: head.pal.font.family
+            font.pixelSize: Math.round(head.pal.u * 1.7)
+            font.bold: true
+            elide: Text.ElideRight
+            Layout.fillWidth: true
+        }
+        Text { text: head.subtitle; visible: text !== ""; font: head.pal.font; color: head.pal.fg; opacity: 0.8; elide: Text.ElideRight; Layout.fillWidth: true }
+    }
+    ColumnLayout {
+        visible: head.showClock
+        spacing: Math.round(head.pal.u * 0.25)
+        Layout.alignment: Qt.AlignTop
+        SevenSeg { pal: head.pal; now: head.now; Layout.alignment: Qt.AlignHCenter }
+        Text {
+            Layout.alignment: Qt.AlignHCenter
+            text: head.now.toLocaleDateString(Qt.locale(), "ddd, d. MMM yyyy")
+            font: head.pal.font
+            color: head.pal.fg
+        }
+    }
+}

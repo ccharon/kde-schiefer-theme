@@ -1,0 +1,2 @@
+# Schiefer-Sperrbildschirm (ersetzt die gleichnamigen Dateien der Plasma-Shell, siehe README)
+singleton PasswordSync 1.0 PasswordSync.qml

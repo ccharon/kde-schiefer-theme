@@ -515,6 +515,9 @@ SCHALTER = [
              *backdrop("Crossfade", False)),
     Schalter("mauszeiger", "KDE", "Schiefer-Mauszeiger (aus: Breeze)", True, zeiger_lesen, zeiger_schreiben),
     # die Dock-Widgets beobachten schieferrc selbst, kein Neuladen nötig
+    Schalter("sperrbildschirm", "Plasma", "Sperrbildschirm im Schiefer-Stil (Kopie der Plasma-Shell in "
+             "~/.local/share/plasma/shells; aus: Plasma-Sperrbildschirm)", True, lambda: sperr_lesen(),
+             lambda an: sperr_schreiben(an)),
     Schalter("frontpanel-farbe", "Dock", "Schiefer-Dock, seine Leisten und Schubladen in der CDE-Frontpanel-Farbe "
              "der Palette (aus: Fensterfarbe)", True, *schieferrc("Dock", "FrontPanelColor", True, "dock")),
 ]
@@ -590,6 +593,112 @@ def palette(name):
 
 # ---------------------------------------------------------------- Befehle
 
+# ---------------------------------------------------------------- Sperrbildschirm
+# Plasma 6 lädt den Sperrbildschirm nur aus dem Shell-Paket (plasmashellrc [Shell] ShellPackage). Ein eigenes
+# Shell-Paket hieße eigene Leistenkonfiguration (plasma-<shell>-appletsrc). Deshalb: eine Kopie der installierten
+# Plasma-Shell unter ~/.local/share (gleiche ID, hat Vorrang), in der nur contents/lockscreen um die Schiefer-Dateien
+# ergänzt ist. Symlinks gehen nicht (KPackage lehnt Pfade außerhalb des Pakets ab). Nach Plasma- oder
+# Schiefer-Updates frischt die Anmeldung die Kopie auf (Fingerabdruck der Quellen)
+# (/etc/xdg/plasma-workspace/env/schiefer-sperrbildschirm.sh).
+SHELL_ID = "org.kde.plasma.desktop"
+SPERR_MARKE = ".schiefer-sperrbildschirm"
+
+
+def sperr_ziel():
+    return os.path.join(DATA_HOME, "plasma", "shells", SHELL_ID)
+
+
+def sperr_quellen():
+    """(installierte Plasma-Shell, Schiefer-Sperrbildschirm) – ohne das eigene Abbild."""
+    shell = next((os.path.join(d, "plasma", "shells", SHELL_ID) for d in DATA_DIRS
+                  if os.path.realpath(d) != os.path.realpath(DATA_HOME)
+                  and os.path.isfile(os.path.join(d, "plasma", "shells", SHELL_ID, "metadata.json"))), None)
+    eigen = os.environ.get("SCHIEFER_LOCKSCREEN_DIR") or next(
+        (os.path.join(d, "schiefer", "lockscreen") for d in DATA_DIRS
+         if os.path.isfile(os.path.join(d, "schiefer", "lockscreen", "SchieferLock.qml"))), None)
+    return shell, eigen
+
+
+def sperr_lesen():
+    ziel = sperr_ziel()
+    if not os.path.lexists(ziel):
+        return False
+    return True if os.path.exists(os.path.join(ziel, SPERR_MARKE)) else None   # fremdes Paket: ?
+
+
+def sperr_fingerabdruck(shell, eigen):
+    """Dateiliste mit Größe und Zeit beider Quellen – ändert sich nach Plasma- oder Schiefer-Updates."""
+    teile = []
+    for basis in (shell, eigen):
+        for wurzel, _, dateien in os.walk(basis, followlinks=True):
+            for d in sorted(dateien):
+                p = os.path.join(wurzel, d)
+                try:
+                    st = os.stat(p)
+                except OSError:
+                    continue
+                teile.append(f"{os.path.relpath(p, basis)}:{st.st_size}:{int(st.st_mtime)}")
+    import hashlib
+    return hashlib.sha256("\n".join(teile).encode()).hexdigest()
+
+
+def sperr_bauen(nur_wenn_veraltet=False):
+    shell, eigen = sperr_quellen()
+    if not shell:
+        raise Fehler(f"Plasma-Shell {SHELL_ID} nicht gefunden")
+    if not eigen:
+        raise Fehler("Schiefer-Sperrbildschirm nicht installiert (…/share/schiefer/lockscreen)")
+    ziel = sperr_ziel()
+    marke = os.path.join(ziel, SPERR_MARKE)
+    if os.path.lexists(ziel) and not os.path.exists(marke):
+        raise Fehler(f"{ziel} gehört nicht zu Schiefer – nicht angefasst")
+    fp = sperr_fingerabdruck(shell, eigen)
+    if nur_wenn_veraltet and os.path.exists(marke):
+        with open(marke) as f:
+            if f"fingerabdruck={fp}" in f.read():
+                return
+    # Kopie statt Symlinks: KPackage weist Dateien zurück, deren echter Pfad außerhalb des Pakets liegt
+    neu = ziel + ".schiefer-neu"
+    shutil.rmtree(neu, ignore_errors=True)
+    shutil.copytree(shell, neu, symlinks=False)
+    sperr = os.path.join(neu, "contents", "lockscreen")
+    for name in os.listdir(eigen):              # config.qml/config.xml, LockOsd, MediaControls … bleiben original
+        q, p = os.path.join(eigen, name), os.path.join(sperr, name)
+        if os.path.isdir(p) and not os.path.islink(p):
+            shutil.rmtree(p)
+        elif os.path.lexists(p):
+            os.remove(p)
+        if os.path.isdir(q):
+            shutil.copytree(q, p, symlinks=False)
+        else:
+            shutil.copy2(q, p)
+    with open(os.path.join(neu, SPERR_MARKE), "w") as f:
+        f.write(f"# erzeugt von schiefer-config – Kopie der Plasma-Shell mit Schiefer-Sperrbildschirm\n"
+                f"shell={shell}\nschiefer={eigen}\nfingerabdruck={fp}\n")
+    alt = ziel + ".schiefer-alt"
+    shutil.rmtree(alt, ignore_errors=True)
+    if os.path.lexists(ziel):
+        os.rename(ziel, alt)
+    os.rename(neu, ziel)
+    shutil.rmtree(alt, ignore_errors=True)
+
+
+def sperr_schreiben(an):
+    ziel = sperr_ziel()
+    if an:
+        sperr_bauen()
+    elif os.path.exists(os.path.join(ziel, SPERR_MARKE)):
+        shutil.rmtree(ziel)
+    elif os.path.lexists(ziel):
+        raise Fehler(f"{ziel} gehört nicht zu Schiefer – nicht angefasst")
+
+
+def sperr_auffrischen():
+    """Für die Anmeldung: Abbild neu bauen, falls eingeschaltet (still, ohne Plasma)."""
+    if sperr_lesen():
+        sperr_bauen(nur_wenn_veraltet=True)
+
+
 def zustand_text(v):
     return {True: "an", False: "aus", None: "?"}.get(v, str(v))
 
@@ -646,6 +755,9 @@ def main(argv):
     try:
         if cmd == "palette":
             palette(argv[1] if len(argv) > 1 else None)
+        elif cmd == "sperrbildschirm-auffrischen":
+            sperr_auffrischen()
+            return 0
         elif cmd == "standard":
             n = standard()
             neu_laden()
