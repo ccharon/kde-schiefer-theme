@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only
  */
 #include "retrodecoration.h"
+#include "schiefercolors.h"
 
 #include <KDecoration3/ScaleHelpers>
 
@@ -14,8 +15,12 @@
 
 #include <QDBusConnection>
 #include <QFontMetricsF>
+#include <QGuiApplication>
+#include <QHoverEvent>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPolygonF>
+#include <QStyleHints>
 #include <QTimer>
 
 K_PLUGIN_FACTORY_WITH_JSON(SchieferDecoFactory,
@@ -39,13 +44,6 @@ constexpr qreal OuterBevel = 2;
 constexpr qreal InnerBevel = 1;
 constexpr qreal ButtonBevel = 1;  // Titelknöpfe und Titelfeld
 constexpr qreal MinTitleHeight = 20;
-
-QColor mix(const QColor &a, const QColor &b, qreal t)
-{
-    return QColor::fromRgbF(a.redF() + (b.redF() - a.redF()) * t,
-                            a.greenF() + (b.greenF() - a.greenF()) * t,
-                            a.blueF() + (b.blueF() - a.blueF()) * t);
-}
 
 // Rechteck in Gerätepixeln (ganzzahlig) → logische Koordinaten
 QRectF fromDevice(qreal x, qreal y, qreal w, qreal h, qreal scale)
@@ -126,6 +124,42 @@ void ColorCache::read()
     inactiveFg = wm.readEntry("inactiveForeground", QColor());
 }
 
+//________________________________________________________________ DecorationConfig
+std::shared_ptr<DecorationConfig> DecorationConfig::instance()
+{
+    static std::weak_ptr<DecorationConfig> s_instance;
+    auto config = s_instance.lock();
+    if (!config) {
+        config = std::make_shared<DecorationConfig>();
+        s_instance = config;
+    }
+    return config;
+}
+
+DecorationConfig::DecorationConfig()
+{
+    read();
+}
+
+void DecorationConfig::watch(const std::shared_ptr<KDecoration3::DecorationSettings> &settings)
+{
+    if (!settings || m_settings.lock() == settings) {
+        return;
+    }
+    m_settings = settings;
+    connect(settings.get(), &KDecoration3::DecorationSettings::reconfigured, this, &DecorationConfig::read);
+}
+
+void DecorationConfig::read()
+{
+    // die Werte werden erst beim Klicken/Zeigen abgefragt – kein Neuzeichnen nötig
+    auto config = KSharedConfig::openConfig(QStringLiteral("schieferrc"), KConfig::NoGlobals);
+    config->reparseConfiguration();
+    const KConfigGroup group(config, QStringLiteral("Decoration"));
+    doubleClickClose = group.readEntry("DoubleClickClose", true);
+    motifCorners = group.readEntry("MotifCorners", true);
+}
+
 //________________________________________________________________ Decoration
 Decoration::Decoration(QObject *parent, const QVariantList &args)
     : KDecoration3::Decoration(parent, args)
@@ -139,6 +173,8 @@ bool Decoration::init()
     readColors();
 
     auto s = settings();
+    m_config = DecorationConfig::instance();
+    m_config->watch(s);
     connect(s.get(), &KDecoration3::DecorationSettings::borderSizeChanged, this, &Decoration::recalculateBorders);
     connect(s.get(), &KDecoration3::DecorationSettings::fontChanged, this, &Decoration::recalculateBorders);
     connect(s.get(), &KDecoration3::DecorationSettings::reconfigured, this, &Decoration::reconfigure);
@@ -229,14 +265,15 @@ QColor Decoration::faceColor() const
     return window()->isActive() ? m_activeBg : m_inactiveBg;
 }
 
+// Licht- und Schattenkante nach der Motif-Formel (common/schiefercolors.h)
 QColor Decoration::lightColor() const
 {
-    return mix(faceColor(), Qt::white, 0.55);
+    return SchieferColors::topShadow(faceColor());
 }
 
 QColor Decoration::darkColor() const
 {
-    return mix(faceColor(), Qt::black, 0.5);
+    return SchieferColors::bottomShadow(faceColor());
 }
 
 QColor Decoration::fontColor() const
@@ -306,6 +343,126 @@ void Decoration::updateLayout()
 
     setTitleBar(QRectF(l, b, width - l - r, t));
     update();
+}
+
+// Motif-Eckgriffe (mwm/dtwm): die Ecken des Rahmens reichen entlang jeder Kante bis zu den Kerben,
+// also Rahmen + Titelhöhe vom Außenrand; dort ändert ein Zug die Größe diagonal.
+// KDecoration3 bestimmt den Abschnitt selbst (Decoration::Private::updateSectionUnderMouse, Ecklänge
+// 2 * largeSpacing, nicht beeinflussbar) – deshalb wird die Zeigerposition vorher auf einen
+// Stellvertreterpunkt gelegt, den KDecoration3 eindeutig als den gewünschten Abschnitt erkennt.
+Qt::WindowFrameSection Decoration::motifSection(const QPointF &pos) const
+{
+    const qreal b = frameWidth();
+    if (!m_config || !m_config->motifCorners || b <= 0 || isMaximized()) {
+        return Qt::NoSection;
+    }
+    const QSizeF sz = size();
+    const QPointF p(std::floor(pos.x()), std::floor(pos.y())); // wie KDecoration3
+    if (titleBar().toRect().contains(p.toPoint())) {
+        return Qt::NoSection;
+    }
+    const bool inLeft = p.x() < borderLeft();
+    const bool inRight = p.x() >= sz.width() - borderRight();
+    const bool inTop = p.y() < b; // Rahmen über der Titelzeile
+    const bool inBottom = borderBottom() > 0 && p.y() >= sz.height() - borderBottom();
+    if (!inLeft && !inRight && !inTop && !inBottom) {
+        return Qt::NoSection; // Titelzeilenhöhe neben den Knöpfen, außerhalb usw.
+    }
+    // Kerben wie in paint(): Rahmen gedanklich über randlose Seiten hinaus verlängert
+    const qreal reach = b + titleHeight();
+    const qreal frameLeft = leftInset() - b;
+    const qreal frameRight = sz.width() - rightInset() + b;
+    const qreal midX = (frameLeft + frameRight) / 2, midY = sz.height() / 2;
+    const bool west = p.x() < std::min(frameLeft + reach, midX);
+    const bool east = !west && p.x() >= std::max(frameRight - reach, midX);
+    const bool shaded = window()->isShaded();
+    const bool north = shaded || p.y() < std::min(reach, midY);
+    const bool south = !north && p.y() >= std::max(sz.height() - reach, midY);
+
+    if (north && west) {
+        return Qt::TopLeftSection;
+    }
+    if (north && east) {
+        return Qt::TopRightSection;
+    }
+    if (south && west) {
+        return Qt::BottomLeftSection;
+    }
+    if (south && east) {
+        return Qt::BottomRightSection;
+    }
+    // keine Ecke: gerade Kante – auch dort, wo KDecoration3 schon eine Ecke sähe
+    if (inLeft) {
+        return Qt::LeftSection;
+    }
+    if (inRight) {
+        return Qt::RightSection;
+    }
+    return inTop ? Qt::TopSection : Qt::BottomSection;
+}
+
+QPointF Decoration::motifRemap(const QPointF &p) const
+{
+    const QSizeF sz = size();
+    const qreal r = sz.width() - 1, bt = sz.height() - 1;
+    switch (motifSection(p)) {
+    case Qt::TopLeftSection:
+        return QPointF(0, 0);
+    case Qt::TopRightSection:
+        return QPointF(r, 0);
+    case Qt::BottomLeftSection:
+        return QPointF(0, bt);
+    case Qt::BottomRightSection:
+        return QPointF(r, bt);
+    // Kantenmitten: dort liegt nie eine Ecke von KDecoration3 (außer bei winzigen Fenstern) und kein Knopf
+    case Qt::LeftSection:
+        return QPointF(0, std::floor((titleBar().bottom() + sz.height()) / 2));
+    case Qt::RightSection:
+        return QPointF(r, std::floor((titleBar().bottom() + sz.height()) / 2));
+    case Qt::TopSection:
+        return QPointF(std::floor(sz.width() / 2), 0);
+    case Qt::BottomSection:
+        return QPointF(std::floor(sz.width() / 2), bt);
+    default:
+        return p;
+    }
+}
+
+void Decoration::hoverEnterEvent(QHoverEvent *event)
+{
+    const QPointF p = motifRemap(event->position());
+    if (p == event->position()) {
+        KDecoration3::Decoration::hoverEnterEvent(event);
+        return;
+    }
+    QHoverEvent e(event->type(), p, event->globalPosition(), event->oldPosF(), event->modifiers());
+    KDecoration3::Decoration::hoverEnterEvent(&e);
+    event->setAccepted(e.isAccepted());
+}
+
+void Decoration::hoverMoveEvent(QHoverEvent *event)
+{
+    const QPointF p = motifRemap(event->position());
+    if (p == event->position()) {
+        KDecoration3::Decoration::hoverMoveEvent(event);
+        return;
+    }
+    QHoverEvent e(event->type(), p, event->globalPosition(), event->oldPosF(), event->modifiers());
+    KDecoration3::Decoration::hoverMoveEvent(&e);
+    event->setAccepted(e.isAccepted());
+}
+
+void Decoration::mouseReleaseEvent(QMouseEvent *event)
+{
+    // KDecoration3 bestimmt den Abschnitt nach dem Loslassen neu (wenn kein Knopf gedrückt war)
+    const QPointF p = motifRemap(event->position());
+    if (p == event->position()) {
+        KDecoration3::Decoration::mouseReleaseEvent(event);
+        return;
+    }
+    QMouseEvent e(event->type(), p, event->globalPosition(), event->button(), event->buttons(), event->modifiers());
+    KDecoration3::Decoration::mouseReleaseEvent(&e);
+    event->setAccepted(e.isAccepted());
 }
 
 void Decoration::paint(QPainter *painter, const QRectF &repaintRegion)
@@ -405,6 +562,53 @@ Button::Button(DecorationButtonType type, Decoration *decoration, QObject *paren
     connect(this, &KDecoration3::DecorationButton::hoveredChanged, this, [this] {
         update();
     });
+
+    if (type == DecorationButtonType::Menu) {
+        // Schalter DoubleClickClose: KDecoration3 öffnet das Fenstermenü sofort beim Loslassen (clicked);
+        // dann schnappt sich das Menü (KWin PopupInputFilter) den zweiten Klick und ein Doppelklick
+        // käme nie an. Deshalb die eingebaute Verbindung clicked → requestShowWindowMenu ersetzen.
+        // Motifs Drücken-Ziehen-Loslassen (Eintrag beim Loslassen wählen) gibt es nicht: KDecoration3
+        // öffnet das Menü erst nach dem Loslassen; ein Öffnen beim Drücken hülfe nicht, weil KWin den
+        // Zeiger während des gedrückten Knopfs bei der Dekoration lässt (implizite Zeigerbindung).
+        disconnect(this, &KDecoration3::DecorationButton::clicked, decoration, nullptr);
+        connect(this, &KDecoration3::DecorationButton::clicked, this, &Button::menuClicked, Qt::QueuedConnection);
+        m_menuTimer = new QTimer(this);
+        m_menuTimer->setSingleShot(true);
+        connect(m_menuTimer, &QTimer::timeout, this, [this] {
+            if (auto d = this->decoration()) {
+                d->requestShowWindowMenu(geometry().toRect());
+            }
+        });
+    }
+}
+
+void Button::menuClicked(Qt::MouseButton button)
+{
+    auto d = qobject_cast<Decoration *>(decoration());
+    if (!d) {
+        return;
+    }
+    // KWins eigene Einstellung (CloseOnDoubleClickOnMenu: Menü nur bei langem Druck) hat Vorrang
+    const bool ours = d->config().doubleClickClose && !d->settings()->isCloseOnDoubleClickOnMenu();
+    if (ours && button == Qt::LeftButton) {
+        m_menuTimer->start(QGuiApplication::styleHints()->mouseDoubleClickInterval());
+        return;
+    }
+    d->requestShowWindowMenu(geometry().toRect());
+}
+
+void Button::mousePressEvent(QMouseEvent *event)
+{
+    // zweiter Klick innerhalb der Doppelklickzeit: Fenster schließen statt Menü
+    if (m_menuTimer && m_menuTimer->isActive() && event->button() == Qt::LeftButton && contains(event->position())) {
+        m_menuTimer->stop();
+        event->setAccepted(true);
+        if (auto d = decoration()) {
+            QMetaObject::invokeMethod(d, &KDecoration3::Decoration::requestClose, Qt::QueuedConnection);
+        }
+        return;
+    }
+    KDecoration3::DecorationButton::mousePressEvent(event);
 }
 
 QObject *Button::createFromArgs(QWidget *parentWidget, QObject *parent, const KPluginMetaData &metaData, const QVariantList &args)

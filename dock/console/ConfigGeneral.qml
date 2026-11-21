@@ -17,6 +17,7 @@ KCM.SimpleKCM {
     property alias cfg_showExitButton: exit.checked
     property alias cfg_onlyCurrentDesktop: onlyCurrent.checked
     property alias cfg_showTasks: showTasks.checked
+    property alias cfg_desktopColorsFromScheme: fromScheme.checked
     property var cfg_desktopColors
     property var cfg_desktopColorsDefault
 
@@ -36,8 +37,9 @@ KCM.SimpleKCM {
         QQC2.CheckBox { id: onlyCurrent; enabled: showTasks.checked; text: i18n("Nur von der aktuellen Arbeitsfläche") }
         QQC2.CheckBox { id: lock; Kirigami.FormData.label: i18n("Knöpfe:"); text: i18n("Sperren") }
         QQC2.CheckBox { id: exit; text: i18n("Startlampe und EXIT") }
+        QQC2.CheckBox { id: fromScheme; Kirigami.FormData.label: i18n("Farben:"); text: i18n("Aus dem Farbschema übernehmen") }
         QQC2.TextField {
-            Kirigami.FormData.label: i18n("Farben der Arbeitsflächen:")
+            Kirigami.FormData.label: i18n("Eigene Farben der Arbeitsflächen:")
             Layout.preferredWidth: Kirigami.Units.gridUnit * 22
             text: (cfg_desktopColors || []).join(", ")
             onEditingFinished: cfg_desktopColors = text.split(",").map(s => s.trim()).filter(s => s.length)

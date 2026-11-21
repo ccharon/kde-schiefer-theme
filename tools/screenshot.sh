@@ -5,6 +5,7 @@
 #   Programm "plasmashell" startet die Arbeitsfläche mit dem Plasma-Theme aus plasma/schiefer.
 #   GTK-Programme nutzen das Theme gtk/Schiefer (BR_GTK_THEME=Breeze zum Vergleich).
 #   BR_SHELL_CMD="qdbus6 org.kde.plasmashell /PlasmaShell activateLauncherMenu" führt danach einen Befehl aus.
+#   BR_DATA_DIRS=a:b stellt zusätzliche Datenverzeichnisse voran (z. B. wallpaper/plugin/build/data für das Hintergrund-Plugin).
 #   BR_SCALE=1.5 skaliert die virtuelle Ausgabe (fraktionale Skalierung testen; BR_WIDTH/BR_HEIGHT bleiben logisch, das Bild wird größer).
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -69,7 +70,7 @@ if [ -n "${BR_ICON_DIR:-}" ]; then mkdir -p "$DATA/icons"; ln -s "$(realpath "$B
 # eigene Daten-/Zustandsverzeichnisse: Dienste der Testsitzung (kactivitymanagerd, ksecretd …)
 # sollen nicht die Datenbanken der echten Sitzung öffnen; ~/.local/share bleibt lesbar
 HOMEDATA=$(mktemp -d)
-export XDG_DATA_DIRS="$DATA:$HOME/.local/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+export XDG_DATA_DIRS="$DATA:${BR_DATA_DIRS:+$BR_DATA_DIRS:}$HOME/.local/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 export XDG_DATA_HOME="$HOMEDATA/data" XDG_STATE_HOME="$HOMEDATA/state" XDG_CACHE_HOME="$HOMEDATA/cache"
 mkdir -p "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
 export XDG_CONFIG_HOME="$CFG"

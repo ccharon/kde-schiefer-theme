@@ -14,6 +14,7 @@ KCM.SimpleKCM {
     property string cfg_sortMode
     property string cfg_display
     property alias cfg_groupWindows: groupWindows.checked
+    property alias cfg_desktopColorsFromScheme: fromScheme.checked
     property var cfg_desktopColors
     property var cfg_desktopColorsDefault
 
@@ -45,8 +46,9 @@ KCM.SimpleKCM {
             onActivated: cfg_sortMode = currentValue
         }
         QQC2.SpinBox { id: columns; Kirigami.FormData.label: i18n("Spalten:"); from: 1; to: 4 }
+        QQC2.CheckBox { id: fromScheme; Kirigami.FormData.label: i18n("Farben:"); text: i18n("Aus dem Farbschema übernehmen") }
         QQC2.TextField {
-            Kirigami.FormData.label: i18n("Farben der Arbeitsflächen:")
+            Kirigami.FormData.label: i18n("Eigene Farben der Arbeitsflächen:")
             enabled: !onlyCurrent.checked
             Layout.preferredWidth: Kirigami.Units.gridUnit * 22
             text: (cfg_desktopColors || []).join(", ")

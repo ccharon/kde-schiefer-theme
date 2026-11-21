@@ -16,6 +16,9 @@ find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS CoreAddons KIO Notificati
 find_package(Plasma REQUIRED)
 find_package(PlasmaQuick REQUIRED)
 
+# Motif-Farbformel (gemeinsam mit kstyle/ und kdecoration/)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
+
 add_subdirectory(drawer)
 add_subdirectory(console)
 add_subdirectory(iconbox)

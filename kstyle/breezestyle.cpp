@@ -1415,8 +1415,8 @@ bool Style::drawWidgetPrimitive(const QStyleOption *option, QPainter *painter, c
 
         rect.setWidth(splitterWidth);
 
-        const auto color(_helper->separatorColor(option->palette));
-        _helper->renderSeparator(painter, rect, color, true);
+        // Schiefer: Kanten aus der Fensterfarbe (Farbkern)
+        _helper->renderSeparator(painter, rect, option->palette.color(QPalette::Window), true);
     }
     return true;
 }
@@ -1730,9 +1730,8 @@ bool Style::eventFilterDialogButtonBox(QDialogButtonBox *widget, QEvent *event)
         rect.setHeight(1);
         const auto &palette(widget->palette());
 
-        // define color and render
-        const auto color(_helper->separatorColor(palette));
-        _helper->renderSeparator(&painter, rect, color, false);
+        // Schiefer: Kanten aus der Fensterfarbe (Farbkern)
+        _helper->renderSeparator(&painter, rect, palette.color(QPalette::Window), false);
     }
 
     return false;
@@ -1760,9 +1759,8 @@ bool Style::eventFilterPageViewHeader(QWidget *widget, QEvent *event)
             rect.setHeight(rect.height() - Metrics::ToolBar_SeparatorVerticalMargin * 2);
             rect.setY(Metrics::ToolBar_SeparatorVerticalMargin);
 
-            // define color and render
-            const auto color(_helper->separatorColor(palette));
-            _helper->renderSeparator(&painter, rect, color, true);
+            // Schiefer: Kanten aus der Fensterfarbe (Farbkern)
+            _helper->renderSeparator(&painter, rect, palette.color(QPalette::Window), true);
         }
     }
 
@@ -2064,6 +2062,12 @@ void Style::configurationChanged()
 
     // reload configuration
     loadConfiguration();
+
+    // Schiefer: Schalter wie RadioDiamond wirken beim Zeichnen – offene Fenster sofort neu zeichnen
+    const auto topLevels = QApplication::topLevelWidgets();
+    for (QWidget *widget : topLevels) {
+        widget->update();
+    }
 }
 
 //_____________________________________________________________________
@@ -2080,7 +2084,8 @@ void Style::loadGlobalAnimationSettings()
     const int animationsDuration = cg.readEntry("AnimationDurationFactor", StyleConfigData::animationsDuration() / 100.0f) * 100;
     if (animationsDuration > 0) {
         StyleConfigData::setAnimationsDuration(animationsDuration);
-        StyleConfigData::setAnimationsEnabled(true);
+        // Schiefer: globale Animationsgeschwindigkeit schaltet Animationen nicht ein –
+        // das entscheidet [Style] AnimationsEnabled in schieferrc (Standard aus); 0 schaltet weiterhin aus
     } else {
         StyleConfigData::setAnimationsEnabled(false);
     }
@@ -5175,7 +5180,7 @@ bool Style::drawIndicatorToolBarHandlePrimitive(const QStyleOption *option, QPai
     const bool separatorIsVertical(state & State_Horizontal);
 
     // define color and render
-    const auto color(_helper->separatorColor(palette));
+    const auto color(palette.color(QPalette::Window)); // Schiefer: Fläche für den Farbkern
     if (separatorIsVertical) {
         rect.setWidth(Metrics::ToolBar_HandleWidth);
         rect = centerRect(option->rect, rect.size());
@@ -5219,7 +5224,7 @@ bool Style::drawIndicatorToolBarSeparatorPrimitive(const QStyleOption *option, Q
     const bool separatorIsVertical(state & State_Horizontal);
 
     // define color and render
-    const auto color(_helper->separatorColor(palette));
+    const auto color(palette.color(QPalette::Window)); // Schiefer: Fläche für den Farbkern
     _helper->renderSeparator(painter, rect, color, separatorIsVertical);
 
     return true;
@@ -5315,7 +5320,7 @@ bool Style::drawPanelStatusBarPrimitive(const QStyleOption *option, QPainter *pa
         return true;
     }
     auto rect(option->rect);
-    const auto color(_helper->separatorColor(option->palette));
+    const auto color(option->palette.color(QPalette::Window)); // Schiefer: Fläche für den Farbkern
     const auto size = pixelMetric(QStyle::PM_SplitterWidth, option, widget);
     rect.setHeight(size);
     _helper->renderSeparator(painter, rect, color, false);
@@ -5982,11 +5987,10 @@ bool Style::drawMenuItemControl(const QStyleOption *option, QPainter *painter, c
     if (menuItemOption->menuItemType == QStyleOptionMenuItem::Separator) {
         auto contentsRect = rect.adjusted(Metrics::MenuItem_MarginWidth, 0,
                                          -Metrics::MenuItem_MarginWidth, 0);
-        QColor separatorColor;
+        // Schiefer: Fläche des Menüs für den Farbkern (bei durchscheinendem Menü mit dessen Deckkraft)
+        QColor separatorColor = palette.color(QPalette::Window);
         if (StyleConfigData::menuOpacity() < 100) {
-            separatorColor = _helper->alphaColor(palette.color(QPalette::WindowText), _helper->frameIntensityBias());
-        } else {
-            separatorColor = _helper->separatorColor(palette);
+            separatorColor.setAlphaF(StyleConfigData::menuOpacity() / 100.0);
         }
 
         if (!menuItemOption->text.isEmpty()) { // icon is ignored on purpose
@@ -6645,7 +6649,7 @@ bool Style::drawShapedFrameControl(const QStyleOption *option, QPainter *painter
     case QFrame::HLine:
     case QFrame::VLine: {
         const auto &rect(option->rect);
-        const auto color(_helper->separatorColor(option->palette));
+        const auto color(option->palette.color(QPalette::Window)); // Schiefer: Fläche für den Farbkern
         const bool isVertical(frameOpt->frameShape == QFrame::VLine);
         _helper->renderSeparator(painter, rect, color, isVertical);
         return true;
@@ -7618,7 +7622,7 @@ bool Style::drawDockWidgetTitleControl(const QStyleOption *option, QPainter *pai
         rect.setHeight(1);
         auto palette = option->palette;
         palette.setCurrentColorGroup(QPalette::Disabled);
-        const auto color(_helper->separatorColor(palette));
+        const auto color(palette.color(QPalette::Window)); // Schiefer: Fläche für den Farbkern
         _helper->renderSeparator(painter, rect, color, false);
     }
 
@@ -8305,7 +8309,7 @@ bool Style::drawScrollBarComplexControl(const QStyleOptionComplex *option, QPain
     // Schiefer: versenkte Motif-Rinne über die ganze Leiste
     {
         const QColor window = option->palette.color(QPalette::Window);
-        _helper->renderBevelPanel(painter, option->rect, KColorUtils::mix(window, Qt::black, 0.12), window, true, 2);
+        _helper->renderBevelPanel(painter, option->rect, _helper->bevelSelect(window), window, true, 2); // Schiefer: Motif troughColor = select
     }
 
     // call base class primitive

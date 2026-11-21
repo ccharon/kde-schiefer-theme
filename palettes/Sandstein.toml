@@ -1,0 +1,18 @@
+# Sandstein – warm, sandig (angelehnt an die erdigen CDE-Paletten)
+id = "SchieferSandstein"
+name = "Schiefer Sandstein"
+comment = "warmes, sandiges Motif/CDE-Farbschema"
+variant = "light"
+
+[cde]
+1 = "#965e44"   # Terrakotta
+2 = "#c2b7a2"
+3 = "#b88a6a"
+4 = "#9aa47a"
+5 = "#e8e2d4"
+6 = "#ccc2ae"
+7 = "#c4baa6"
+8 = "#aa9c82"
+
+[schiefer]
+desktops = ["3", "4", "#c4a66e", "#8f9fae", "#a88a9a", "#7f9a8a", "#c09478", "#a09a80"]

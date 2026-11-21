@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/Wallpaper",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Schiefer"
+            }
+        ],
+        "Description": "Pixel-exact tiled retro patterns, own pattern and colour per virtual desktop (like CDE)",
+        "Description[de]": "Pixelgenau gekachelte Retro-Muster, auf Wunsch je Arbeitsfläche eigenes Muster und eigene Farbe (wie CDE)",
+        "Icon": "preferences-desktop-wallpaper",
+        "Id": "org.kde.schiefer.backdrop",
+        "License": "GPL-2.0+",
+        "Name": "Schiefer Patterns",
+        "Name[de]": "Schiefer-Muster",
+        "Version": "0.1"
+    },
+    "X-KDE-ParentApp": "org.kde.plasmashell",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

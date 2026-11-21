@@ -1,8 +1,9 @@
 # Schiefer – helles Solaris/CDE-artiges Farbschema (nachempfunden, keine Originalwerte)
-# Struktur nach BreezeLight.colors (LGPL-2.0-or-later)
+# Erzeugt von palettes/make_palette.py aus palettes/Schiefer.toml – nicht von Hand ändern.
+# Ableitungen nach der Motif-Formel (common/schiefercolors.py, Motif 2.3.8 lib/Xm/Color.c, LGPL-2.1+).
 
 [ColorEffects:Disabled]
-Color=120,124,140
+Color=105,107,116
 ColorAmount=0
 ColorEffect=0
 ContrastAmount=0.55
@@ -12,7 +13,7 @@ IntensityEffect=2
 
 [ColorEffects:Inactive]
 ChangeSelectionColor=true
-Color=120,124,140
+Color=105,107,116
 ColorAmount=0.025
 ColorEffect=2
 ContrastAmount=0.1
@@ -22,12 +23,12 @@ IntensityAmount=0
 IntensityEffect=0
 
 [Colors:Button]
-BackgroundAlternate=166,176,201
+BackgroundAlternate=176,180,195
 BackgroundNormal=190,194,211
-DecorationFocus=60,80,130
-DecorationHover=90,110,150
-ForegroundActive=40,70,140
-ForegroundInactive=70,74,90
+DecorationFocus=82,97,134
+DecorationHover=96,114,158
+ForegroundActive=82,97,134
+ForegroundInactive=80,81,89
 ForegroundLink=30,60,150
 ForegroundNegative=160,40,40
 ForegroundNeutral=150,100,0
@@ -36,40 +37,40 @@ ForegroundPositive=30,110,40
 ForegroundVisited=110,50,120
 
 [Colors:Complementary]
-BackgroundAlternate=56,62,80
-BackgroundNormal=70,76,96
-DecorationFocus=150,170,210
-DecorationHover=150,170,210
-ForegroundActive=170,190,230
-ForegroundInactive=170,174,190
-ForegroundLink=150,180,240
-ForegroundNegative=230,110,110
-ForegroundNeutral=230,180,80
-ForegroundNormal=235,237,242
-ForegroundPositive=120,200,130
-ForegroundVisited=200,150,210
+BackgroundAlternate=139,146,170
+BackgroundNormal=150,158,184
+DecorationFocus=182,190,210
+DecorationHover=182,190,210
+ForegroundActive=224,227,236
+ForegroundInactive=211,214,225
+ForegroundLink=140,180,255
+ForegroundNegative=240,120,120
+ForegroundNeutral=235,185,80
+ForegroundNormal=255,255,255
+ForegroundPositive=130,210,140
+ForegroundVisited=205,160,235
 
 [Colors:Selection]
-BackgroundAlternate=140,155,185
-BackgroundNormal=90,110,150
-DecorationFocus=60,80,130
-DecorationHover=90,110,150
+BackgroundAlternate=130,144,179
+BackgroundNormal=96,114,158
+DecorationFocus=82,97,134
+DecorationHover=96,114,158
 ForegroundActive=255,255,255
-ForegroundInactive=210,215,228
-ForegroundLink=255,220,140
-ForegroundNegative=255,170,170
-ForegroundNeutral=255,210,120
+ForegroundInactive=215,220,231
+ForegroundLink=140,180,255
+ForegroundNegative=240,120,120
+ForegroundNeutral=235,185,80
 ForegroundNormal=255,255,255
-ForegroundPositive=170,240,170
-ForegroundVisited=230,190,240
+ForegroundPositive=130,210,140
+ForegroundVisited=205,160,235
 
 [Colors:Tooltip]
-BackgroundAlternate=226,222,200
+BackgroundAlternate=218,216,198
 BackgroundNormal=236,233,214
-DecorationFocus=60,80,130
-DecorationHover=90,110,150
-ForegroundActive=40,70,140
-ForegroundInactive=80,80,80
+DecorationFocus=82,97,134
+DecorationHover=96,114,158
+ForegroundActive=82,97,134
+ForegroundInactive=99,98,90
 ForegroundLink=30,60,150
 ForegroundNegative=160,40,40
 ForegroundNeutral=150,100,0
@@ -78,12 +79,12 @@ ForegroundPositive=30,110,40
 ForegroundVisited=110,50,120
 
 [Colors:View]
-BackgroundAlternate=204,208,221
-BackgroundNormal=214,218,230
-DecorationFocus=60,80,130
-DecorationHover=90,110,150
-ForegroundActive=40,70,140
-ForegroundInactive=70,74,90
+BackgroundAlternate=209,212,219
+BackgroundNormal=226,229,237
+DecorationFocus=82,97,134
+DecorationHover=96,114,158
+ForegroundActive=82,97,134
+ForegroundInactive=95,96,100
 ForegroundLink=30,60,150
 ForegroundNegative=160,40,40
 ForegroundNeutral=150,100,0
@@ -92,12 +93,12 @@ ForegroundPositive=30,110,40
 ForegroundVisited=110,50,120
 
 [Colors:Window]
-BackgroundAlternate=180,184,202
+BackgroundAlternate=176,180,195
 BackgroundNormal=190,194,211
-DecorationFocus=60,80,130
-DecorationHover=90,110,150
-ForegroundActive=40,70,140
-ForegroundInactive=70,74,90
+DecorationFocus=82,97,134
+DecorationHover=96,114,158
+ForegroundActive=82,97,134
+ForegroundInactive=80,81,89
 ForegroundLink=30,60,150
 ForegroundNegative=160,40,40
 ForegroundNeutral=150,100,0
@@ -114,10 +115,23 @@ shadeSortColumn=true
 [KDE]
 contrast=6
 
+[Schiefer]
+Color1=#60729e
+Color2=#aeb3c6
+Color3=#8fa3bf
+Color4=#bba78e
+Color5=#e2e5ed
+Color6=#bec2d3
+Color7=#bec2d3
+Color8=#969eb8
+DesktopColors=#8fa3bf,#bba78e,#7fa39a,#b48f96,#a8a47e,#9c90b5,#8faf8f,#c09c7c
+FrontPanel=#969eb8
+Palette=Schiefer
+
 [WM]
-activeBackground=112,130,170
-activeBlend=112,130,170
+activeBackground=96,114,158
+activeBlend=96,114,158
 activeForeground=255,255,255
-inactiveBackground=190,194,211
-inactiveBlend=190,194,211
-inactiveForeground=60,64,80
+inactiveBackground=174,179,198
+inactiveBlend=174,179,198
+inactiveForeground=44,45,50

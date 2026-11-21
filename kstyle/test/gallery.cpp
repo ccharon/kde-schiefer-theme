@@ -1,7 +1,12 @@
 // Test-Galerie für Schiefer: zeigt typische Bedienelemente.
 //   retrogallery                       -> Fenster anzeigen
 //   retrogallery --grab out.png        -> offscreen in PNG rendern (inkl. aufgeklapptem Menü)
+//   Zusätze (ändern das Standardbild nicht):
+//     --menu view     statt „File“ das Menü „View“ mit Optionsfeldern (exklusive Häkchen) daneben setzen
+//     --busy out2.png Fortschrittsbalken „besetzt“; out2.png wird 400 ms nach out.png aufgenommen
+//     --delay ms      Aufnahme erst nach ms (Standard 300)
 #include <QAction>
+#include <QActionGroup>
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
@@ -29,6 +34,7 @@
 #include <QTimer>
 #include <QToolBar>
 #include <QToolButton>
+#include <QtMath>
 #include <QTreeWidget>
 #include <QVBoxLayout>
 
@@ -164,7 +170,27 @@ int main(int argc, char **argv)
     file->addSeparator();
     file->addAction(QIcon::fromTheme(QStringLiteral("application-exit")), QStringLiteral("&Beenden"))->setShortcut(QKeySequence::Quit);
     win.menuBar()->addMenu(QStringLiteral("&Edit"));
-    win.menuBar()->addMenu(QStringLiteral("&View"));
+    // Optionsfelder im Menü (nur sichtbar mit --menu view)
+    auto *view = win.menuBar()->addMenu(QStringLiteral("&View"));
+    auto *group = new QActionGroup(view);
+    for (const auto &name : {QStringLiteral("Symbole"), QStringLiteral("Liste"), QStringLiteral("Details")}) {
+        auto *a = view->addAction(name);
+        a->setCheckable(true);
+        a->setActionGroup(group);
+        a->setChecked(name == QStringLiteral("Liste"));
+    }
+    view->addSeparator();
+    auto *dis1 = view->addAction(QStringLiteral("Deaktiviert an"));
+    auto *dis2 = view->addAction(QStringLiteral("Deaktiviert aus"));
+    auto *group2 = new QActionGroup(view);
+    for (auto *a : {dis1, dis2}) {
+        a->setCheckable(true);
+        a->setActionGroup(group2);
+        a->setEnabled(false);
+    }
+    dis1->setChecked(true);
+    view->addSeparator();
+    view->addAction(QStringLiteral("Statusleiste"))->setCheckable(true);
     win.menuBar()->addMenu(QStringLiteral("&Help"));
 
     auto *toolbar = win.addToolBar(QStringLiteral("Werkzeuge"));
@@ -190,21 +216,46 @@ int main(int argc, char **argv)
     }
 
     const QString out = args.at(grabIdx + 1);
+    QMenu *shown = file;
+    const int menuIdx = args.indexOf(QStringLiteral("--menu"));
+    if (menuIdx >= 0 && menuIdx + 1 < args.size() && args.at(menuIdx + 1) == QStringLiteral("view")) {
+        shown = view;
+    }
+    const int busyIdx = args.indexOf(QStringLiteral("--busy"));
+    if (busyIdx >= 0 && busyIdx + 1 < args.size()) {
+        for (auto *bar : win.findChildren<QProgressBar *>()) {
+            bar->setRange(0, 0);
+        }
+        // zweite Aufnahme nach 400 ms: der Balken muss sich auch ohne Animationen weiterbewegen
+        QTimer::singleShot(700, [&] {
+            win.grab().toImage().save(args.at(busyIdx + 1));
+        });
+    }
     win.show();
-    QTimer::singleShot(300, [&] {
+    const int delayIdx = args.indexOf(QStringLiteral("--delay")); // --delay ms: später aufnehmen (z. B. nach D-Bus-Neuladen)
+    const int delay = delayIdx >= 0 && delayIdx + 1 < args.size() ? args.at(delayIdx + 1).toInt() : 300;
+    QTimer::singleShot(delay, [&] {
         QImage shot = win.grab().toImage();
         // Menü separat rendern und rechts neben das Fenster setzen
-        file->adjustSize();
-        file->ensurePolished();
-        const QImage menu = file->grab().toImage();
-        QImage sheet(shot.width() + menu.width() + 24, std::max(shot.height(), menu.height() + 40), QImage::Format_ARGB32);
+        shown->adjustSize();
+        shown->ensurePolished();
+        const QImage menu = shown->grab().toImage();
+        // in logischen Maßen zusammensetzen, Bild in Gerätepixeln (QT_SCALE_FACTOR=1.5: Pixel bleiben unverändert)
+        const qreal dpr = shot.devicePixelRatio();
+        const QSizeF ss = shot.deviceIndependentSize(), ms = menu.deviceIndependentSize();
+        QImage sheet(qCeil((ss.width() + ms.width() + 24) * dpr), qCeil(std::max(ss.height(), ms.height() + 40) * dpr), QImage::Format_ARGB32);
+        sheet.setDevicePixelRatio(dpr);
         sheet.fill(QColor(110, 138, 166));
         QPainter p(&sheet);
-        p.drawImage(0, 0, shot);
-        p.drawImage(shot.width() + 12, 30, menu);
+        p.drawImage(QPointF(0, 0), shot);
+        p.drawImage(QPointF(ss.width() + 12, 30), menu);
         p.end();
         sheet.save(out);
-        app.quit();
+        if (busyIdx >= 0) {
+            QTimer::singleShot(500, &app, &QApplication::quit); // auf die zweite Aufnahme warten
+        } else {
+            app.quit();
+        }
     });
     return app.exec();
 }

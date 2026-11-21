@@ -1,3 +1,8 @@
-/* Schiefer für GTK4: Breeze-GTK (Abstände, Größen, Verhalten) + Motif-Zeichnung aus retro.css */
+/* Schiefer für GTK4: Breeze-GTK (Abstände, Größen, Verhalten) + Motif-Zeichnung aus retro.css
+ * + abschaltbare Optionen (opt-*.css; Liste und Beschreibung: ../optionen.txt).
+ * Reihenfolge: Breeze, retro.css, dann die Optionen. Eine Option abzuschalten heißt, ihre @import-Zeile wegzulassen
+ * (schiefer-config erzeugt dazu eine Überlagerung des Themes, die nur die gewählten Dateien importiert). */
 @import url("file:///usr/share/themes/Breeze/gtk-4.0/gtk.css");
 @import url("retro.css");
+@import url("opt-kopfleiste.css");
+@import url("opt-raute.css");

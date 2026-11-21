@@ -22,8 +22,9 @@ PlasmoidItem {
     readonly property int thickness: Math.max(12, Kirigami.Units.gridUnit)
 
     readonly property color base: Kirigami.Theme.backgroundColor
-    readonly property color lightColor: Qt.tint(base, Qt.rgba(1, 1, 1, 0.55))
-    readonly property color darkColor: Qt.tint(base, Qt.rgba(0, 0, 0, 0.5))
+    readonly property var motif: Scheme.motifColors(base)
+    readonly property color lightColor: motif.top
+    readonly property color darkColor: motif.bottom
 
     preferredRepresentation: fullRepresentation
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground

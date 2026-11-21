@@ -75,7 +75,7 @@ Item {
             width: Math.max(height, countLabel.implicitWidth + 6)
             height: countLabel.implicitHeight + 2
             color: Kirigami.Theme.backgroundColor
-            border.color: Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(0, 0, 0, 0.5))
+            border.color: Scheme.motifColors(Kirigami.Theme.backgroundColor).bottom
             PlasmaComponents3.Label {
                 id: countLabel
                 anchors.centerIn: parent

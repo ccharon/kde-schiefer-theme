@@ -1,6 +1,6 @@
 plasma_add_applet(org.kde.schiefer.drawer
     QML_SOURCES main.qml Bevel.qml MotifArrow.qml DrawerPopup.qml ClockFace.qml DateFace.qml SystemFace.qml TrayItemIcon.qml config.qml ConfigGeneral.qml
-    CPP_SOURCES schieferhelper.cpp schiefertray.cpp schieferfolder.cpp
+    CPP_SOURCES schieferhelper.cpp schieferscheme.cpp schiefertray.cpp schieferfolder.cpp
     RESOURCES main.xml
     GENERATE_APPLET_CLASS
 )

@@ -24,6 +24,8 @@ set(HAVE_QTDBUS ON)
 configure_file(config-breeze.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-breeze.h)
 
 include_directories(animations debug common ${CMAKE_CURRENT_BINARY_DIR})
+# Schiefer: gemeinsamer Farbkern (Motif-Formel), nur Header
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
 
 set(SRCS
     animations/breezeanimation.cpp

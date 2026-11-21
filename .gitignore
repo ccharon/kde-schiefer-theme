@@ -6,3 +6,5 @@ build/
 /dist/
 /plasma/schiefer/
 __pycache__/
+/cursors/Schiefer/
+/cursors/svg/

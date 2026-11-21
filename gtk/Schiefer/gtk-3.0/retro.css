@@ -2,18 +2,25 @@
  *
  * Grundregel: Breeze hat 1 px Rand. Motif-Kanten sind 2 px breit: äußere Linie = border,
  * innere Linie = box-shadow inset. So bleiben alle Größen und Abstände wie bei Breeze.
- * Licht/Schatten wie im Qt-Stil: mix(Grund, weiß, 0.55) / mix(Grund, schwarz, 0.5).
+ * Licht/Schatten/Auswahl nach der Motif-Formel wie Qt-Stil, Deko und Plasma-Stil (common/schiefercolors.*).
+ * CSS kann die Formel nicht rechnen (die Anteile hängen bei Motif von der Helligkeit der Fläche ab),
+ * deshalb feste Anteile an Bezugsfarben der Palette „Schiefer“ – schiefercolors.factors():
+ *   Fläche 190,194,211 (Helligkeit 77 %): oben mix(weiß, 0.57), unten mix(schwarz, 0.45), Auswahl mix(schwarz, 0.15)
+ *   Titel   96,114,158 (Helligkeit 47 %): oben mix(weiß, 0.54), unten mix(schwarz, 0.51)
+ * Die Auswahlfarbe ist im mittleren Motif-Zweig exakt; Abweichungen je Palette: gtk/tools/retro_colors.py.
+ * Die Farben selbst kommen zur Laufzeit aus colors.css (kde-gtk-config), folgen also dem Farbschema.
  */
 
-@define-color retro_light mix(@theme_bg_color_breeze, white, 0.55);
-@define-color retro_dark mix(@theme_bg_color_breeze, black, 0.5);
-@define-color retro_trough mix(@theme_bg_color_breeze, black, 0.12);
+@define-color retro_light mix(@theme_bg_color_breeze, white, 0.57);
+@define-color retro_dark mix(@theme_bg_color_breeze, black, 0.45);
+@define-color retro_select mix(@theme_bg_color_breeze, black, 0.15);
+@define-color retro_trough @retro_select;
 @define-color retro_hover mix(@theme_button_background_normal_breeze, white, 0.12);
-@define-color retro_pressed mix(@theme_button_background_normal_breeze, black, 0.08);
+@define-color retro_pressed mix(@theme_button_background_normal_breeze, black, 0.15);
 @define-color retro_focus shade(@theme_selected_bg_color_breeze, 0.77);
 @define-color retro_outline mix(@theme_bg_color_breeze, black, 0.62);
-@define-color retro_title_light mix(@theme_titlebar_background_breeze, white, 0.45);
-@define-color retro_title_dark mix(@theme_titlebar_background_breeze, black, 0.45);
+@define-color retro_title_light mix(@theme_titlebar_background_breeze, white, 0.54);
+@define-color retro_title_dark mix(@theme_titlebar_background_breeze, black, 0.51);
 
 /* ------------------------------------------------------------------ Knöpfe */
 
@@ -285,11 +292,11 @@ levelbar trough:backdrop {
 }
 
 scale.horizontal trough {
-    min-height: 6px;
+    min-height: 5px;
 }
 
 scale.vertical trough {
-    min-width: 6px;
+    min-width: 5px;
 }
 
 scale highlight,
@@ -310,9 +317,21 @@ progressbar progress {
     margin: 1px;
 }
 
-progressbar.horizontal trough,
-progressbar.horizontal progress {
+/* Höhe wie im Qt-Stil: 12 px mit Kante, Füllung 1 px innerhalb der Kante */
+progressbar.horizontal trough {
     min-height: 10px;
+}
+
+progressbar.horizontal progress {
+    min-height: 8px;
+}
+
+progressbar.vertical trough {
+    min-width: 10px;
+}
+
+progressbar.vertical progress {
+    min-width: 8px;
 }
 
 scale slider,
@@ -327,15 +346,22 @@ scale slider:disabled {
     background: @theme_button_background_normal_breeze;
 }
 
-/* Mittelrille wie beim Motif-Daumen */
+/* länglicher Daumen mit Mittelrille wie im Qt-Stil (28 x 16 px; Breeze zählt den Daumen
+   über negative Ränder nicht zur Größe des Reglers) */
 scale.horizontal slider {
-    background-image: linear-gradient(to right, transparent 7px, @retro_dark 7px, @retro_dark 8px,
-                                      @retro_light 8px, @retro_light 9px, transparent 9px);
+    min-width: 26px;
+    min-height: 14px;
+    margin: -8px -14px;
+    background-image: linear-gradient(to right, transparent 12px, @retro_dark 12px, @retro_dark 13px,
+                                      @retro_light 13px, @retro_light 14px, transparent 14px);
 }
 
 scale.vertical slider {
-    background-image: linear-gradient(to bottom, transparent 7px, @retro_dark 7px, @retro_dark 8px,
-                                      @retro_light 8px, @retro_light 9px, transparent 9px);
+    min-width: 14px;
+    min-height: 26px;
+    margin: -14px -8px;
+    background-image: linear-gradient(to bottom, transparent 12px, @retro_dark 12px, @retro_dark 13px,
+                                      @retro_light 13px, @retro_light 14px, transparent 14px);
 }
 
 levelbar trough block,
@@ -666,4 +692,106 @@ window.csd > headerbar,
 .csd headerbar {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
+}
+
+/* ------------------------------------------------------------------ Harmonisierung mit dem Qt-Stil (nicht abschaltbar) */
+
+/* keine Übergänge */
+* {
+    transition: none;
+}
+
+check,
+radio,
+notebook > header.top > tabs > tab:hover,
+notebook > header.bottom > tabs > tab:hover,
+notebook > header.left > tabs > tab:hover,
+notebook > header.right > tabs > tab:hover {
+    transition: none;
+}
+
+/* Kombifeld ohne Eingabe: Motif-Optionsmenü-Anzeiger statt Pfeil, kleiner erhabener Balken 12 x 7
+   (zwei Verläufe übereinander, weil der Pfeilknoten die ganze Höhe belegt und sich nicht zentrieren lässt) */
+combobox > box > button.combo:only-child arrow {
+    -gtk-icon-source: none;
+    min-width: 12px;
+    min-height: 7px;
+    margin: 0 4px 0 0;
+    border: none;
+    background-color: transparent;
+    background-image:
+        linear-gradient(to right, @retro_light 1px, transparent 1px, transparent 11px, @retro_dark 11px),
+        linear-gradient(to bottom, @retro_light 1px, @theme_button_background_normal_breeze 1px,
+                        @theme_button_background_normal_breeze 6px, @retro_dark 6px);
+    background-size: 12px 7px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+combobox button.combo,
+combobox > box > button.combo:not(:only-child),
+combobox > box > button.combo:only-child {
+    border-radius: 0;
+}
+
+/* verbundene Gruppen (Kombifeld mit Eingabe, Knopfgruppen): eckig */
+box.linked:not(.vertical):not(.dialog-action-area) entry,
+box.linked:not(.vertical):not(.dialog-action-area) button,
+box.linked:not(.vertical):not(.dialog-action-area) entry:first-child,
+box.linked:not(.vertical):not(.dialog-action-area) button:first-child,
+box.linked:not(.vertical):not(.dialog-action-area) entry:last-child,
+box.linked:not(.vertical):not(.dialog-action-area) button:last-child,
+box.linked:not(.vertical):not(.dialog-action-area) entry:only-child,
+box.linked:not(.vertical):not(.dialog-action-area) button:only-child,
+box.linked:not(.vertical):not(.dialog-action-area) entry:not(:only-child):not(:first-child),
+box.linked:not(.vertical):not(.dialog-action-area) button:not(:only-child):not(:first-child),
+box.linked:not(.vertical):not(.dialog-action-area) entry:not(:only-child):not(:last-child),
+box.linked:not(.vertical):not(.dialog-action-area) button:not(:only-child):not(:last-child) {
+    border-radius: 0;
+}
+
+/* Drehfeld: Dreiecke statt Plus und Minus. GTK3 setzt die Symbole fest in die Knöpfe (nur die Farbe ist änderbar)
+   und ordnet die Knöpfe nebeneinander an (Minus links); übereinander ginge nur mit spinbutton.vertical, dann steht
+   das Eingabefeld dazwischen. Deshalb: Symbol unsichtbar (color: transparent), Dreieck (8 x 4 px) als Treppe aus vier
+   Verlaufsstreifen auf den Knopf gezeichnet, in der Mitte der 14 px breiten Knopffläche. */
+spinbutton:not(.vertical) button.up,
+spinbutton:not(.vertical) button.down {
+    color: transparent;
+    min-width: 14px;
+    padding: 0;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 2px 4px, 4px 4px, 6px 4px, 8px 4px;
+}
+
+spinbutton:not(.vertical) button.up {
+    background-image:
+        linear-gradient(to bottom, @theme_button_foreground_normal_breeze 0px, @theme_button_foreground_normal_breeze 1px, transparent 1px),
+        linear-gradient(to bottom, transparent 1px, @theme_button_foreground_normal_breeze 1px, @theme_button_foreground_normal_breeze 2px, transparent 2px),
+        linear-gradient(to bottom, transparent 2px, @theme_button_foreground_normal_breeze 2px, @theme_button_foreground_normal_breeze 3px, transparent 3px),
+        linear-gradient(to bottom, transparent 3px, @theme_button_foreground_normal_breeze 3px, @theme_button_foreground_normal_breeze 4px);
+}
+
+spinbutton:not(.vertical) button.down {
+    background-image:
+        linear-gradient(to bottom, transparent 3px, @theme_button_foreground_normal_breeze 3px, @theme_button_foreground_normal_breeze 4px),
+        linear-gradient(to bottom, transparent 2px, @theme_button_foreground_normal_breeze 2px, @theme_button_foreground_normal_breeze 3px, transparent 3px),
+        linear-gradient(to bottom, transparent 1px, @theme_button_foreground_normal_breeze 1px, @theme_button_foreground_normal_breeze 2px, transparent 2px),
+        linear-gradient(to bottom, @theme_button_foreground_normal_breeze 0px, @theme_button_foreground_normal_breeze 1px, transparent 1px);
+}
+
+spinbutton:not(.vertical) button.up:disabled {
+    background-image:
+        linear-gradient(to bottom, @insensitive_fg_color_breeze 0px, @insensitive_fg_color_breeze 1px, transparent 1px),
+        linear-gradient(to bottom, transparent 1px, @insensitive_fg_color_breeze 1px, @insensitive_fg_color_breeze 2px, transparent 2px),
+        linear-gradient(to bottom, transparent 2px, @insensitive_fg_color_breeze 2px, @insensitive_fg_color_breeze 3px, transparent 3px),
+        linear-gradient(to bottom, transparent 3px, @insensitive_fg_color_breeze 3px, @insensitive_fg_color_breeze 4px);
+}
+
+spinbutton:not(.vertical) button.down:disabled {
+    background-image:
+        linear-gradient(to bottom, transparent 3px, @insensitive_fg_color_breeze 3px, @insensitive_fg_color_breeze 4px),
+        linear-gradient(to bottom, transparent 2px, @insensitive_fg_color_breeze 2px, @insensitive_fg_color_breeze 3px, transparent 3px),
+        linear-gradient(to bottom, transparent 1px, @insensitive_fg_color_breeze 1px, @insensitive_fg_color_breeze 2px, transparent 2px),
+        linear-gradient(to bottom, @insensitive_fg_color_breeze 0px, @insensitive_fg_color_breeze 1px, transparent 1px);
 }

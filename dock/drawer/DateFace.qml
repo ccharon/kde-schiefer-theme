@@ -16,10 +16,15 @@ Item {
         width: Math.round(parent.width * 0.78)
         height: Math.round(parent.height * 0.86)
 
+        // Papier ist immer hell (auch in dunklen Paletten) – Schrift deshalb nach der Motif-Vordergrundregel
+        // der Papierfarbe, nicht in der Textfarbe des Schemas
+        readonly property color paperColor: Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(1, 1, 1, 0.7))
+        readonly property color inkColor: Scheme.motifColors(paperColor).foreground
+
         Bevel {
             anchors.fill: parent
             base: Kirigami.Theme.backgroundColor
-            fill: Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(1, 1, 1, 0.7))
+            fill: paper.paperColor
         }
         // Spiralbindung
         Row {
@@ -32,7 +37,7 @@ Item {
                     width: Math.max(2, Math.round(paper.width / 18))
                     height: Math.max(3, Math.round(paper.height / 9))
                     radius: width / 2
-                    color: Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(0, 0, 0, 0.5))
+                    color: Scheme.motifColors(Kirigami.Theme.backgroundColor).bottom
                 }
             }
         }
@@ -43,7 +48,7 @@ Item {
             text: Qt.locale().monthName(sheet.today.getMonth(), Locale.ShortFormat).replace(".", "")
             font.pixelSize: Math.max(8, Math.round(paper.height * 0.26))
             font.family: Kirigami.Theme.defaultFont.family
-            color: Kirigami.Theme.textColor
+            color: paper.inkColor
         }
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -52,7 +57,7 @@ Item {
             text: sheet.today.getDate()
             font.pixelSize: Math.max(10, Math.round(paper.height * 0.44))
             font.family: Kirigami.Theme.defaultFont.family
-            color: Kirigami.Theme.textColor
+            color: paper.inkColor
         }
     }
 }

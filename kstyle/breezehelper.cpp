@@ -8,6 +8,8 @@
 
 #include "breeze.h"
 #include "breezepropertynames.h"
+#include "breezestyleconfigdata.h" // Schiefer: Schalter RadioDiamond
+#include "schiefercolors.h" // Schiefer: Motif-Farbkern
 
 #include <KColorScheme>
 #include <KColorUtils>
@@ -559,15 +561,20 @@ void Helper::renderFrame(QPainter *painter, const QRectF &rect, const QColor &co
 }
 
 //______________________________________________________________________________
-// Schiefer: Grundbausteine
+// Schiefer: Grundbausteine – Kantenfarben nach der Motif-Formel (common/schiefercolors.h)
 QColor Helper::bevelLight(const QColor &base) const
 {
-    return KColorUtils::mix(base, Qt::white, 0.55);
+    return SchieferColors::topShadow(base);
 }
 
 QColor Helper::bevelDark(const QColor &base) const
 {
-    return KColorUtils::mix(base, Qt::black, 0.5);
+    return SchieferColors::bottomShadow(base);
+}
+
+QColor Helper::bevelSelect(const QColor &base) const
+{
+    return SchieferColors::selectColor(base);
 }
 
 void Helper::renderBevel(QPainter *painter, const QRectF &rectF, const QColor &base, bool sunken, int width) const
@@ -768,7 +775,7 @@ void Helper::renderButtonFrame(QPainter *painter,
     const bool sunken = (down && enabled) || checked;
     QColor fill = base;
     if (sunken) {
-        fill = KColorUtils::mix(base, Qt::black, 0.08);
+        fill = bevelSelect(base); // Schiefer: Motif armColor = select
     }
     if (hasNeutralHighlight) {
         fill = KColorUtils::mix(fill, neutralText(palette), 0.25);
@@ -849,13 +856,13 @@ void Helper::renderTabWidgetFrame(QPainter *painter, const QRectF &rect, const Q
 }
 
 //______________________________________________________________________________
-void Helper::renderSeparator(QPainter *painter, const QRectF &rect, const QColor &color, bool vertical) const
+void Helper::renderSeparator(QPainter *painter, const QRectF &rect, const QColor &base, bool vertical) const
 {
-    // Schiefer: geätzte Linie (dunkel + hell)
+    // Schiefer: geätzte Linie (dunkel + hell) nach dem Farbkern: base = Fläche, auf der die Linie liegt
     painter->setRenderHint(QPainter::Antialiasing, false);
     const QRect r = rect.toAlignedRect();
-    const QColor dark = color.darker(115);
-    const QColor light(255, 255, 255, 170);
+    const QColor dark = bevelDark(base);
+    const QColor light = bevelLight(base);
     if (vertical) {
         const int x = r.left() + r.width() / 2 - 1;
         painter->fillRect(QRect(x, r.top(), 1, r.height()), dark);
@@ -882,7 +889,7 @@ void Helper::renderCheckBoxBackground(QPainter *painter,
     const QRect box = rect.toAlignedRect().adjusted(2, 2, -2, -2);
     QColor fill = palette.color(QPalette::Base);
     if (sunken) {
-        fill = KColorUtils::mix(fill, Qt::black, 0.1);
+        fill = bevelSelect(fill); // Schiefer: Motif selectColor
     }
     if (neutalHighlight) {
         fill = KColorUtils::mix(fill, neutralText(palette), 0.25);
@@ -1006,6 +1013,22 @@ void Helper::renderRadioButtonBackground(QPainter *painter,
                                          bool sunken,
                                          qreal animation) const
 {
+    // Schiefer: Motif/CDE-Raute (Schalter [Style] RadioDiamond)
+    if (StyleConfigData::radioDiamond()) {
+        const QColor base = palette.color(QPalette::Window);
+        // gesetzt (auch während einer Umschaltanimation ab der Hälfte): Motif selectColor
+        const bool on = state == RadioOn || (state == RadioAnimated && animation >= 0.5);
+        QColor fill = on ? bevelSelect(base) : palette.color(QPalette::Base);
+        if (sunken && !on) {
+            fill = bevelSelect(fill); // gedrückt: wie beim Kästchen
+        }
+        if (neutalHighlight) {
+            fill = KColorUtils::mix(fill, neutralText(palette), 0.25);
+        }
+        renderRadioDiamond(painter, rect, fill, base);
+        return;
+    }
+
     // Schiefer: versenkter Kreis (CDE)
     Q_UNUSED(state)
     Q_UNUSED(animation)
@@ -1013,7 +1036,7 @@ void Helper::renderRadioButtonBackground(QPainter *painter,
     const QColor base = palette.color(QPalette::Window);
     QColor fill = palette.color(QPalette::Base);
     if (sunken) {
-        fill = KColorUtils::mix(fill, Qt::black, 0.1);
+        fill = bevelSelect(fill); // Schiefer: Motif selectColor
     }
     if (neutalHighlight) {
         fill = KColorUtils::mix(fill, neutralText(palette), 0.25);
@@ -1049,6 +1072,11 @@ void Helper::renderRadioButton(QPainter *painter,
 {
     Q_UNUSED(sunken)
     Q_UNUSED(animationHover)
+
+    // Schiefer: die Raute zeichnet renderRadioButtonBackground vollständig (inkl. Füllung)
+    if (StyleConfigData::radioDiamond()) {
+        return;
+    }
 
     // copy rect
     QRectF frameRect(rect);
@@ -1093,11 +1121,83 @@ void Helper::renderRadioButton(QPainter *painter,
 }
 
 //______________________________________________________________________________
+// Schiefer: versenkte Motif-Raute in Gerätepixeln. Ecken liegen auf ganzen Gerätepixeln, die Kanten
+// laufen also genau durch Pixelecken: jedes Randpixel ist exakt zur Hälfte bedeckt (50 %-Mischung),
+// alle anderen ganz – das wirkt bei jeder Skalierung gleichmäßig scharf. Gerechnet über den
+// L1-Abstand der Pixelmitte vom Mittelpunkt (bei halbzahligen Mitten immer ganzzahlig).
+// Obere Hälfte dunkel, untere hell (versenkt; Motif XmeDrawDiamond teilt waagerecht).
+void Helper::renderRadioDiamond(QPainter *painter, const QRectF &rect, const QColor &fill, const QColor &base) const
+{
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing, false);
+    const QTransform t = painter->deviceTransform();
+    qreal scale = 1;
+    QRectF r = rect;
+    if (t.type() <= QTransform::TxScale && t.m11() > 0 && qFuzzyCompare(t.m11(), t.m22())) {
+        scale = t.m11();
+        r = t.mapRect(rect);
+        painter->setWorldTransform(t.inverted() * painter->worldTransform()); // jetzt Gerätekoordinaten
+    }
+
+    // halbe Diagonale: 1 logisches Pixel Luft zum Indikatorrand (20 px -> 9), Kante 2 px
+    const int h = qMax(3, qRound((qMin(rect.width(), rect.height()) / 2 - 1) * scale));
+    const int d = qMin(h - 1, qMax(1, qRound(2 * scale)));
+    const int cx = qRound(r.center().x()), cy = qRound(r.center().y());
+
+    const QColor top = bevelDark(base), bottom = bevelLight(base);
+    auto halfAlpha = [](QColor c) {
+        c.setAlphaF(c.alphaF() / 2);
+        return c;
+    };
+    const QColor topEdge = halfAlpha(top), bottomEdge = halfAlpha(bottom);
+    const QColor topInner = KColorUtils::mix(top, fill, 0.5), bottomInner = KColorUtils::mix(bottom, fill, 0.5);
+
+    for (int y = cy - h; y < cy + h; ++y) {
+        const int dy = qAbs(2 * (y - cy) + 1); // doppelter Abstand (ungerade)
+        const bool upper = y < cy;
+        // Lauf gleicher Farbe zusammenfassen
+        int runStart = cx - h;
+        QColor runColor;
+        bool runValid = false;
+        for (int x = cx - h; x <= cx + h; ++x) {
+            QColor c;
+            bool valid = false;
+            if (x < cx + h) {
+                const int dist = (qAbs(2 * (x - cx) + 1) + dy) / 2; // L1-Abstand der Pixelmitte
+                if (dist == h) {
+                    c = upper ? topEdge : bottomEdge;
+                    valid = true;
+                } else if (dist < h && dist > h - d) {
+                    c = upper ? top : bottom;
+                    valid = true;
+                } else if (dist == h - d) {
+                    c = upper ? topInner : bottomInner;
+                    valid = true;
+                } else if (dist < h - d) {
+                    c = fill;
+                    valid = true;
+                }
+            }
+            if (valid == runValid && (!valid || c == runColor)) {
+                continue;
+            }
+            if (runValid) {
+                painter->fillRect(QRect(runStart, y, x - runStart, 1), runColor);
+            }
+            runStart = x;
+            runColor = c;
+            runValid = valid;
+        }
+    }
+    painter->restore();
+}
+
+//______________________________________________________________________________
 void Helper::renderSliderGroove(QPainter *painter, const QRectF &rect, const QColor &fg, const QColor &bg) const
 {
     // Schiefer: versenkte Rinne (fg wird nicht genutzt – Motif kennt keine Füllung)
     Q_UNUSED(fg)
-    renderBevelPanel(painter, rect, KColorUtils::mix(bg, Qt::black, 0.12), bg, true, 2);
+    renderBevelPanel(painter, rect, bevelSelect(bg), bg, true, 2); // Schiefer: Motif troughColor = select
 }
 
 //______________________________________________________________________________
@@ -1215,7 +1315,7 @@ void Helper::renderProgressBarGroove(QPainter *painter, const QRectF &rect, cons
 {
     // Schiefer: versenkte Rinne
     Q_UNUSED(fg)
-    renderBevelPanel(painter, rect, KColorUtils::mix(bg, Qt::black, 0.12), bg, true, 2);
+    renderBevelPanel(painter, rect, bevelSelect(bg), bg, true, 2); // Schiefer: Motif troughColor = select
 }
 
 //______________________________________________________________________________
@@ -1875,7 +1975,7 @@ void Helper::renderRetroDial(QPainter *painter, const QRectF &rect, const QPalet
 
     // versenkte Mulde
     painter->setPen(Qt::NoPen);
-    painter->setBrush(KColorUtils::mix(base, Qt::black, 0.12));
+    painter->setBrush(bevelSelect(base)); // Schiefer: Mulde in Motif-Auswahlfarbe
     painter->drawEllipse(outer);
     QPen pen(bevelDark(base), 2);
     pen.setCapStyle(Qt::FlatCap);

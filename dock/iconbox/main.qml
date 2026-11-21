@@ -74,7 +74,8 @@ PlasmoidItem {
     TaskManager.ActivityInfo { id: activityInfo }
 
     function desktopColor(i) {
-        const list = cfg.desktopColors;
+        const fromScheme = cfg.desktopColorsFromScheme ? Scheme.desktopColors : [];
+        const list = fromScheme.length ? fromScheme : cfg.desktopColors;
         return list.length ? list[i % list.length] : Kirigami.Theme.backgroundColor;
     }
 

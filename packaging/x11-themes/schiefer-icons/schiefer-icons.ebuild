@@ -49,6 +49,22 @@ src_install() {
 	cp -a "${WORKDIR}/icons/schiefer" "${ED}/usr/share/icons/" || die
 }
 
+pkg_preinst() {
+	# Bis 0.3 waren Größenordner wie 16@2x echte Ordner, jetzt sind es Symlinks (16@2x -> 16) wie in Breeze.
+	# Portage ersetzt keinen Ordner durch einen Symlink: der Symlink landete als "16@2x.backup.0000" daneben
+	# und der alte Ordner blieb leer zurück – bei jeder Neuinstallation wieder. Leere Reste hier entfernen.
+	local l rel t
+	while IFS= read -r -d '' l; do
+		[[ -d ${l} ]] || continue          # nur Ordner-Symlinks
+		rel=${l#"${ED}"}
+		t=${EROOT%/}${rel}
+		rm -f "${t}".backup.[0-9][0-9][0-9][0-9]
+		if [[ -d ${t} && ! -L ${t} ]]; then
+			rmdir "${t}" 2>/dev/null || ewarn "Nicht leer, bitte von Hand entfernen: ${t}"
+		fi
+	done < <(find "${ED}/usr/share/icons/schiefer" -type l -print0)
+}
+
 pkg_postinst() {
 	xdg_pkg_postinst
 	elog "Schiefer-Icons sind eine Momentaufnahme von breeze-icons."

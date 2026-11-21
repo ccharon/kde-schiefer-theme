@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "KWin/WindowSwitcher",
+    "KPlugin": {
+        "Authors": [{ "Name": "Schiefer" }],
+        "Description": "Motif-style window switcher: raised plain panel, sunken selection",
+        "Description[de]": "Fensterwechsler im Motif-Stil: schlichte erhabene Tafel, versenkte Auswahl",
+        "Icon": "preferences-system-windows-switcher-compact",
+        "Id": "schiefer",
+        "License": "GPL",
+        "Name": "Schiefer",
+        "Name[de]": "Schiefer"
+    }
+}

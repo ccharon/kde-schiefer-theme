@@ -84,7 +84,8 @@ PlasmoidItem {
         startupCount = n;
     }
     function desktopColor(i) {
-        const list = cfg.desktopColors;
+        const fromScheme = cfg.desktopColorsFromScheme ? Scheme.desktopColors : [];
+        const list = fromScheme.length ? fromScheme : cfg.desktopColors;
         return list.length ? list[i % list.length] : Kirigami.Theme.backgroundColor;
     }
 
@@ -92,8 +93,8 @@ PlasmoidItem {
     component Etch: Item {
         implicitWidth: 2
         Layout.fillHeight: true
-        Rectangle { x: 0; width: 1; height: parent.height; color: Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(0, 0, 0, 0.5)) }
-        Rectangle { x: 1; width: 1; height: parent.height; color: Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(1, 1, 1, 0.55)) }
+        Rectangle { x: 0; width: 1; height: parent.height; color: Scheme.motifColors(Kirigami.Theme.backgroundColor).bottom }
+        Rectangle { x: 1; width: 1; height: parent.height; color: Scheme.motifColors(Kirigami.Theme.backgroundColor).top }
     }
 
     component PanelButton: Item {
@@ -165,7 +166,7 @@ PlasmoidItem {
                         base: desk.color
                         sunken: desk.current || (deskMouse.pressed && deskMouse.containsMouse)
                         outline: dropArea.containsDrag
-                        fill: desk.current ? Qt.tint(desk.color, Qt.rgba(0, 0, 0, 0.12)) : desk.color
+                        fill: desk.current ? Scheme.motifColors(desk.color).select : desk.color
                     }
                     PlasmaComponents3.Label {
                         anchors.fill: parent
@@ -295,7 +296,7 @@ PlasmoidItem {
                     sunken: true
                     depth: 1
                     property bool lit: root.startupCount > 0 && blink.on
-                    fill: lit ? "#e8d050" : Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(0, 0, 0, 0.12))
+                    fill: lit ? "#e8d050" : Scheme.motifColors(Kirigami.Theme.backgroundColor).select
                 }
                 Timer {
                     id: blink

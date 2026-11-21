@@ -13,6 +13,8 @@
     <entry name="display" type="String"><default>list</default></entry>
     <!-- Fenster einer Anwendung zu einer Gruppe mit seitlicher Schublade zusammenfassen -->
     <entry name="groupWindows" type="Bool"><default>true</default></entry>
+    <!-- Farben der Arbeitsflächen aus [Schiefer] DesktopColors des aktiven Farbschemas; aus (oder nichts gefunden) = Liste unten -->
+    <entry name="desktopColorsFromScheme" type="Bool"><default>true</default></entry>
     <entry name="desktopColors" type="StringList">
       <default>#8fa3bf,#bba78e,#7fa39a,#b48f96,#a8a47e,#9c90b5,#8faf8f,#c09c7c</default>
     </entry>

@@ -4,7 +4,7 @@ EAPI=8
 PYTHON_COMPAT=( python3_{11..14} )
 inherit python-any-r1
 
-DESCRIPTION="Schiefer: Farbschema, Plasma-Stil, GTK-Theme und Hintergrund im Motif/CDE-Stil"
+DESCRIPTION="Schiefer: Farbschemata, Plasma-Stil, GTK-Theme, Mauszeiger, Fensterwechsler und Hintergrund im Motif/CDE-Stil"
 SRC_URI="schiefer-${PV}.tar.xz"
 S="${WORKDIR}/schiefer-${PV}"
 
@@ -32,17 +32,27 @@ src_compile() {
 	"${EPYTHON}" plasma/make_plasma_theme.py "${WORKDIR}/plasma/schiefer" || die
 	rm -f "${WORKDIR}/plasma/schiefer/.schiefer-generated" || die
 	"${EPYTHON}" wallpaper/make_wallpaper_package.py "${WORKDIR}/wallpaper/Schiefer" || die
+	# Mauszeiger (reines Python): XCursor 24–96 px + SVG für Wayland, --check prüft Vollständigkeit
+	"${EPYTHON}" cursors/make_cursors.py --out "${WORKDIR}/cursors" --check || die
 }
 
 src_install() {
+	# Paletten Schiefer, Sandstein, Jade, Granit, Basalt (umschalten: schiefer-config palette <Name>)
 	insinto /usr/share/color-schemes
-	doins colors/Schiefer.colors
+	doins colors/*.colors
 
 	insinto /usr/share/plasma/desktoptheme
 	doins -r "${WORKDIR}/plasma/schiefer"
 
 	insinto /usr/share/themes
 	doins -r gtk/Schiefer
+
+	insinto /usr/share/icons
+	doins -r "${WORKDIR}/cursors/Schiefer"
+
+	# Fensterwechsler (Alt+Tab) für KWin
+	insinto /usr/share/kwin-wayland/tabbox
+	doins -r kwin/tabbox/schiefer
 
 	insinto /usr/share/wallpapers
 	doins -r "${WORKDIR}/wallpaper/Schiefer"
@@ -57,5 +67,8 @@ src_install() {
 
 pkg_postinst() {
 	elog "GTK-Theme aktivieren: Systemeinstellungen › Anwendungsstil › GTK-Design › Schiefer"
-	elog "Hintergrund pixelgenau für jede Auflösung: schiefer-wallpaper [muster]"
+	elog "Mauszeiger: Systemeinstellungen › Mauszeiger › Schiefer"
+	elog "Fensterwechsler: Systemeinstellungen › Fensterverwaltung › Fensterwechsel › Schiefer"
+	elog "Bild-Hintergrund pixelgenau für jede Auflösung: schiefer-wallpaper [muster]"
+	elog "(Muster je Arbeitsfläche: Paket x11-themes/schiefer-backdrop)"
 }

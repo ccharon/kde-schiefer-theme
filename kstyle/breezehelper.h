@@ -182,10 +182,12 @@ public:
 
     //*@name Schiefer: Motif/CDE-Grundbausteine
     //@{
-    //* helle Lichtkante zu einer Grundfarbe
+    //* helle Lichtkante zu einer Grundfarbe (Motif: top shadow)
     QColor bevelLight(const QColor &base) const;
-    //* dunkle Schattenkante zu einer Grundfarbe
+    //* dunkle Schattenkante zu einer Grundfarbe (Motif: bottom shadow)
     QColor bevelDark(const QColor &base) const;
+    //* Schiefer: Motif-Auswahlfarbe (select color) – gedrückte Knöpfe, Rinnen, gesetzte Kästchen
+    QColor bevelSelect(const QColor &base) const;
     //* Lichtkante: oben/links hell, unten/rechts dunkel (versenkt: umgekehrt); Ecken diagonal geteilt
     void renderBevel(QPainter *, const QRectF &, const QColor &base, bool sunken, int width = 2) const;
     //* erhabene/versenkte Fläche: füllen + Lichtkante; inset = um so viele Linienbreiten nach innen
@@ -232,7 +234,8 @@ public:
     void renderTabWidgetFrame(QPainter *, const QRectF &, const QColor &color, const QColor &outline, Corners) const;
 
     //* separator
-    void renderSeparator(QPainter *, const QRectF &, const QColor &, bool vertical = false) const;
+    // Schiefer: QColor = Fläche (z. B. palette.window()), Kanten nach dem Farbkern
+    void renderSeparator(QPainter *, const QRectF &, const QColor &base, bool vertical = false) const;
 
     //* checkbox
     void renderCheckBoxBackground(QPainter *,
@@ -274,6 +277,9 @@ public:
                            bool sunken,
                            qreal animation = AnimationData::OpacityInvalid,
                            qreal hoverAnimation = AnimationData::OpacityInvalid) const;
+
+    //* Schiefer: versenkte Motif-Raute (Optionsfeld), Füllung fill, Kanten aus base
+    void renderRadioDiamond(QPainter *, const QRectF &, const QColor &fill, const QColor &base) const;
 
     //* slider groove
     void renderSliderGroove(QPainter *, const QRectF &, const QColor &fg, const QColor &bg) const;

@@ -1,6 +1,6 @@
 /*
  * Schiefer – Motif-Kante: Licht oben links, Schatten unten rechts, Gehrung an den Ecken.
- * Farben wie im Qt-Stil: Licht = Grund + 55 % Weiß, Schatten = Grund + 50 % Schwarz.
+ * Farben wie im Qt-Stil: Licht und Schatten nach der Motif-Formel (Scheme.motifColors).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 import QtQuick
@@ -16,8 +16,10 @@ Item {
     property bool filled: true
     property bool outline: false            // dunkle 1-px-Außenlinie wie bei Default-Knöpfen
 
-    readonly property color lightColor: Qt.tint(base, Qt.rgba(1, 1, 1, 0.55))
-    readonly property color darkColor: Qt.tint(base, Qt.rgba(0, 0, 0, 0.5))
+    // Kantenfarben nach der Motif-Formel (common/schiefercolors.h), abhängig von der Grundfarbe
+    readonly property var motif: Scheme.motifColors(base)
+    readonly property color lightColor: motif.top
+    readonly property color darkColor: motif.bottom
     readonly property color topLeft: sunken ? darkColor : lightColor
     readonly property color bottomRight: sunken ? lightColor : darkColor
     readonly property int off: outline ? 1 : 0

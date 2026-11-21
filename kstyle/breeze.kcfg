@@ -42,7 +42,13 @@
   <group name="Style">
 
     <!-- animations -->
+    <!-- Schiefer: Standard aus – Motif reagiert sofort; true schaltet die Breeze-Übergänge wieder ein -->
     <entry name="AnimationsEnabled" type="Bool">
+      <default>false</default>
+    </entry>
+
+    <!-- Schiefer: Optionsfelder als Motif/CDE-Raute (false = runde Variante) -->
+    <entry name="RadioDiamond" type="Bool">
       <default>true</default>
     </entry>
 

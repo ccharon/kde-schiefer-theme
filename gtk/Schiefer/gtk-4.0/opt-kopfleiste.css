@@ -1,0 +1,401 @@
+/* Schiefer: Motif-Kopfleiste für Fenster mit eigener Titelleiste (CSD) – abschaltbar durch Weglassen des
+ * Imports in gtk.css (dann bleibt die Breeze-artige Kopfleiste aus retro.css).
+ *
+ * Wie die KWin-Dekoration „schiefer“: Titelfläche in der Aktivfarbe (@theme_titlebar_background_breeze, inaktiv
+ * ..._backdrop_breeze), Titel in einem erhabenen Feld, eckige erhabene Fensterknöpfe mit 1-px-Kante und den Symbolen
+ * Minimieren = kleines Kästchen, Maximieren = großes Kästchen, Schließen = X (als Verlaufsflächen gezeichnet, in der
+ * Titelvordergrundfarbe), Rahmen als erhabene Kante ohne Schlagschatten und ohne Rundung.
+ * Grenzen von CSS: Das Titelfeld reicht nur um den Text (GTK dehnt es nicht zwischen die Knopfgruppen), die Kerben
+ * des KWin-Rahmens fehlen, der Rahmen ist 5 px breit (2 px Kante + 3 px Fläche). Maximierte Fenster: kein Rahmen.
+ */
+
+
+/* Rahmen: kein Schatten, nur eine 1-px-Umrandung; erhabene 2-px-Kante, 3 px Titelfarbe */
+window.csd:not(.popup):not(.tooltip):not(.maximized):not(.fullscreen):not(.tiled),
+window.csd:not(.popup):not(.tooltip):not(.maximized):not(.fullscreen):not(.tiled):backdrop {
+    border-radius: 0;
+    margin: 0;
+    padding: 3px;
+    border: 2px solid;
+    border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
+    box-shadow: 0 0 0 1px @retro_outline;
+    background-color: @theme_titlebar_background_breeze;
+}
+
+window.csd:not(.popup):not(.tooltip):not(.maximized):not(.fullscreen):not(.tiled):backdrop {
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    background-color: @theme_titlebar_background_backdrop_breeze;
+}
+
+window.csd.maximized,
+window.csd.fullscreen,
+window.csd.tiled {
+    border: none;
+    padding: 0;
+    box-shadow: none;
+}
+
+
+/* Leiste: flach in der Titelfarbe, Titel als erhabenes Feld */
+headerbar,
+headerbar:backdrop,
+.titlebar:not(headerbar) {
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    background-image: none;
+    background-color: @theme_titlebar_background_breeze;
+    color: @theme_titlebar_foreground_breeze;
+    padding: 0 1px;
+}
+
+headerbar button,
+.titlebar:not(headerbar) button {
+    min-height: 16px;
+    min-width: 16px;
+    padding: 0 5px;
+    margin: 2px 1px;
+}
+
+headerbar:backdrop,
+.titlebar:not(headerbar):backdrop {
+    background-color: @theme_titlebar_background_backdrop_breeze;
+    color: @theme_titlebar_foreground_backdrop_breeze;
+}
+
+headerbar.titlebar {
+    min-height: 22px;
+}
+
+headerbar .title {
+    font-weight: normal;
+    min-height: 0;
+    margin: 0;
+    padding: 0 14px;
+    border: 1px solid;
+    border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
+    box-shadow: inset 1px 1px @retro_title_light, inset -1px -1px @retro_title_dark;
+    background-color: @theme_titlebar_background_breeze;
+    color: @theme_titlebar_foreground_breeze;
+}
+
+headerbar:backdrop .title {
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    background-color: @theme_titlebar_background_backdrop_breeze;
+    color: @theme_titlebar_foreground_backdrop_breeze;
+}
+
+headerbar .subtitle {
+    font-size: smaller;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+
+headerbar button {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
+    box-shadow: inset 1px 1px @retro_title_light, inset -1px -1px @retro_title_dark;
+    background-image: none;
+    background-color: @theme_titlebar_background_breeze;
+    color: @theme_titlebar_foreground_breeze;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+}
+
+headerbar button:hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
+    box-shadow: inset 1px 1px @retro_title_light, inset -1px -1px @retro_title_dark;
+    background-image: none;
+    background-color: mix(@theme_titlebar_background_breeze, white, 0.12);
+    color: @theme_titlebar_foreground_breeze;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+}
+
+headerbar button:active,
+headerbar button:checked,
+headerbar button:active:hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_title_dark @retro_title_light @retro_title_light @retro_title_dark;
+    box-shadow: inset 1px 1px @retro_title_dark, inset -1px -1px @retro_title_light;
+    background-image: none;
+    background-color: shade(@theme_titlebar_background_breeze, 0.9);
+    color: @theme_titlebar_foreground_breeze;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+}
+
+headerbar button:backdrop,
+headerbar button:backdrop:hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    background-image: none;
+    background-color: @theme_titlebar_background_backdrop_breeze;
+    color: @theme_titlebar_foreground_backdrop_breeze;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+}
+
+headerbar button:backdrop:active,
+headerbar button:backdrop:checked {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    background-image: none;
+    background-color: shade(@theme_titlebar_background_backdrop_breeze, 0.92);
+    color: @theme_titlebar_foreground_backdrop_breeze;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+}
+
+/* Fensterknöpfe: 16 x 16 px mit 1-px-Kante statt Breezes riesiger Klickfläche */
+window headerbar windowcontrols button,
+window headerbar windowcontrols button:dir(ltr),
+window headerbar windowcontrols button:dir(rtl) {
+    min-width: 18px;
+    min-height: 14px;
+    padding: 0;
+    margin: 3px 1px;
+}
+
+window headerbar windowcontrols button image {
+    -gtk-icon-size: 1px;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    color: transparent;
+}
+
+
+window headerbar windowcontrols button.minimize:not(.nn) {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
+    box-shadow: none;
+    background-color: @theme_titlebar_background_breeze;
+    background-image:
+        linear-gradient(to right, @theme_titlebar_foreground_breeze 1px, transparent 1px, transparent 5px, @theme_titlebar_foreground_breeze 5px),
+        linear-gradient(to bottom, @theme_titlebar_foreground_breeze 1px, @theme_titlebar_background_breeze 1px, @theme_titlebar_background_breeze 5px, @theme_titlebar_foreground_breeze 5px);
+    background-size: 6px 6px, 6px 6px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.minimize:not(.nn):hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
+    box-shadow: none;
+    background-color: mix(@theme_titlebar_background_breeze, white, 0.12);
+    background-image:
+        linear-gradient(to right, @theme_titlebar_foreground_breeze 1px, transparent 1px, transparent 5px, @theme_titlebar_foreground_breeze 5px),
+        linear-gradient(to bottom, @theme_titlebar_foreground_breeze 1px, mix(@theme_titlebar_background_breeze, white, 0.12) 1px, mix(@theme_titlebar_background_breeze, white, 0.12) 5px, @theme_titlebar_foreground_breeze 5px);
+    background-size: 6px 6px, 6px 6px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.minimize:not(.nn):active,
+window headerbar windowcontrols button.minimize:not(.nn):checked,
+window headerbar windowcontrols button.minimize:not(.nn):active:hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_title_dark @retro_title_light @retro_title_light @retro_title_dark;
+    box-shadow: none;
+    background-color: shade(@theme_titlebar_background_breeze, 0.9);
+    background-image:
+        linear-gradient(to right, @theme_titlebar_foreground_breeze 1px, transparent 1px, transparent 5px, @theme_titlebar_foreground_breeze 5px),
+        linear-gradient(to bottom, @theme_titlebar_foreground_breeze 1px, shade(@theme_titlebar_background_breeze, 0.9) 1px, shade(@theme_titlebar_background_breeze, 0.9) 5px, @theme_titlebar_foreground_breeze 5px);
+    background-size: 6px 6px, 6px 6px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.minimize:not(.nn):backdrop,
+window headerbar windowcontrols button.minimize:not(.nn):backdrop:hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: none;
+    background-color: @theme_titlebar_background_backdrop_breeze;
+    background-image:
+        linear-gradient(to right, @theme_titlebar_foreground_backdrop_breeze 1px, transparent 1px, transparent 5px, @theme_titlebar_foreground_backdrop_breeze 5px),
+        linear-gradient(to bottom, @theme_titlebar_foreground_backdrop_breeze 1px, @theme_titlebar_background_backdrop_breeze 1px, @theme_titlebar_background_backdrop_breeze 5px, @theme_titlebar_foreground_backdrop_breeze 5px);
+    background-size: 6px 6px, 6px 6px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.minimize:not(.nn):backdrop:active,
+window headerbar windowcontrols button.minimize:not(.nn):backdrop:checked {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: none;
+    background-color: shade(@theme_titlebar_background_backdrop_breeze, 0.92);
+    background-image:
+        linear-gradient(to right, @theme_titlebar_foreground_backdrop_breeze 1px, transparent 1px, transparent 5px, @theme_titlebar_foreground_backdrop_breeze 5px),
+        linear-gradient(to bottom, @theme_titlebar_foreground_backdrop_breeze 1px, shade(@theme_titlebar_background_backdrop_breeze, 0.92) 1px, shade(@theme_titlebar_background_backdrop_breeze, 0.92) 5px, @theme_titlebar_foreground_backdrop_breeze 5px);
+    background-size: 6px 6px, 6px 6px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.maximize:not(.nn) {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
+    box-shadow: none;
+    background-color: @theme_titlebar_background_breeze;
+    background-image:
+        linear-gradient(to right, @theme_titlebar_foreground_breeze 1px, transparent 1px, transparent 9px, @theme_titlebar_foreground_breeze 9px),
+        linear-gradient(to bottom, @theme_titlebar_foreground_breeze 2px, @theme_titlebar_background_breeze 2px, @theme_titlebar_background_breeze 9px, @theme_titlebar_foreground_breeze 9px);
+    background-size: 10px 10px, 10px 10px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.maximize:not(.nn):hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
+    box-shadow: none;
+    background-color: mix(@theme_titlebar_background_breeze, white, 0.12);
+    background-image:
+        linear-gradient(to right, @theme_titlebar_foreground_breeze 1px, transparent 1px, transparent 9px, @theme_titlebar_foreground_breeze 9px),
+        linear-gradient(to bottom, @theme_titlebar_foreground_breeze 2px, mix(@theme_titlebar_background_breeze, white, 0.12) 2px, mix(@theme_titlebar_background_breeze, white, 0.12) 9px, @theme_titlebar_foreground_breeze 9px);
+    background-size: 10px 10px, 10px 10px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.maximize:not(.nn):active,
+window headerbar windowcontrols button.maximize:not(.nn):checked,
+window headerbar windowcontrols button.maximize:not(.nn):active:hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_title_dark @retro_title_light @retro_title_light @retro_title_dark;
+    box-shadow: none;
+    background-color: shade(@theme_titlebar_background_breeze, 0.9);
+    background-image:
+        linear-gradient(to right, @theme_titlebar_foreground_breeze 1px, transparent 1px, transparent 9px, @theme_titlebar_foreground_breeze 9px),
+        linear-gradient(to bottom, @theme_titlebar_foreground_breeze 2px, shade(@theme_titlebar_background_breeze, 0.9) 2px, shade(@theme_titlebar_background_breeze, 0.9) 9px, @theme_titlebar_foreground_breeze 9px);
+    background-size: 10px 10px, 10px 10px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.maximize:not(.nn):backdrop,
+window headerbar windowcontrols button.maximize:not(.nn):backdrop:hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: none;
+    background-color: @theme_titlebar_background_backdrop_breeze;
+    background-image:
+        linear-gradient(to right, @theme_titlebar_foreground_backdrop_breeze 1px, transparent 1px, transparent 9px, @theme_titlebar_foreground_backdrop_breeze 9px),
+        linear-gradient(to bottom, @theme_titlebar_foreground_backdrop_breeze 2px, @theme_titlebar_background_backdrop_breeze 2px, @theme_titlebar_background_backdrop_breeze 9px, @theme_titlebar_foreground_backdrop_breeze 9px);
+    background-size: 10px 10px, 10px 10px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.maximize:not(.nn):backdrop:active,
+window headerbar windowcontrols button.maximize:not(.nn):backdrop:checked {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: none;
+    background-color: shade(@theme_titlebar_background_backdrop_breeze, 0.92);
+    background-image:
+        linear-gradient(to right, @theme_titlebar_foreground_backdrop_breeze 1px, transparent 1px, transparent 9px, @theme_titlebar_foreground_backdrop_breeze 9px),
+        linear-gradient(to bottom, @theme_titlebar_foreground_backdrop_breeze 2px, shade(@theme_titlebar_background_backdrop_breeze, 0.92) 2px, shade(@theme_titlebar_background_backdrop_breeze, 0.92) 9px, @theme_titlebar_foreground_backdrop_breeze 9px);
+    background-size: 10px 10px, 10px 10px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.close:not(.nn) {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
+    box-shadow: none;
+    background-color: @theme_titlebar_background_breeze;
+    background-image:
+        linear-gradient(to bottom right, transparent 38%, @theme_titlebar_foreground_breeze 38%, @theme_titlebar_foreground_breeze 62%, transparent 62%),
+        linear-gradient(to bottom left, transparent 38%, @theme_titlebar_foreground_breeze 38%, @theme_titlebar_foreground_breeze 62%, transparent 62%);
+    background-size: 8px 8px, 8px 8px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.close:not(.nn):hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_title_light @retro_title_dark @retro_title_dark @retro_title_light;
+    box-shadow: none;
+    background-color: mix(@theme_titlebar_background_breeze, white, 0.12);
+    background-image:
+        linear-gradient(to bottom right, transparent 38%, @theme_titlebar_foreground_breeze 38%, @theme_titlebar_foreground_breeze 62%, transparent 62%),
+        linear-gradient(to bottom left, transparent 38%, @theme_titlebar_foreground_breeze 38%, @theme_titlebar_foreground_breeze 62%, transparent 62%);
+    background-size: 8px 8px, 8px 8px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.close:not(.nn):active,
+window headerbar windowcontrols button.close:not(.nn):checked,
+window headerbar windowcontrols button.close:not(.nn):active:hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_title_dark @retro_title_light @retro_title_light @retro_title_dark;
+    box-shadow: none;
+    background-color: shade(@theme_titlebar_background_breeze, 0.9);
+    background-image:
+        linear-gradient(to bottom right, transparent 38%, @theme_titlebar_foreground_breeze 38%, @theme_titlebar_foreground_breeze 62%, transparent 62%),
+        linear-gradient(to bottom left, transparent 38%, @theme_titlebar_foreground_breeze 38%, @theme_titlebar_foreground_breeze 62%, transparent 62%);
+    background-size: 8px 8px, 8px 8px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.close:not(.nn):backdrop,
+window headerbar windowcontrols button.close:not(.nn):backdrop:hover {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_light @retro_dark @retro_dark @retro_light;
+    box-shadow: none;
+    background-color: @theme_titlebar_background_backdrop_breeze;
+    background-image:
+        linear-gradient(to bottom right, transparent 38%, @theme_titlebar_foreground_backdrop_breeze 38%, @theme_titlebar_foreground_backdrop_breeze 62%, transparent 62%),
+        linear-gradient(to bottom left, transparent 38%, @theme_titlebar_foreground_backdrop_breeze 38%, @theme_titlebar_foreground_backdrop_breeze 62%, transparent 62%);
+    background-size: 8px 8px, 8px 8px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}
+
+window headerbar windowcontrols button.close:not(.nn):backdrop:active,
+window headerbar windowcontrols button.close:not(.nn):backdrop:checked {
+    border-radius: 0;
+    border: 1px solid;
+    border-color: @retro_dark @retro_light @retro_light @retro_dark;
+    box-shadow: none;
+    background-color: shade(@theme_titlebar_background_backdrop_breeze, 0.92);
+    background-image:
+        linear-gradient(to bottom right, transparent 38%, @theme_titlebar_foreground_backdrop_breeze 38%, @theme_titlebar_foreground_backdrop_breeze 62%, transparent 62%),
+        linear-gradient(to bottom left, transparent 38%, @theme_titlebar_foreground_backdrop_breeze 38%, @theme_titlebar_foreground_backdrop_breeze 62%, transparent 62%);
+    background-size: 8px 8px, 8px 8px;
+    background-position: center, center;
+    background-repeat: no-repeat;
+}

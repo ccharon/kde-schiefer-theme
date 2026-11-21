@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<longdescription lang="de">Schiefer-Muster: Plasma-Hintergrund-Plugin mit Muster und Farbe je Arbeitsfläche wie bei CDE, pixelgenau bei jeder Skalierung – lokales Paket.</longdescription>
+</pkgmetadata>

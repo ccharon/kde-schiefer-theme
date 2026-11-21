@@ -16,8 +16,21 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEST = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "schiefer"))
 
-LIGHT = ("#ffffff", 0.55)   # entspricht mix(base, weiß, 0.55) im Qt-Stil
-DARK = ("#000000", 0.50)    # entspricht mix(base, schwarz, 0.5)
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), "common"))
+import schiefercolors  # noqa: E402  (Motif-Farbformel, gemeinsam mit Qt-Stil, Deko und Paletten)
+
+# Kantenfarben nach Motif: oben = mix(Fläche, weiß, f_oben), unten = mix(Fläche, schwarz, f_unten),
+# Auswahl (Rinnen, gedrückt) = mix(Fläche, schwarz, 0,15). SVG kann nicht rechnen: die Farbe kommt
+# zur Laufzeit aus den ColorScheme-Klassen, die Deckkraft der weißen/schwarzen Schicht ist fest.
+# Die Anteile hängen bei Motif von der Helligkeit der Fläche ab; sie gelten hier exakt für das
+# Hauptfenster der Palette „Schiefer“ (190,194,211: 57 % / 45 %). Für die übrigen hellen Paletten
+# (Helligkeit 72–79 %) weicht das um höchstens ±1 %-Punkt ab; bei „Basalt“ (31 %) wären es
+# 53 % / 54 %, die Kanten sind dort also etwas heller als im Qt-Stil.
+REF_BG = (190, 194, 211)
+_TS, _BS, _SEL = schiefercolors.factors(REF_BG)
+LIGHT = ("#ffffff", _TS)
+DARK = ("#000000", _BS)
+SELECT = ("#000000", _SEL)   # Motif-Auswahlfarbe: Rinnen, gedrückte Knöpfe (im mittleren Zweig exakt)
 OUTLINE = ("#000000", 0.62)
 
 BG = "ColorScheme-Background"
@@ -28,10 +41,10 @@ NEUTRAL = "ColorScheme-NeutralText"
 TEXT = "ColorScheme-Text"
 
 STYLE = """<style type="text/css" id="current-color-scheme">
-.ColorScheme-Background { color:#aeb2c3; }
-.ColorScheme-ViewBackground { color:#c6cad6; }
-.ColorScheme-ButtonBackground { color:#aeb2c3; }
-.ColorScheme-Highlight { color:#5a6e96; }
+.ColorScheme-Background { color:#bec2d3; }
+.ColorScheme-ViewBackground { color:#e2e5ed; }
+.ColorScheme-ButtonBackground { color:#bec2d3; }
+.ColorScheme-Highlight { color:#60729e; }
 .ColorScheme-NeutralText { color:#966400; }
 .ColorScheme-Text { color:#000000; }
 </style>"""
@@ -257,7 +270,7 @@ def sunken(width=2, **kw):
 
 
 HOVER_TINT = rgb(("#ffffff", 0.14))
-PRESS_TINT = rgb(("#000000", 0.08))
+PRESS_TINT = rgb(SELECT)
 
 
 def popup_background(margins):
@@ -291,7 +304,7 @@ def build(dest):
     s.frame("normal-hover", 2, raised(2, fill_layers=[HOVER_TINT]), m)
     s.frame("hover", 2, raised(2, fill_layers=[HOVER_TINT]), m)
     s.frame("launcher-hover", 2, raised(2, fill_layers=[HOVER_TINT]), m)
-    s.frame("focus", 2, sunken(2, fill_layers=[rgb(("#000000", 0.10))]), m)
+    s.frame("focus", 2, sunken(2, fill_layers=[rgb(SELECT)]), m)
     s.frame("focus-hover", 2, sunken(2, fill_layers=[rgb(("#000000", 0.04))]), m)
     s.frame("minimized", 2, raised(1, fill_layers=[rgb(("#000000", 0.05))]), m)
     s.frame("minimized-hover", 2, raised(2, fill_layers=[HOVER_TINT]), m)
@@ -367,7 +380,7 @@ def build(dest):
 
     # Rollbalken: versenkte Rinne, erhabener Schieber
     s = Sheet()
-    trough = sunken(2, fill=BG, fill_layers=[rgb(("#000000", 0.12))])
+    trough = sunken(2, fill=BG, fill_layers=[rgb(SELECT)])
     s.frame("background-vertical", 2, trough, None)
     s.frame("background-horizontal", 2, trough, None)
     s.frame("slider", 2, raised(2, fill=BUTTON), None)
@@ -380,7 +393,7 @@ def build(dest):
 
     # Schieberegler: versenkte Rinne, Füllung, erhabener Daumen mit Mittelrille
     s = Sheet()
-    s.frame("groove", 4, sunken(2, fill=BG, fill_layers=[rgb(("#000000", 0.12))]), None)
+    s.frame("groove", 4, sunken(2, fill=BG, fill_layers=[rgb(SELECT)]), None)
     s.frame("groove-highlight", 4, sunken(2, fill=HL), None)
 
     def thumb(horizontal, extra=()):
@@ -439,7 +452,7 @@ def build(dest):
         s._piece(prefix + "-center", img, 6, 0, 6 + MID, n, 10, s.y)
         s._piece(prefix + "-right", img, 6 + MID, 0, n, n, 20, s.y)
         s.y += n + 6
-    bar("inactive", [rgb(("#000000", 0.12))])
+    bar("inactive", [rgb(SELECT)])
     bar("active", [cls(HL, 0.85)])
 
     def knob(extra=()):
