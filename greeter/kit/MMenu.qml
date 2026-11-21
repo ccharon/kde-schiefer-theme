@@ -15,8 +15,10 @@ Item {
     z: 100
 
     property Item anchorItem: null
-    function open(anchor) {
+    property bool below: false          // Optionsmenüs klappen nach unten auf, Knopfmenüs nach oben
+    function open(anchor, openBelow) {
         anchorItem = anchor;
+        below = openBelow === true;
         current = next(-1, 1);
         visible = true;
         forceActiveFocus();
@@ -48,14 +50,16 @@ Item {
         // bevorzugt über dem Knopf (Knöpfe stehen unten), sonst darunter; folgt der Tafelgröße
         readonly property point at: menu.visible && menu.anchorItem ? menu.anchorItem.mapToItem(menu, 0, 0) : Qt.point(0, 0)
         x: Math.max(0, Math.min(menu.width - width, at.x))
-        y: at.y - height - 2 >= 0 ? at.y - height - 2 : at.y + (menu.anchorItem ? menu.anchorItem.height : 0) + 2
+        readonly property real up: at.y - height - 2
+        readonly property real down: at.y + (menu.anchorItem ? menu.anchorItem.height : 0) + 2
+        y: menu.below ? (down + height <= menu.height ? down : up) : (up >= 0 ? up : down)
         width: col.width + 4
         height: col.height + 4
         MouseArea { anchors.fill: parent }       // Klicks auf die Tafel schließen nicht
         Column {
             id: col
             x: 2; y: 2
-            width: Math.max(10 * menu.pal.u, implicitW)
+            width: Math.max(10 * menu.pal.u, implicitW, menu.below && menu.anchorItem ? menu.anchorItem.width - 4 : 0)
             property real implicitW: 0
             Repeater {
                 model: menu.entries

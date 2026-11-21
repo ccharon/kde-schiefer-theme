@@ -1,8 +1,9 @@
 /*
  * Schiefer – Anmeldung (SDDM) im Stil klassischer Unix-Workstations:
- * Muster-Hintergrund, Dialogtafel mit Rechnername, ein Eingabefeld, das erst nach dem
- * Benutzernamen und dann nach dem Passwort fragt. Der zuletzt angemeldete Benutzer ist
- * vorbelegt, dann genügt das Passwort; „Neu beginnen“ fragt wieder nach dem Namen.
+ * Muster-Hintergrund, Dialogtafel mit Rechnername, Benutzer als Optionsmenü (Liste aus SDDM
+ * oder „Anderer Benutzer …“ zum Eintippen), darunter das Passwort. Vorbelegt ist der zuletzt
+ * angemeldete Benutzer (SDDM merkt ihn sich, RememberLastUser), bei nur einem Benutzer dieser;
+ * „Neu beginnen“ fragt nach dem Namen.
  * Optionen: Sitzung, Tastaturbelegung, Bereitschaft, Neu starten, Herunterfahren.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -47,19 +48,27 @@ Item {
             userName = userModel.lastUser;
             stage = "pass";
         }
-        Qt.callLater(() => field.grab());
+        Qt.callLater(() => {
+            if (stage === "user" && users.length === 1) chooseUser(users[0]);
+            else focusField();
+        });
     }
 
     Timer { interval: 1000; running: true; repeat: true; onTriggered: root.now = new Date() }
 
     // Echtnamen und Sitzungsnamen einsammeln
     property var realNames: ({})
+    property var users: []
     Instantiator {
         model: userModel
         delegate: QtObject {
+            required property int index
             required property string name
             required property string realName
-            Component.onCompleted: { const m = root.realNames; m[name] = realName; root.realNames = m; }
+            Component.onCompleted: {
+                const m = root.realNames; m[name] = realName; root.realNames = m;
+                const u = root.users.slice(); u[index] = name; root.users = u.filter(x => x !== undefined);
+            }
         }
     }
     property var sessions: []
@@ -74,14 +83,19 @@ Item {
 
     function displayName(n) { const r = realNames[n]; return r && r !== "" && r !== n ? r + " (" + n + ")" : n; }
 
+    function focusField() { if (stage === "user") nameField.grab(); else field.grab(); }
+    function chooseUser(n) {
+        userName = n;
+        message = "";
+        stage = "pass";
+        field.clear();
+        field.grab();
+    }
     function proceed() {
         if (stage === "user") {
-            const n = field.text.trim();
+            const n = nameField.text.trim();
             if (n === "") return;
-            userName = n;
-            message = "";
-            stage = "pass";
-            field.clear();
+            chooseUser(n);
         } else if (stage === "pass") {
             stage = "busy";
             message = "";
@@ -93,7 +107,8 @@ Item {
         userName = "";
         message = "";
         field.clear();
-        field.grab();
+        nameField.clear();
+        nameField.grab();
     }
 
     Connections {
@@ -140,24 +155,62 @@ Item {
             }
             Etch { base: pal.bg; Layout.fillWidth: true }
 
-            Text {
-                renderType: pal.renderType
+            // Benutzer und Passwort als beschriftetes Raster (wie dtlogin, aber mit Auswahl)
+            GridLayout {
                 Layout.alignment: Qt.AlignHCenter
-                font: pal.font
-                color: pal.fg
-                text: root.stage === "user" ? T.t("Bitte Benutzernamen eingeben:", "Please enter your user name:")
-                    : T.t("Passwort für %1:", "Password for %1:").arg(root.displayName(root.userName))
-            }
-            MField {
-                id: field
-                pal: pal
-                password: root.stage !== "user"
-                enabled: root.stage !== "busy"
-                Layout.alignment: Qt.AlignHCenter
-                Layout.preferredWidth: 20 * pal.u
-                onAccepted: root.proceed()
-                input.Keys.onEscapePressed: root.startOver()
-                KeyNavigation.tab: okButton
+                columns: 2
+                columnSpacing: Math.round(pal.u * 0.6)
+                rowSpacing: Math.round(pal.u * 0.5)
+                Text {
+                    renderType: pal.renderType
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                    font: pal.font
+                    color: pal.fg
+                    textFormat: Text.StyledText
+                    text: T.t("<u>B</u>enutzer:", "<u>U</u>ser:")
+                }
+                Item {
+                    Layout.preferredWidth: 20 * pal.u
+                    Layout.preferredHeight: Math.max(nameField.implicitHeight, userOption.implicitHeight)
+                    MField {
+                        id: nameField
+                        pal: pal
+                        anchors.fill: parent
+                        visible: root.stage === "user"
+                        onAccepted: root.proceed()
+                        input.Keys.onDownPressed: root.openUsers()
+                        KeyNavigation.tab: okButton
+                    }
+                    MOption {
+                        id: userOption
+                        pal: pal
+                        anchors.fill: parent
+                        visible: root.stage !== "user"
+                        enabled: root.stage !== "busy"
+                        text: root.displayName(root.userName)
+                        onActivated: root.openUsers()
+                        KeyNavigation.tab: field.input
+                    }
+                }
+                Text {
+                    renderType: pal.renderType
+                    visible: root.stage !== "user"
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                    font: pal.font
+                    color: pal.fg
+                    text: T.t("Passwort:", "Password:")
+                }
+                MField {
+                    id: field
+                    pal: pal
+                    visible: root.stage !== "user"
+                    password: true
+                    enabled: root.stage !== "busy"
+                    Layout.preferredWidth: 20 * pal.u
+                    onAccepted: root.proceed()
+                    input.Keys.onEscapePressed: root.startOver()
+                    KeyNavigation.tab: okButton
+                }
             }
             // Meldungszeile: Fehler, Feststelltaste, Anmeldung läuft
             RowLayout {
@@ -186,7 +239,7 @@ Item {
                 spacing: pal.u
                 MButton { id: okButton; pal: pal; text: T.t("&OK", "&OK"); isDefault: true; enabled: root.stage !== "busy"; onClicked: root.proceed(); Layout.fillWidth: true; KeyNavigation.tab: againButton }
                 MButton { id: againButton; pal: pal; text: T.t("&Neu beginnen", "&Start Over"); enabled: root.stage !== "busy"; onClicked: root.startOver(); Layout.fillWidth: true; KeyNavigation.tab: optButton }
-                MButton { id: optButton; pal: pal; text: T.t("O&ptionen …", "O&ptions …"); onClicked: root.openOptions(); Layout.fillWidth: true; KeyNavigation.tab: field.input }
+                MButton { id: optButton; pal: pal; text: T.t("O&ptionen …", "O&ptions …"); onClicked: root.openOptions(); Layout.fillWidth: true; KeyNavigation.tab: root.stage === "user" ? nameField.input : userOption }
             }
         }
     }
@@ -235,17 +288,28 @@ Item {
         menu.open(optButton);
     }
 
+    function openUsers() {
+        if (stage === "busy") return;
+        const e = [];
+        for (const n of users) e.push({ type: "radio", text: displayName(n), checked: stage !== "user" && n === userName, action: () => root.chooseUser(n) });
+        if (e.length > 0) e.push({ type: "sep" });
+        e.push({ type: "item", text: T.t("Anderer Benutzer …", "Other User …"), action: () => root.startOver() });
+        menu.entries = e;
+        menu.open(stage === "user" ? nameField : userOption, true);
+    }
+
     MMenu {
         id: menu
         pal: pal
         anchors.fill: parent
-        onClosed: field.grab()
+        onClosed: root.focusField()
     }
 
     // Alt+Buchstabe löst den Knopf mit dieser Mnemonik aus (Motif zeigt sie immer)
     Keys.onPressed: e => {
         if (!(e.modifiers & Qt.AltModifier) || menu.visible) return;
         const c = e.text.toLowerCase() || String.fromCharCode(e.key).toLowerCase();
+        if (c === T.t("b", "u")) { root.openUsers(); e.accepted = true; return; }
         for (const b of [okButton, againButton, optButton]) {
             if (b.enabled && b.mnemonic === c) { b.clicked(); e.accepted = true; return; }
         }

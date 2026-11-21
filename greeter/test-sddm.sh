@@ -1,6 +1,6 @@
 #!/bin/bash
 # Offscreen-Bild des SDDM-Themas (ohne Fenster): greeter/test-sddm.sh out.png [BREITE HÖHE] [qml-Zusatz]
-#   SCHIEFER_TEST_STAGE=user|pass|busy  SCHIEFER_TEST_MENU=1  SCHIEFER_TEST_MSG=1
+#   SCHIEFER_TEST_STAGE=user|pass|busy  SCHIEFER_TEST_MENU=1|user  SCHIEFER_TEST_MSG=1
 set -eu
 HERE="$(cd "$(dirname "$0")" && pwd)"
 OUT="$(realpath -m "$1")"; W="${2:-1600}"; H="${3:-1000}"
@@ -14,7 +14,7 @@ Item { id: r; width: $W; height: $H
       const m = l.item; const st = "${SCHIEFER_TEST_STAGE:-}";
       if (st) { m.stage = st; m.userName = "christian"; }
       if ("${SCHIEFER_TEST_MSG:-}") m.message = "Anmeldung fehlgeschlagen. Bitte erneut versuchen.";
-      if ("${SCHIEFER_TEST_MENU:-}") m.openOptions();
+      if ("${SCHIEFER_TEST_MENU:-}" === "user") m.openUsers(); else if ("${SCHIEFER_TEST_MENU:-}") m.openOptions();
   } }
   Timer { interval: 2500; running: true; onTriggered: l.grabToImage(res => { res.saveToFile("$OUT"); Qt.quit(); }) } }
 QML
