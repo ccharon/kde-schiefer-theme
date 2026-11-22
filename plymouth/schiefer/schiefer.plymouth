@@ -1,0 +1,9 @@
+[Plymouth Theme]
+Name=Schiefer
+Description=Workstation console: machine banner, systemd units as they start, progress
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/schiefer
+# generated with the machine details by schiefer-plymouth-info (dracut module 90schiefer-plymouth)
+ScriptFile=/var/lib/schiefer/plymouth/schiefer.script

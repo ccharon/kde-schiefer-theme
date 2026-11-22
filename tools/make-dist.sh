@@ -25,6 +25,8 @@ FILES=(
     tools/schiefer-config
     dock
     greeter
+    plymouth
+    konsole/Schiefer.colorscheme konsole/Schiefer.profile konsole/mc-schiefer.ini konsole/make_konsole.py
 )
 # check first, then delete dist/
 for f in "${FILES[@]}" packaging/x11-themes tools/install-overlay.sh; do

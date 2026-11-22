@@ -24,8 +24,10 @@ The user interface is available in English and German.
 | `dock/` | Plasma widgets in the style of the CDE front panel: drawer, console, icon box, end pieces, status tiles |
 | `greeter/` | SDDM login, lock screen, and the shared Motif QML kit used by splash and logout |
 | `lookandfeel/` | global theme `Schiefer` including splash screen and logout dialog |
+| `plymouth/` | boot screen: Plymouth script theme with machine banner, systemd units as they start, progress bar and passphrase prompt; generator, dracut module, test tools |
+| `konsole/` | Konsole color scheme and profile `Schiefer` (black on the light text field, contrast-checked by `make_konsole.py`) and the matching Midnight Commander skin |
 | `tools/schiefer-config` | command line tool for options and palettes |
-| `packaging/` | ebuild templates for `x11-themes/schiefer{,-kde,-icons,-themes,-dock,-backdrop}` |
+| `packaging/` | ebuild templates for `x11-themes/schiefer{,-kde,-icons,-themes,-dock,-backdrop,-plymouth}` |
 
 ## Installation (Gentoo)
 
@@ -47,10 +49,15 @@ once per user. To rebuild only the panels later: **Add Panel > Schiefer Front Pa
 |---|---|
 | `schiefer-kde` | window decoration and Qt style |
 | `schiefer-icons` | icons, generated from the installed breeze-icons at build time |
-| `schiefer-themes` | color schemes, Plasma style, GTK theme, cursors, window switcher, image wallpaper, `schiefer-wallpaper` |
+| `schiefer-themes` | color schemes, Plasma style, GTK theme, cursors, window switcher, image wallpaper, `schiefer-wallpaper`, Konsole scheme and profile, mc skin |
 | `schiefer-dock` | dock widgets |
 | `schiefer-backdrop` | backdrop plugin |
-| `schiefer` | global theme, lock screen, SDDM theme, `schiefer-config`; pulls in all of the above |
+| `schiefer-plymouth` | boot screen (Plymouth theme and dracut module) |
+| `schiefer` | global theme, lock screen, SDDM theme, `schiefer-config`; pulls in all of the above, the boot screen with USE `plymouth` |
+
+Boot screen: install `schiefer-plymouth` and run `plymouth-set-default-theme -R schiefer` as root. This
+rebuilds the initramfs with dracut. The kernel command line needs `splash`. The previous theme comes back with
+`plymouth-set-default-theme -R <name>`.
 
 Other distributions: each part builds with CMake or a Python generator; the ebuilds show the steps.
 
@@ -103,6 +110,9 @@ tools/screenshot.sh out.png dolphin kwrite # isolated KWin session with all part
 kstyle/render.sh out.png                   # Qt gallery offscreen
 greeter/test-sddm.sh out.png               # SDDM theme offscreen
 greeter/test-lock.sh out.png dialog        # lock screen in an isolated session
+plymouth/make_plymouth.py                  # boot screen images and script template
+python3 konsole/make_konsole.py            # Konsole scheme and profile; fails if a color pair is hard to read
+PLY_PREFIX=... plymouth/test-plymouth.sh out.png [boot|password|shutdown]   # see plymouth/README.md
 tools/make-dist.sh                         # release tarball and ebuilds in dist/
 ```
 
@@ -123,8 +133,11 @@ Releases: set `VERSION`, run `tools/make-dist.sh`, attach `dist/schiefer-<versio
 - The lock screen is a copy of the Plasma shell package, because Plasma 6 loads the lock screen only from the
   shell package. A login script refreshes the copy after updates.
 - The splash screen always uses the Schiefer palette for its pattern.
+- The boot screen draws text from glyph images, because Plymouth 22 has no fonts in the initramfs. With
+  Plymouth's device scale 2 (HiDPI laptops) Plymouth enlarges these images, so the text is slightly soft.
 
 ## License
 
 GPL-2.0-or-later, except the color formula (LGPL-2.1-or-later, Motif) and the files taken from Breeze and
-KDecoration, which keep their SPDX headers. Generated icons are LGPL-3 like breeze-icons.
+KDecoration, which keep their SPDX headers. Generated icons are LGPL-3 like breeze-icons. The glyph images of the boot screen are rendered from Noto Sans
+and Noto Sans Mono (SIL Open Font License 1.1).

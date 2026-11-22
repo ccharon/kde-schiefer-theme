@@ -1,0 +1,74 @@
+#!/bin/bash
+# Writes the Schiefer boot screen script with the details of this machine (host name, system,
+# kernel, machine, CPU, memory, boot device). Plymouth cannot read them itself at boot time.
+#   schiefer-plymouth-info [--kernel VERSION] [--template FILE] [--out FILE]
+# Called by the dracut module 90schiefer-plymouth for every initramfs build.
+set -u
+TEMPLATE=/usr/share/plymouth/themes/schiefer/schiefer.script.in
+OUT=/var/lib/schiefer/plymouth/schiefer.script
+KERNEL="$(uname -r)"
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --kernel) KERNEL="$2"; shift 2 ;;
+        --template) TEMPLATE="$2"; shift 2 ;;
+        --out) OUT="$2"; shift 2 ;;
+        *) echo "usage: $0 [--kernel VERSION] [--template FILE] [--out FILE]" >&2; exit 2 ;;
+    esac
+done
+
+# one line, printable, without characters that end a script string
+clean() { tr -d '\000-\037"\\' | sed 's/  */ /g; s/^ //; s/ $//'; }
+first() { for f in "$@"; do [ -r "$f" ] && { tr -d '\000' < "$f"; return; }; done; }
+junk() { case "$1" in ""|*"To Be Filled"*|*"System Product Name"*|*"System manufacturer"*|*"Default string"*|*"O.E.M."*) return 0 ;; esac; return 1; }
+
+host="$(first /etc/hostname /proc/sys/kernel/hostname | head -n1)"
+[ -n "$host" ] || host="$(uname -n)"
+
+os="$( . /etc/os-release 2>/dev/null; echo "${PRETTY_NAME:-${NAME:-Linux}}")"
+
+machine="$(first /proc/device-tree/model /sys/firmware/devicetree/base/model)"
+if [ -z "$machine" ]; then
+    vendor="$(first /sys/class/dmi/id/sys_vendor)"; product="$(first /sys/class/dmi/id/product_name)"
+    if junk "$product"; then
+        vendor="$(first /sys/class/dmi/id/board_vendor)"; product="$(first /sys/class/dmi/id/board_name)"
+    fi
+    junk "$vendor" && vendor=""
+    machine="$vendor $product"
+fi
+
+cpu="$(sed -n 's/^model name[[:space:]]*:[[:space:]]*//p' /proc/cpuinfo | head -n1)"
+if [ -z "$cpu" ] && command -v lscpu >/dev/null; then
+    cpu="$(LC_ALL=C lscpu | sed -n 's/^Model name:[[:space:]]*//p' | sort -u | paste -sd/)"
+fi
+n="$(nproc 2>/dev/null || grep -c ^processor /proc/cpuinfo)"
+cpu="${cpu:-CPU}, $n CPUs"
+
+mem="$(awk '/^MemTotal:/ { printf "%.1f GiB", $2 / 1048576 }' /proc/meminfo)"
+
+lang=en
+loc="$( . /etc/locale.conf 2>/dev/null; echo "${LC_MESSAGES:-${LANG:-}}")"
+case "$loc" in de*) lang=de; mem="${mem/./,}" ;; esac
+
+root="$(tr ' ' '\n' < /proc/cmdline | sed -n 's/^root=//p' | tail -n1)"
+if [ "${root#zfs}" != "$root" ] && command -v zpool >/dev/null; then
+    bootfs="$(zpool list -H -o bootfs 2>/dev/null | grep -v '^-$' | head -n1)"
+    [ -n "$bootfs" ] && root="zfs:$bootfs"
+fi
+
+[ -r "$TEMPLATE" ] || { echo "$0: template $TEMPLATE missing" >&2; exit 1; }
+mkdir -p "$(dirname "$OUT")" || exit 1
+tmp="$(mktemp "$OUT.XXXXXX")" || exit 1
+{
+    printf 'host = "%s";\n' "$(printf %s "$host" | clean)"
+    printf 'os = "%s";\n' "$(printf %s "$os" | clean)"
+    printf 'kernel = "%s";\n' "$(printf %s "$KERNEL" | clean)"
+    printf 'machine = "%s";\n' "$(printf %s "$machine" | clean)"
+    printf 'cpu = "%s";\n' "$(printf %s "$cpu" | clean)"
+    printf 'mem = "%s";\n' "$(printf %s "$mem" | clean)"
+    printf 'root = "%s";\n' "$(printf %s "${root:-?}" | clean)"
+    printf 'lang = "%s";\n' "$lang"
+} > "$tmp.info"
+sed -e "/^#@INFO@\$/{r $tmp.info" -e 'd}' "$TEMPLATE" > "$tmp" && chmod 644 "$tmp" && mv "$tmp" "$OUT"
+rc=$?
+rm -f "$tmp.info" "$tmp"
+exit $rc
