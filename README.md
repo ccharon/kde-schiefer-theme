@@ -37,8 +37,11 @@ emaint sync -r schiefer-overlay
 emerge -av x11-themes/schiefer
 ```
 
-Then select **System Settings > Global Theme > Schiefer**, choose the GTK theme under
-**Application Style > GTK Theme**, and run `schiefer-config defaults` once per user.
+Then select **System Settings > Global Theme > Schiefer** with **Desktop and window layout**
+checked (this builds the dock, icon box and status tiles and replaces the existing panels),
+choose the GTK theme under **Application Style > GTK Theme**, and run `schiefer-config defaults`
+once per user. To rebuild only the panels later: **Add Panel > Schiefer Front Panel**, or
+`qdbus6 org.kde.plasmashell /PlasmaShell evaluateScript "$(cat /usr/share/schiefer/dock/layout.js)"`.
 
 | Package | Content |
 |---|---|
@@ -88,7 +91,7 @@ The SDDM theme reads `/usr/share/sddm/themes/schiefer/theme.conf`:
 |---|---|---|---|
 | `hostName` | text | system host name | large name on the panel |
 | `subtitle` | text | `PRETTY_NAME` from `/etc/os-release` | line below the host name |
-| `fontSize` | points | system font x 1.25, at least 12 | text size |
+| `fontSize` | points | system font, at least 10 | text size |
 | `showClock` | bool | `true` | seven-segment clock |
 | `background`, `backgroundColor`, `dialogColor`, `fieldColor`, `activeColor`, `activeTextColor`, `textColor` | file, colors | Schiefer palette | appearance |
 

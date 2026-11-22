@@ -244,28 +244,6 @@ Item {
         }
     }
 
-    // bottom: session and keyboard layout as a plain status line on the pattern
-    Bevel {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: dialog.bottom
-        anchors.topMargin: pal.u
-        base: pal.bg
-        width: statusLine.implicitWidth + 2 * pal.u
-        height: statusLine.implicitHeight + Math.round(pal.u * 0.6)
-        Text {
-            renderType: pal.renderType
-            id: statusLine
-            anchors.centerIn: parent
-            font: pal.font
-            color: pal.fg
-            text: {
-                const parts = [T.t("Sitzung: ", "Session: ") + (root.sessions[root.sessionIndex] || "–")];
-                if (keyboard.layouts.length > 1) parts.push(T.t("Tastatur: ", "Keyboard: ") + (keyboard.layouts[keyboard.currentLayout] ? keyboard.layouts[keyboard.currentLayout].longName : ""));
-                return parts.join("    ");
-            }
-        }
-    }
-
     function openOptions() {
         const e = [{ type: "title", text: T.t("Sitzung", "Session") }];
         for (let i = 0; i < sessions.length; ++i) {

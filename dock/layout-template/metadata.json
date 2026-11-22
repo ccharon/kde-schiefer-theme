@@ -1,0 +1,17 @@
+{
+    "KPackageStructure": "Plasma/LayoutTemplate",
+    "KPlugin": {
+        "Authors": [{ "Name": "Schiefer" }],
+        "Category": "",
+        "Description": "Dock at the bottom, icon box on the left, status tiles at the top right (replaces the panels at the bottom, left and right)",
+        "Description[de]": "Dock unten, Icon Box links, Statuskacheln rechts oben (ersetzt die Leisten unten, links und rechts)",
+        "Id": "org.kde.schiefer.dock",
+        "License": "GPL-2.0-or-later",
+        "Name": "Schiefer Front Panel",
+        "Name[de]": "Schiefer-Frontpanel"
+    },
+    "X-Plasma-ContainmentCategories": [
+        "panel"
+    ],
+    "X-Plasma-Shell": "plasmashell"
+}

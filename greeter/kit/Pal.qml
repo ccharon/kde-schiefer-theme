@@ -20,13 +20,13 @@ QtObject {
     property color alert: "#a02828"
     property color lamp: "#e0a030"        // Startlampe wie am Dock
     // Font: the system font (lock/logout: Kirigami, SDDM: sddm.conf, often only 8 pt there),
-    // enlarged for the centered panels; fontPoints > 0 fixes the size (SDDM: theme.conf).
+    // at least 10 pt; fontPoints > 0 fixes the size (SDDM: theme.conf).
     property font baseFont: Qt.application.font
     property real fontPoints: 0
     readonly property real basePoints: baseFont.pointSize > 0 ? baseFont.pointSize : (baseFont.pixelSize > 0 ? baseFont.pixelSize * 0.75 : 10)
     readonly property font font: Qt.font({
         family: baseFont.family,
-        pointSize: fontPoints > 0 ? fontPoints : Math.max(12, Math.round(basePoints * 1.25)),
+        pointSize: fontPoints > 0 ? fontPoints : Math.max(10, Math.round(basePoints)),
         weight: baseFont.weight
     })
     // Rasterized, hinted text as in Plasma; distance field text looks thin and ragged at scale 1

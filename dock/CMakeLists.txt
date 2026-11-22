@@ -27,3 +27,8 @@ add_subdirectory(tiles)
 add_subdirectory(endcap)
 
 ki18n_install(po)
+
+# Panel layout as Plasma layout template: loaded by the Schiefer global theme
+# ("Desktop and window layout") and listed under "Add Panel"
+install(FILES layout-template/metadata.json DESTINATION ${KDE_INSTALL_DATADIR}/plasma/layout-templates/org.kde.schiefer.dock)
+install(FILES layout.js DESTINATION ${KDE_INSTALL_DATADIR}/plasma/layout-templates/org.kde.schiefer.dock/contents)
