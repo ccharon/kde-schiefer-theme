@@ -33,6 +33,10 @@ PromptText = 0;
 PromptField = 0;
 PromptBullets = 0;
 PromptActive = 0;
+ProgLast = 0;      # last fraction from Plymouth
+ProgShown = 0;     # last fraction on the bar
+ProgBase = 0;      # bar fraction when the last prompt closed
+ProgFrom = 0;      # Plymouth's fraction at that moment
 
 # ------------------------------------------------------------------ glyph atlases
 Chars = [" ", "!", "\"", "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", ";", "<", "=", ">", "?", "@", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "\\", "]", "^", "_", "`", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{", "|", "}", "~", "Ä", "Ö", "Ü", "ä", "ö", "ü", "ß", "é", "è", "ê", "à", "â", "ç", "ñ", "ó", "ô", "í", "ú", "É", "·", "…", "•", "°", "±", "×", "µ"];
@@ -365,9 +369,17 @@ fun OnRefresh() {
 }
 Plymouth.SetRefreshFunction(OnRefresh);
 
+# Plymouth's progress is a time estimate and keeps running while a prompt waits for input.
+# The bar holds still during a prompt and afterwards runs from the held value to 100 %.
 fun OnProgress(l_duration, l_progress) {
     Now = l_duration;
-    if (Booting) ShowProgress(l_progress);
+    ProgLast = l_progress;
+    if (!Booting || PromptActive) return;
+    l_f = ProgBase;
+    if (ProgFrom < 1) l_f = ProgBase + (l_progress - ProgFrom) * (1 - ProgBase) / (1 - ProgFrom);
+    if (l_f < ProgShown) l_f = ProgShown;
+    ProgShown = l_f;
+    ShowProgress(l_f);
 }
 Plymouth.SetBootProgressFunction(OnProgress);
 
@@ -404,6 +416,8 @@ Plymouth.SetDisplayQuestionFunction(OnQuestion);
 
 fun OnNormal() {
     if (PromptActive) {
+        ProgBase = ProgShown;
+        ProgFrom = ProgLast;
         HidePrompt();
         Cursor.SetImage(Img.lit.Scale(CharW, LineH));
         Cursor.SetZ(30);

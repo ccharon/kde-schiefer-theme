@@ -98,6 +98,7 @@ Item {
     MouseArea {
         id: screen
         anchors.fill: parent
+        focus: true                      // idle: receives the first key press (the field is still hidden)
         property bool uiVisible: false
         property bool seenPositionChange: false
         readonly property bool blockUI: containsMouse && (field.text.length > 0)
@@ -112,6 +113,7 @@ Item {
             else if (uiVisible) fadeoutTimer.restart();
             authenticator.startAuthenticating();
             if (uiVisible) field.grab();
+            else screen.forceActiveFocus();   // hidden field loses focus; keep catching keys
         }
         onBlockUIChanged: { if (blockUI) { fadeoutTimer.running = false; uiVisible = true; } else fadeoutTimer.restart(); }
         onExited: uiVisible = false
@@ -119,7 +121,20 @@ Item {
             // Escape: kscreenlocker turns the screen off; discard the input
             if (uiVisible) { uiVisible = false; root.clearPassword(); }
         }
-        Keys.onPressed: event => { uiVisible = true; event.accepted = false; }
+        Keys.onPressed: event => {
+            if (event.key === Qt.Key_Escape) { event.accepted = false; return; }
+            const wasVisible = uiVisible;
+            uiVisible = true;
+            // the key that woke the dialog goes into the password field instead of being lost
+            const typed = event.text.length > 0 && event.text.charCodeAt(0) >= 32
+                          && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier));
+            if (!wasVisible && typed && field.visible && field.enabled) {
+                field.input.insert(field.input.cursorPosition, event.text);
+                event.accepted = true;
+                return;
+            }
+            event.accepted = false;
+        }
 
         Timer {
             id: fadeoutTimer
