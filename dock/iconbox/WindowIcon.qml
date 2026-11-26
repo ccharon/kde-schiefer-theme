@@ -2,7 +2,8 @@
  * An icon box entry in the icon view (mwm): image in a frame, label below.
  * State through the relief as in the list view: open = raised, active = pressed in
  * + highlighted label, minimized = flat + italic, attention = orange.
- * Groups carry a count badge and open their windows to the side on click.
+ * Groups carry a count badge; a click brings the most recently used window forward, or opens
+ * the windows to the side when the application is already active.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -114,14 +115,21 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+        // wheel on a group: through its windows; elsewhere the box scrolls
+        onWheel: wheel => {
+            if (!win.isGroup) { wheel.accepted = false; return; }
+            const d = wheel.angleDelta.y || wheel.angleDelta.x;
+            if (d !== 0) win.box.cycleGroup(win.tasksModel, win.modelIndex, d < 0 ? 1 : -1);
+        }
         onClicked: event => {
             if (event.button === Qt.RightButton) {
                 win.box.showMenu(win.tasksModel, win.modelIndex, win);
             } else if (win.isGroup) {
                 if (event.button === Qt.MiddleButton) win.tasksModel.requestNewInstance(win.modelIndex);
-                else win.box.toggleGroup(win.tasksModel, win.modelIndex, win);
+                else win.box.clickGroup(win.tasksModel, win.modelIndex, win);
             } else if (event.button === Qt.MiddleButton) {
-                win.tasksModel.requestToggleMinimized(win.modelIndex);
+                // middle click closes the window
+                win.tasksModel.requestClose(win.modelIndex);
             } else if (win.active && !win.minimized) {
                 win.tasksModel.requestToggleMinimized(win.modelIndex);
             } else {

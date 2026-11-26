@@ -8,7 +8,10 @@ OUT="$(realpath -m "$1")"
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
 cp -rL "$ROOT/greeter/lockscreen" "$T/lock"
 [ "${2:-}" = dialog ] && sed -i 's/SchieferLock { anchors.fill: parent }/SchieferLock { anchors.fill: parent; testShowDialog: true }/' "$T/lock/LockScreen.qml"
+# Gentoo installs helpers to /usr/libexec, Debian to /usr/lib/<triplet>/libexec.
+GREET=$(ls /usr/libexec/kscreenlocker_greet /usr/lib/*/libexec/kscreenlocker_greet 2>/dev/null | head -1)
+[ -n "$GREET" ] || { echo "kscreenlocker_greet not found" >&2; exit 1; }
 mkdir -p "$T/data"
 XDG_DATA_HOME="$T/data" SCHIEFER_LOCKSCREEN_DIR="$T/lock" XDG_DATA_DIRS=/usr/share \
     python3 "$ROOT/tools/schiefer-config" lockscreen on >/dev/null
-BR_DATA_DIRS="$T/data" "$ROOT/tools/screenshot.sh" "$OUT" "/usr/libexec/kscreenlocker_greet --testing"
+BR_DATA_DIRS="$T/data" "$ROOT/tools/screenshot.sh" "$OUT" "$GREET --testing"

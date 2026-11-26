@@ -3,8 +3,9 @@
  * ("Dodge Windows" mode). Two views:
  *   list:  icon manager as in twm/FvwmIconMan, icon on the left, title to its right
  *   icons: icon box as in mwm, image in a frame, label below
- * Windows of one application can be grouped; a click on the group opens a drawer
- * with the single windows to the side.
+ * Windows of one application stay together in the order they were opened. Only when
+ * they no longer fit are they grouped; a click on a group brings its last used window forward,
+ * a click on the group of the active application opens a drawer with the single windows.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -39,6 +40,27 @@ PlasmoidItem {
     readonly property int laneWidth: Math.floor((sections.width) / lanes)
     readonly property int iconSize: Math.max(Kirigami.Units.iconSizes.small, Math.min(Kirigami.Units.iconSizes.large, Math.floor(laneWidth * 0.5)))
     readonly property int cellLength: iconSize + 10 + 2 * pad + 2 * Math.ceil(fontMetrics.height) + 8
+    // height of an entry in the list view (WindowRow)
+    readonly property int rowHeight: Kirigami.Units.iconSizes.medium + 2 * Kirigami.Units.smallSpacing + 4
+
+    // ---------- Grouping only when space runs out ----------
+    // Length all windows would need without groups, against the room the well has
+    // (plus what a vertical panel could still grow). Both stay the same when grouping
+    // changes, so the decision does not swing back and forth.
+    readonly property int ungroupedLength: {
+        let n = 0, visible = 0;
+        for (let i = 0; i < sectionRepeater.count; ++i) {
+            const l = sectionRepeater.itemAt(i)?.ungroupedLength ?? 0;
+            if (l > 0) { n += l; ++visible; }
+        }
+        return n + Math.max(0, visible - 1) * sections.spacing;
+    }
+    readonly property int availableLength: flick.height + fit.growRoom
+    readonly property bool wantTight: cfg.groupWindows && flick.height > 0 && ungroupedLength > availableLength
+    property bool tight: false
+    onWantTightChanged: tightTimer.restart()
+    // panel resizes come in several steps; decide once they settle
+    Timer { id: tightTimer; interval: 300; onTriggered: root.tight = root.wantTight }
 
     readonly property int contentLength: sections.implicitHeight
     // length of title and well including edges, without the outer margin
@@ -75,6 +97,9 @@ PlasmoidItem {
     Layout.minimumWidth: vertical ? -1 : Kirigami.Units.gridUnit * 8
 
     FontMetrics { id: fontMetrics; font: Kirigami.Theme.smallFont }
+    // mouse over the box (Section freezes the "most recently used" order meanwhile)
+    readonly property bool hovered: boxHover.hovered
+    HoverHandler { id: boxHover }
     TaskManager.VirtualDesktopInfo { id: desktopInfo }
     TaskManager.ActivityInfo { id: activityInfo }
 
@@ -86,7 +111,9 @@ PlasmoidItem {
 
     // ---------- Group drawer ----------
     property var groupModel: null          // TasksModel of the open group
-    property var groupIndex: null          // QModelIndex of the group
+    property var groupPersistent: null     // QPersistentModelIndex of the group (rows move as windows come and go)
+    property int groupRow: -1              // current row of the group
+    readonly property var groupIndex: groupModel && groupRow >= 0 ? groupModel.makeModelIndex(groupRow) : null
     property Item groupAnchor: null
     readonly property bool groupVisible: groupPopup.visible
 
@@ -96,12 +123,79 @@ PlasmoidItem {
             return;
         }
         groupModel = model;
-        groupIndex = index;
+        groupPersistent = model.makePersistentModelIndex(index.row);
+        groupRow = index.row;
         groupAnchor = anchor;
+        // order by use, frozen while the list is open
+        groupSnapshot = groupOrder.usageKeys(model, model.makeModelIndex(index.row));
+        groupRanks = groupOrder.ranks(model, model.makeModelIndex(index.row), "", groupSnapshot);
         groupPopup.visible = true;
     }
     function closeGroup() {
         groupPopup.visible = false;
+    }
+    // follow the group's row; close when it is gone or no longer a group (one window left)
+    function checkGroup() {
+        if (!groupPopup.visible || !groupModel) return;
+        if (!groupPersistent || !groupPersistent.valid) { closeGroup(); return; }
+        groupRow = groupPersistent.row;
+        if (groupModel.data(groupModel.makeModelIndex(groupRow), TaskManager.AbstractTasksModel.IsGroupParent) !== true) {
+            closeGroup();
+            return;
+        }
+        groupRanks = groupOrder.ranks(groupModel, groupModel.makeModelIndex(groupRow), "", groupSnapshot);
+    }
+    // order of the windows in the open group (TaskOrder ranks by child row)
+    TaskOrder { id: groupOrder }
+    property var groupRanks: []
+    property var groupSnapshot: []
+    Connections {
+        target: root.groupModel
+        function onRowsInserted() { root.checkGroup(); }
+        function onRowsRemoved() { root.checkGroup(); }
+        function onRowsMoved() { root.checkGroup(); }
+        function onLayoutChanged() { root.checkGroup(); }
+        function onDataChanged() { root.checkGroup(); }
+        function onModelReset() { root.closeGroup(); }
+    }
+
+    // children of a group in opening order: [{ index, active, time }]
+    function groupChildren(model, index) {
+        const list = [];
+        const n = model.rowCount(index);
+        for (let c = 0; c < n; ++c) {
+            const ci = model.makeModelIndex(index.row, c);
+            const t = model.data(ci, TaskManager.AbstractTasksModel.LastActivated);
+            list.push({ index: ci, active: model.data(ci, TaskManager.AbstractTasksModel.IsActive) === true,
+                        time: t ? (new Date(t).getTime() || 0) : 0 });
+        }
+        return list;
+    }
+    // Click on a group: if none of its windows is active, bring the most recently used one
+    // forward; if one is active (or the list is open), open or close the list.
+    function clickGroup(model, index, anchor) {
+        const list = groupChildren(model, index);
+        if (list.some(w => w.active) || (groupPopup.visible && groupAnchor === anchor) || list.length === 0) {
+            toggleGroup(model, index, anchor);
+            return;
+        }
+        let pick = 0;
+        for (let i = 1; i < list.length; ++i) if (list[i].time > list[pick].time) pick = i;
+        model.requestActivate(list[pick].index);
+    }
+    // mouse wheel on a group: next or previous window in opening order
+    function cycleGroup(model, index, step) {
+        const list = groupChildren(model, index);
+        if (list.length === 0) return;
+        const a = list.findIndex(w => w.active);
+        let pick;
+        if (a < 0) {
+            pick = 0;
+            for (let i = 1; i < list.length; ++i) if (list[i].time > list[pick].time) pick = i;
+        } else {
+            pick = (a + step + list.length) % list.length;
+        }
+        model.requestActivate(list[pick].index);
     }
 
     // ---------- Shared window menu ----------
@@ -242,18 +336,29 @@ PlasmoidItem {
                     color: Kirigami.Theme.highlightedTextColor
                 }
             }
-            Repeater {
-                model: DelegateModel {
-                    model: groupPopup.visible ? root.groupModel : null
-                    rootIndex: root.groupIndex ?? root.groupModel?.makeModelIndex(-1)
-                    delegate: WindowRow {
-                        id: child
-                        required property int index
-                        Layout.fillWidth: true
-                        tasksModel: root.groupModel
-                        modelIndex: root.groupModel.makeModelIndex(root.groupIndex.row, index)
-                        box: root
-                        inGroupPopup: true
+            // windows of the group, most recently used first; placed by rank, the Repeater
+            // runs over the unsorted children so index is the child row
+            Item {
+                id: groupRows
+                Layout.fillWidth: true
+                implicitHeight: childRepeater.count > 0 ? childRepeater.count * (root.rowHeight + 2) - 2 : 0
+                Repeater {
+                    id: childRepeater
+                    model: DelegateModel {
+                        model: groupPopup.visible ? root.groupModel : null
+                        rootIndex: root.groupIndex ?? root.groupModel?.makeModelIndex(-1)
+                        delegate: WindowRow {
+                            id: child
+                            required property int index
+                            readonly property int rank: root.groupRanks[index] ?? index
+                            y: rank * (root.rowHeight + 2)
+                            width: groupRows.width
+                            height: root.rowHeight
+                            tasksModel: root.groupModel
+                            modelIndex: root.groupModel.makeModelIndex(root.groupRow, index)
+                            box: root
+                            inGroupPopup: true
+                        }
                     }
                 }
             }

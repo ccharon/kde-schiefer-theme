@@ -5,6 +5,7 @@
  */
 #include "schieferhelper.h"
 
+#include <KConfigGroup>
 #include <KDesktopFile>
 #include <KFileItem>
 #include <KIO/ApplicationLauncherJob>
@@ -77,6 +78,32 @@ QVariantMap SchieferHelper::launcherData(const QUrl &rawUrl) const
                        {QStringLiteral("icon"), icon},
                        {QStringLiteral("genericName"), genericName},
                        {QStringLiteral("url"), url.toString()}};
+}
+
+QString SchieferHelper::appId(const QUrl &rawUrl) const
+{
+    const QUrl url = resolve(rawUrl);
+    if (url.isLocalFile() && KDesktopFile::isDesktopFile(url.toLocalFile())) {
+        return QFileInfo(url.toLocalFile()).completeBaseName();
+    }
+    // applications: URL without an installed service (for example a window of an uninstalled program)
+    if (url.scheme() == QLatin1String("applications")) {
+        QString id = url.path();
+        if (id.endsWith(QLatin1String(".desktop"))) {
+            id.chop(8);
+        }
+        return id;
+    }
+    return {};
+}
+
+bool SchieferHelper::singleMainWindow(const QUrl &rawUrl) const
+{
+    const QUrl url = resolve(rawUrl);
+    if (url.isLocalFile() && KDesktopFile::isDesktopFile(url.toLocalFile())) {
+        return KDesktopFile(url.toLocalFile()).desktopGroup().readEntry("SingleMainWindow", false);
+    }
+    return false;
 }
 
 void SchieferHelper::openUrl(const QUrl &url)

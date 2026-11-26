@@ -4,7 +4,8 @@
  *   open = raised, active = pressed in + highlight, minimized = flat + italic,
  *   demands attention = tinted orange.
  * Groups (several windows of one application) show the application, count and an arrow;
- * a click opens a drawer with the single windows to the side.
+ * a click brings the most recently used window forward, or opens a drawer with the single
+ * windows to the side when the application is already active. Middle click on a window closes it.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -42,7 +43,7 @@ Item {
     readonly property color base: attention ? Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(0.85, 0.6, 0.2, 0.45))
                                             : Kirigami.Theme.backgroundColor
 
-    implicitHeight: Kirigami.Units.iconSizes.medium + 2 * Kirigami.Units.smallSpacing + 4
+    implicitHeight: box.rowHeight
 
     Bevel {
         anchors.fill: parent
@@ -118,14 +119,21 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+        // wheel on a group: through its windows; elsewhere the box scrolls
+        onWheel: wheel => {
+            if (!row.isGroup) { wheel.accepted = false; return; }
+            const d = wheel.angleDelta.y || wheel.angleDelta.x;
+            if (d !== 0) row.box.cycleGroup(row.tasksModel, row.modelIndex, d < 0 ? 1 : -1);
+        }
         onClicked: event => {
             if (event.button === Qt.RightButton) {
                 row.box.showMenu(row.tasksModel, row.modelIndex, row);
             } else if (row.isGroup) {
                 if (event.button === Qt.MiddleButton) row.tasksModel.requestNewInstance(row.modelIndex);
-                else row.box.toggleGroup(row.tasksModel, row.modelIndex, row);
+                else row.box.clickGroup(row.tasksModel, row.modelIndex, row);
             } else if (event.button === Qt.MiddleButton) {
-                row.tasksModel.requestToggleMinimized(row.modelIndex);
+                // middle click closes the window
+                row.tasksModel.requestClose(row.modelIndex);
             } else if (row.active && !row.minimized) {
                 row.tasksModel.requestToggleMinimized(row.modelIndex);
             } else {

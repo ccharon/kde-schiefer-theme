@@ -12,8 +12,11 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$(realpath -m "${1:-/tmp/schiefer.png}")"; shift || true
 APPS=("$@"); [ ${#APPS[@]} -eq 0 ] && APPS=(dolphin kwrite)
 if [ -z "${SCHIEFER_INNER:-}" ]; then
+    # containers often have no login session and therefore no runtime directory
+    RTD=""; [ -n "${XDG_RUNTIME_DIR:-}" ] || { RTD=$(mktemp -d); export XDG_RUNTIME_DIR="$RTD"; }
     # background services of the test session would otherwise inherit stdout and keep pipes open
     SCHIEFER_INNER=1 timeout 150 dbus-run-session -- "$0" "$OUT" "${APPS[@]}" >/dev/null 2>&1 </dev/null
+    [ -n "$RTD" ] && rm -rf "$RTD"
     [ -s "$OUT" ] && echo "$OUT" || { echo "no image produced" >&2; exit 1; }
     exit 0
 fi

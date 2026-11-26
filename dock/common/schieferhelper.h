@@ -19,6 +19,10 @@ public:
 
     // name, icon, genericName of a launcher (.desktop, applications: URL or file)
     Q_INVOKABLE QVariantMap launcherData(const QUrl &url) const;
+    // desktop entry id of an application launcher ("org.kde.dolphin"); empty for anything else
+    Q_INVOKABLE QString appId(const QUrl &url) const;
+    // SingleMainWindow=true in the .desktop file: the program never wants a second window
+    Q_INVOKABLE bool singleMainWindow(const QUrl &url) const;
     // open a launcher: also runs programs and scripts (like a click in the launcher menu)
     Q_INVOKABLE void openUrl(const QUrl &url);
     // open an entry of the folder drawer: files only with their application, never execute;

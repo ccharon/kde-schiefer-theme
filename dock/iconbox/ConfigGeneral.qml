@@ -32,17 +32,19 @@ KCM.SimpleKCM {
         }
         QQC2.CheckBox { id: onlyCurrent; Kirigami.FormData.label: i18n("Windows:"); text: i18n("Only from the current desktop") }
         QQC2.CheckBox { id: showNormal; text: i18n("Also show open windows (otherwise only minimized ones)") }
-        QQC2.CheckBox { id: groupWindows; text: i18n("Group windows of an application") }
+        QQC2.CheckBox { id: groupWindows; text: i18n("Group windows of an application when space runs out") }
         QQC2.ComboBox {
             Kirigami.FormData.label: i18n("Order:")
             textRole: "text"
             valueRole: "value"
             model: [
                 { text: i18n("As opened"), value: "opening" },
-                { text: i18n("By application"), value: "app" },
+                { text: i18n("By application name"), value: "app" },
                 { text: i18n("Most recently used first"), value: "lastActivated" }
             ]
             Component.onCompleted: currentIndex = Math.max(0, indexOfValue(cfg_sortMode))
+            QQC2.ToolTip.visible: hovered
+            QQC2.ToolTip.text: i18n("Order of the applications. Windows of one application always stay together in the order they were opened. With \"Most recently used first\" the order changes only after the mouse leaves the box.")
             onActivated: cfg_sortMode = currentValue
         }
         QQC2.SpinBox { id: columns; Kirigami.FormData.label: i18n("Columns:"); from: 1; to: 4 }
@@ -59,7 +61,7 @@ KCM.SimpleKCM {
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
             opacity: 0.75
-            text: i18n("A click raises or restores a window; a click on the active window minimizes it. A click on a group opens its windows to the side. Middle click minimizes, right click opens the window menu. To keep windows clear of the box, set the panel to \"Dodge Windows\".")
+            text: i18n("A click raises or restores a window; a click on the active window minimizes it. A click on a group raises its most recently used window; if the application is already active, it opens the windows to the side. The mouse wheel on a group switches between its windows. Middle click closes a window, right click opens the window menu. To keep windows clear of the box, set the panel to \"Dodge Windows\".")
         }
     }
 }

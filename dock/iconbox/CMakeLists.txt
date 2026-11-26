@@ -1,5 +1,5 @@
 plasma_add_applet(org.kde.schiefer.iconbox
-    QML_SOURCES main.qml Bevel.qml FrameTint.qml PanelFit.qml MotifArrow.qml Section.qml WindowRow.qml WindowIcon.qml config.qml ConfigGeneral.qml
+    QML_SOURCES main.qml Bevel.qml FrameTint.qml PanelFit.qml MotifArrow.qml Section.qml TaskOrder.qml WindowRow.qml WindowIcon.qml config.qml ConfigGeneral.qml
     CPP_SOURCES schieferhelper.cpp schieferscheme.cpp
     RESOURCES main.xml
     GENERATE_APPLET_CLASS

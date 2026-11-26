@@ -40,6 +40,15 @@ Item {
     readonly property int innerWidth: winSize.width - edgeL - edgeR - 2 * gap
     readonly property int innerHeight: winSize.height - edgeT - edgeB - 2 * gap
 
+    // how much longer the panel window could still become (vertical panels only: there the
+    // applet grows with its content); 0 at the custom maximum length or the screen edge
+    readonly property int growRoom: {
+        const w = fit.Window.window;
+        if (!w || !vertical) return 0;
+        // lengthMode 2 = PanelView::Custom
+        const max = (w.lengthMode === 2 && w.maximumLength > 0) ? w.maximumLength : Screen.desktopAvailableHeight;
+        return Math.max(0, max - fit.Window.height);
+    }
     // length the applet must report so the window covers edges + margin + content
     function lengthFor(contentLength) {
         return Math.max(1, edgesAlong + 2 * gap + contentLength - excess);

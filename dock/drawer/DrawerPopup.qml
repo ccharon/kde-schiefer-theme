@@ -4,6 +4,7 @@
  */
 pragma ComponentBehavior: Bound
 
+import QtQml
 import QtQuick
 import QtQuick.Layouts
 import org.kde.plasma.components as PlasmaComponents3
@@ -273,6 +274,9 @@ Item {
                 required property string modelData
                 required property int index
                 readonly property var info: content.helper.launcherData(modelData)
+                readonly property int running: content.drawer.runningCount(modelData)
+                // open windows for the context menu, read when it opens
+                property var menuWindows: []
 
                 Layout.fillWidth: true
                 implicitHeight: content.rowHeight
@@ -297,18 +301,24 @@ Item {
                         elide: Text.ElideRight
                         Component.onCompleted: content.maxLabel = Math.max(content.maxLabel, implicitWidth)
                     }
+                    RunningMark {
+                        Layout.alignment: Qt.AlignVCenter
+                        visible: entry.running > 0
+                    }
                 }
                 MouseArea {
                     id: mouse
                     anchors.fill: parent
                     hoverEnabled: true
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                     onClicked: mouseEvent => {
                         if (mouseEvent.button === Qt.RightButton) {
+                            entry.menuWindows = content.drawer.windowsOf(entry.modelData).windows;
                             menu.visualParent = entry;
                             menu.openRelative();
                         } else {
-                            content.drawer.launch(entry.modelData);
+                            content.drawer.launch(entry.modelData, mouseEvent.button === Qt.MiddleButton
+                                                                   || (mouseEvent.modifiers & Qt.ShiftModifier));
                         }
                     }
                 }
@@ -317,9 +327,32 @@ Item {
                     onDragEnter: event => { if (!event.mimeData.hasUrls) event.ignore(); }
                     onDrop: event => event.mimeData.urls.forEach(u => content.drawer.addToDrawer(u.toString(), entry.index))
                 }
+                // open windows of the program at the top of the menu, before "New Window".
+                // PlasmaExtras.Menu only takes MenuItems as children, so this sits beside it.
+                Instantiator {
+                    model: entry.menuWindows
+                    delegate: PlasmaExtras.MenuItem {
+                        required property var modelData
+                        text: modelData.title
+                        icon: modelData.icon
+                        checkable: true
+                        checked: modelData.active
+                        onClicked: content.drawer.activateWindow(modelData.index)
+                    }
+                    onObjectAdded: (i, item) => menu.addMenuItem(item, newWindowItem)
+                    onObjectRemoved: (i, item) => menu.removeMenuItem(item)
+                }
                 PlasmaExtras.Menu {
                     id: menu
                     placement: PlasmaExtras.Menu.RightPosedTopAlignedPopup
+                    PlasmaExtras.MenuItem {
+                        id: newWindowItem
+                        visible: entry.running > 0
+                        text: i18n("New Window")
+                        icon: "window-new"
+                        onClicked: content.drawer.launch(entry.modelData, true)
+                    }
+                    PlasmaExtras.MenuItem { separator: true; visible: entry.running > 0 }
                     PlasmaExtras.MenuItem {
                         text: i18n("Use as Main Icon in the Panel")
                         icon: "go-down"

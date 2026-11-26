@@ -12,6 +12,7 @@ import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
 import org.kde.draganddrop as DragAndDrop
 import org.kde.kitemmodels as KItemModels
+import org.kde.taskmanager as TaskManager
 import QtQuick.Dialogs as Dialogs
 import QtCore
 import plasma.applet.org.kde.schiefer.drawer
@@ -115,8 +116,101 @@ PlasmoidItem {
         Plasmoid.configuration.mainUrl = u;
     }
     function closeDrawer() { popup.visible = false; }
-    function launch(url) {
+
+    // ---------- Running applications ----------
+    // A click on a launcher brings the program forward if it already runs; middle click
+    // (or Shift+click) always starts a new instance.
+    TaskManager.ActivityInfo { id: activityInfo }
+    TaskManager.TasksModel {
+        id: tasks
+        groupMode: TaskManager.TasksModel.GroupDisabled
+        sortMode: TaskManager.TasksModel.SortDisabled   // source order = order of opening
+        separateLaunchers: false
+        launcherList: []
+        filterByActivity: true
+        activity: activityInfo.currentActivity
+        filterByVirtualDesktop: false
+        filterByScreen: false
+    }
+    // bindings that ask about windows read this so they follow the task list
+    property int taskRevision: 0
+    Connections {
+        target: tasks
+        function onRowsInserted() { root.taskRevision++; }
+        function onRowsRemoved() { root.taskRevision++; }
+        function onModelReset() { root.taskRevision++; }
+        function onDataChanged() { root.taskRevision++; }
+    }
+    // launcher URL of a task -> desktop entry id; KService lookups only once per URL
+    property var appIdCache: ({})
+    function taskAppId(idx) {
+        const u = tasks.data(idx, TaskManager.AbstractTasksModel.LauncherUrlWithoutIcon);
+        const key = u ? u.toString() : "";
+        let id = key ? root.appIdCache[key] : undefined;
+        if (id === undefined) {
+            id = key ? helper.appId(u) : "";
+            if (key) root.appIdCache[key] = id;
+        }
+        // AppId carries ".desktop" on Wayland ("org.kde.kwrite.desktop")
+        return (id || tasks.data(idx, TaskManager.AbstractTasksModel.AppId) || "").replace(/\.desktop$/, "").toLowerCase();
+    }
+    // windows of a launcher in the order they were opened: [{ index, title, icon, active, time }],
+    // plus whether the program is just starting
+    function windowsOf(url) {
+        root.taskRevision;
+        const id = url ? helper.appId(url).toLowerCase() : "";
+        const result = { windows: [], starting: false };
+        if (!id) return result;
+        for (let i = 0; i < tasks.count; ++i) {
+            const idx = tasks.makeModelIndex(i);
+            if (root.taskAppId(idx) !== id) continue;
+            if (tasks.data(idx, TaskManager.AbstractTasksModel.IsStartup) === true) {
+                result.starting = true;
+            } else if (tasks.data(idx, TaskManager.AbstractTasksModel.IsWindow) === true) {
+                const t = tasks.data(idx, TaskManager.AbstractTasksModel.LastActivated);
+                result.windows.push({
+                    index: idx,
+                    title: tasks.data(idx, Qt.DisplayRole) || "",
+                    icon: tasks.data(idx, Qt.DecorationRole),
+                    active: tasks.data(idx, TaskManager.AbstractTasksModel.IsActive) === true,
+                    time: t ? (new Date(t).getTime() || 0) : 0
+                });
+            }
+        }
+        return result;
+    }
+    function runningCount(url) { return url ? root.windowsOf(url).windows.length : 0; }
+    // none of its windows active: the most recently used one; otherwise the next one in opening order
+    function activateNext(windows) {
+        const a = windows.findIndex(w => w.active);
+        let pick = 0;
+        if (a >= 0) {
+            pick = (a + 1) % windows.length;
+        } else {
+            for (let i = 1; i < windows.length; ++i) if (windows[i].time > windows[pick].time) pick = i;
+        }
+        if (pick !== a) tasks.requestActivate(windows[pick].index);
+    }
+    function activateWindow(index) {
         popup.visible = false;
+        tasks.requestActivate(index);
+    }
+    // a second click within the double-click time does nothing (CDE habit: double click)
+    Timer { id: clickGuard; interval: Qt.styleHints.mouseDoubleClickInterval }
+
+    function launch(url, newInstance) {
+        if (clickGuard.running) return;
+        clickGuard.restart();
+        popup.visible = false;
+        if (!newInstance || helper.singleMainWindow(url)) {
+            const running = root.windowsOf(url);
+            if (running.windows.length > 0) {
+                root.activateNext(running.windows);
+                return;
+            }
+            // already on its way (startup notification): a second instance is not wanted
+            if (running.starting && !newInstance) return;
+        }
         helper.openUrl(url);
         launchFeedback.restart();
     }
@@ -186,6 +280,12 @@ PlasmoidItem {
             visible: !root.isFolder
             icon.name: "document-edit"
             onTriggered: helper.chooseLauncher("main")
+        },
+        PlasmaCore.Action {
+            text: i18n("New Window")
+            icon.name: "window-new"
+            visible: !root.isFolder && root.mainUrl.length > 0 && root.runningCount(root.mainUrl) > 0
+            onTriggered: root.launch(root.mainUrl, true)
         },
         PlasmaCore.Action {
             text: i18n("Add Application to Drawer…")
@@ -269,6 +369,10 @@ PlasmoidItem {
                 }
             }
         }
+        RunningMark {
+            anchors { left: parent.left; bottom: parent.bottom; margins: 3 }
+            visible: !root.isFolder && root.runningCount(root.mainUrl) > 0
+        }
         Component { id: clockFace; ClockFace { now: root.now } }
         Component { id: dateFace; DateFace { today: root.now } }
         Component {
@@ -286,12 +390,13 @@ PlasmoidItem {
             // the system icons take their own clicks
             enabled: !root.isSystem
             hoverEnabled: true
-            acceptedButtons: Qt.LeftButton
-            onClicked: {
+            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+            onClicked: event => {
+                const newInstance = event.button === Qt.MiddleButton || (event.modifiers & Qt.ShiftModifier);
                 if (root.isFolder) {
                     // folder.url: already resolved ("~/...", relative paths)
-                    if (root.folderUrl) root.launch(folder.url); else folderDialog.open();
-                } else if (root.mainUrl) root.launch(root.mainUrl);
+                    if (root.folderUrl) root.launch(folder.url, true); else folderDialog.open();
+                } else if (root.mainUrl) root.launch(root.mainUrl, newInstance);
                 else if (root.face === "launcher") helper.chooseLauncher("main");
                 else popup.visible = !popup.visible;
             }
@@ -305,7 +410,9 @@ PlasmoidItem {
                     : (root.face === "date" || root.face === "clock") ? Qt.formatDate(root.now, Qt.locale().dateFormat(Locale.LongFormat))
                     : (root.mainData.name ?? i18n("No application"))
             subText: root.isFolder ? (root.folderUrl ? i18np("%1 entry. Click to open the folder.", "%1 entries. Click to open the folder.", folder.count) : i18n("Click to choose a folder"))
-                   : root.mainUrl ? (root.mainData.genericName ?? "") : i18n("Click or drag an application here")
+                   : root.mainUrl ? [root.mainData.genericName ?? "",
+                                     root.runningCount(root.mainUrl) > 0 ? i18n("Running. Click brings it forward, middle click opens a new window.") : ""].filter(t => t).join("\n")
+                   : i18n("Click or drag an application here")
             location: Plasmoid.location
         }
         DragAndDrop.DropArea {

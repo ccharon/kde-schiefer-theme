@@ -119,3 +119,9 @@ msgstr "Persönlicher Ordner"
 msgctxt "@label name of the trash in the dock"
 msgid "Trash"
 msgstr "Papierkorb"
+
+msgid "New Window"
+msgstr "Neues Fenster"
+
+msgid "Running. Click brings it forward, middle click opens a new window."
+msgstr "Läuft. Klick holt es nach vorn, Mittelklick öffnet ein neues Fenster."
