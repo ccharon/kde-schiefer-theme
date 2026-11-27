@@ -630,6 +630,65 @@ void Helper::renderBevelPanel(QPainter *painter, const QRectF &rectF, const QCol
     renderBevel(painter, rect, base, sunken, width);
 }
 
+void Helper::renderMotifArrow(QPainter *painter, const QRectF &rectF, const QColor &fill, const QColor &base, ArrowOrientation orientation, bool sunken) const
+{
+    QColor hi = bevelLight(base), lo = bevelDark(base);
+    if (sunken) {
+        std::swap(hi, lo);
+    }
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing, false);
+    QRect r = rectF.toAlignedRect();
+    if (bevelDeviceScale(painter)) {
+        r = beginDevicePixels(painter, r); // Schiefer: whole device pixels with fractional scaling
+    }
+    const bool vertical = orientation == ArrowUp || orientation == ArrowDown;
+    // arrow-local: "length" runs from the tip to the base, "span" across it
+    const int length = vertical ? r.height() : r.width();
+    const int span = vertical ? r.width() : r.height();
+    if (length < 3 || span < 3) {
+        painter->restore();
+        return;
+    }
+    // device rect for a run [a, b] across, at step i from the tip
+    auto run = [&](int i, int a, int b) -> QRect {
+        switch (orientation) {
+        case ArrowUp:
+            return QRect(r.left() + a, r.top() + i, b - a + 1, 1);
+        case ArrowDown:
+            return QRect(r.left() + a, r.bottom() - i, b - a + 1, 1);
+        case ArrowLeft:
+            return QRect(r.left() + i, r.top() + a, 1, b - a + 1);
+        default:
+            return QRect(r.right() - i, r.top() + a, 1, b - a + 1);
+        }
+    };
+    // the edge on the "a" side faces up (left/right arrows) or left (up/down arrows): light;
+    // the "b" side faces down or right: dark. The base faces down (up arrow), right (left
+    // arrow): dark; up (down arrow), left (right arrow): light.
+    const bool baseLight = orientation == ArrowDown || orientation == ArrowRight;
+    int prevA = (span - 1) / 2, prevB = span / 2;
+    for (int i = 0; i < length; ++i) {
+        const qreal half = (i + 1) * span / (2.0 * length);
+        const int a = qBound(0, qRound(span / 2.0 - half), span - 1);
+        const int b = qBound(a, qRound(span / 2.0 + half) - 1, span - 1);
+        if (i == length - 1) {
+            painter->fillRect(run(i, a, b), baseLight ? hi : lo);
+            painter->fillRect(run(i, a, a), hi);
+            painter->fillRect(run(i, b, b), lo);
+            break;
+        }
+        painter->fillRect(run(i, a, b), fill);
+        // edge pixels, including the steps where the edge moves by more than one pixel
+        // light: from a up to the previous row's edge; dark: from the previous row's edge to b
+        painter->fillRect(run(i, a, qBound(a, prevA - 1, b)), hi);
+        painter->fillRect(run(i, qBound(a, prevB + 1, b), b), lo);
+        prevA = a;
+        prevB = b;
+    }
+    painter->restore();
+}
+
 void Helper::renderEtchedFrame(QPainter *painter, const QRectF &rectF, const QColor &base) const
 {
     const QRect r = rectF.toAlignedRect();

@@ -457,10 +457,60 @@ scrollbar button:active {
     background: @retro_pressed;
 }
 
-scrollbar.vertical button.up { -gtk-icon-source: -gtk-icontheme("pan-up-symbolic"); }
-scrollbar.vertical button.down { -gtk-icon-source: -gtk-icontheme("pan-down-symbolic"); }
-scrollbar.horizontal button.up { -gtk-icon-source: -gtk-icontheme("pan-start-symbolic"); }
-scrollbar.horizontal button.down { -gtk-icon-source: -gtk-icontheme("pan-end-symbolic"); }
+/* CDE: the arrows are bevelled triangles lying in the trough, without a button around them
+ * (light edge facing up/left, dark edge facing down/right; armed: sunken in the select color).
+ * CSS has no triangles: each half of the arrow is a diagonal gradient, the base a 1 px gradient. */
+scrollbar button,
+scrollbar button:backdrop,
+scrollbar button:hover,
+scrollbar button:active,
+scrollbar button:disabled {
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    -gtk-icon-source: none;
+}
+scrollbar.vertical button.up {
+    background-image: linear-gradient(to top, @retro_dark 1px, transparent 1px), linear-gradient(to bottom right, transparent 50%, @retro_light 50%, @retro_light 56%, @theme_button_background_normal_breeze 56%), linear-gradient(to bottom left, transparent 50%, @retro_dark 50%, @retro_dark 56%, @theme_button_background_normal_breeze 56%);
+    background-size: 100% 100%, 50% 100%, 50% 100%;
+    background-position: left top, left top, right top;
+}
+scrollbar.vertical button.down {
+    background-image: linear-gradient(to bottom, @retro_light 1px, transparent 1px), linear-gradient(to top right, transparent 50%, @retro_light 50%, @retro_light 56%, @theme_button_background_normal_breeze 56%), linear-gradient(to top left, transparent 50%, @retro_dark 50%, @retro_dark 56%, @theme_button_background_normal_breeze 56%);
+    background-size: 100% 100%, 50% 100%, 50% 100%;
+    background-position: left top, left top, right top;
+}
+scrollbar.horizontal button.up {
+    background-image: linear-gradient(to left, @retro_dark 1px, transparent 1px), linear-gradient(to bottom right, transparent 50%, @retro_light 50%, @retro_light 56%, @theme_button_background_normal_breeze 56%), linear-gradient(to top right, transparent 50%, @retro_dark 50%, @retro_dark 56%, @theme_button_background_normal_breeze 56%);
+    background-size: 100% 100%, 100% 50%, 100% 50%;
+    background-position: left top, left top, left bottom;
+}
+scrollbar.horizontal button.down {
+    background-image: linear-gradient(to right, @retro_light 1px, transparent 1px), linear-gradient(to bottom left, transparent 50%, @retro_light 50%, @retro_light 56%, @theme_button_background_normal_breeze 56%), linear-gradient(to top left, transparent 50%, @retro_dark 50%, @retro_dark 56%, @theme_button_background_normal_breeze 56%);
+    background-size: 100% 100%, 100% 50%, 100% 50%;
+    background-position: left top, left top, left bottom;
+}
+scrollbar.vertical button.up:active {
+    background-image: linear-gradient(to top, @retro_light 1px, transparent 1px), linear-gradient(to bottom right, transparent 50%, @retro_dark 50%, @retro_dark 56%, @retro_pressed 56%), linear-gradient(to bottom left, transparent 50%, @retro_light 50%, @retro_light 56%, @retro_pressed 56%);
+    background-size: 100% 100%, 50% 100%, 50% 100%;
+    background-position: left top, left top, right top;
+}
+scrollbar.vertical button.down:active {
+    background-image: linear-gradient(to bottom, @retro_dark 1px, transparent 1px), linear-gradient(to top right, transparent 50%, @retro_dark 50%, @retro_dark 56%, @retro_pressed 56%), linear-gradient(to top left, transparent 50%, @retro_light 50%, @retro_light 56%, @retro_pressed 56%);
+    background-size: 100% 100%, 50% 100%, 50% 100%;
+    background-position: left top, left top, right top;
+}
+scrollbar.horizontal button.up:active {
+    background-image: linear-gradient(to left, @retro_light 1px, transparent 1px), linear-gradient(to bottom right, transparent 50%, @retro_dark 50%, @retro_dark 56%, @retro_pressed 56%), linear-gradient(to top right, transparent 50%, @retro_light 50%, @retro_light 56%, @retro_pressed 56%);
+    background-size: 100% 100%, 100% 50%, 100% 50%;
+    background-position: left top, left top, left bottom;
+}
+scrollbar.horizontal button.down:active {
+    background-image: linear-gradient(to right, @retro_dark 1px, transparent 1px), linear-gradient(to bottom left, transparent 50%, @retro_dark 50%, @retro_dark 56%, @retro_pressed 56%), linear-gradient(to top left, transparent 50%, @retro_light 50%, @retro_light 56%, @retro_pressed 56%);
+    background-size: 100% 100%, 100% 50%, 100% 50%;
+    background-position: left top, left top, left bottom;
+}
 
 /* narrow overlay scroll bars (touchpad) stay plain */
 scrollbar.overlay-indicator:not(.dragging):not(.hovering) {

@@ -195,6 +195,9 @@ public:
     //* raised/sunken panel: fill plus bevel; inset = number of line widths to move inward
     //* (in device pixels, so the default button ring keeps its width at 150 %)
     void renderBevelPanel(QPainter *, const QRectF &, const QColor &fill, const QColor &base, bool sunken, int width = 2, int inset = 0) const;
+    //* Motif arrow (XmArrowButton, scroll bar arrows): triangle in fill with 1 px edges, light
+    //* facing up/left, dark facing down/right; sunken swaps them (armed arrow)
+    void renderMotifArrow(QPainter *, const QRectF &, const QColor &fill, const QColor &base, ArrowOrientation, bool sunken) const;
     //* etched line (group box frame): dark and light, doubled
     void renderEtchedFrame(QPainter *, const QRectF &, const QColor &base) const;
     //* Motif option menu indicator, dial and slider handle with a center groove

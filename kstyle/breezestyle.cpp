@@ -6463,20 +6463,14 @@ bool Style::drawScrollBarAddLineControl(const QStyleOption *option, QPainter *pa
 
     // Schiefer: Motif arrow button (raised, sunken when pressed)
     if (_addLineButtons == SingleButton) {
-        QRect r = rect;
-        if (horizontal) {
-            r.adjust(0, 2, 0, -2);
-        } else {
-            r.adjust(2, 0, -2, 0);
-        }
+        // CDE: the arrow is a bevelled triangle lying in the trough, no button around it;
+        // armed it sinks in and takes the select color
+        const int bw = _helper->bevelWidth();
+        const QRect r = rect.adjusted(bw, bw, -bw, -bw);
         const bool pressed = (state & State_Sunken) && (sliderOption->activeSubControls & SC_ScrollBarAddLine);
         const QColor button = option->palette.color(QPalette::Button);
-        _helper->renderBevelPanel(painter, r, button, button, pressed, _helper->bevelWidth());
-        QStyleOptionSlider arrowCopy(*sliderOption);
-        arrowCopy.rect = r;
-        const QColor color = scrollBarArrowColor(&arrowCopy, SC_ScrollBarAddLine, widget);
         const ArrowOrientation orientation = horizontal ? (reverseLayout ? ArrowLeft : ArrowRight) : ArrowDown;
-        _helper->renderArrow(painter, r.adjusted(3, 3, -3, -3), color, orientation);
+        _helper->renderMotifArrow(painter, r, pressed ? _helper->bevelSelect(button) : button, button, orientation, pressed);
         return true;
     }
 
@@ -6561,20 +6555,14 @@ bool Style::drawScrollBarSubLineControl(const QStyleOption *option, QPainter *pa
 
     // Schiefer: Motif arrow button (raised, sunken when pressed)
     if (_subLineButtons == SingleButton) {
-        QRect r = rect;
-        if (horizontal) {
-            r.adjust(0, 2, 0, -2);
-        } else {
-            r.adjust(2, 0, -2, 0);
-        }
+        // CDE: the arrow is a bevelled triangle lying in the trough, no button around it;
+        // armed it sinks in and takes the select color
+        const int bw = _helper->bevelWidth();
+        const QRect r = rect.adjusted(bw, bw, -bw, -bw);
         const bool pressed = (state & State_Sunken) && (sliderOption->activeSubControls & SC_ScrollBarSubLine);
         const QColor button = option->palette.color(QPalette::Button);
-        _helper->renderBevelPanel(painter, r, button, button, pressed, _helper->bevelWidth());
-        QStyleOptionSlider arrowCopy(*sliderOption);
-        arrowCopy.rect = r;
-        const QColor color = scrollBarArrowColor(&arrowCopy, SC_ScrollBarSubLine, widget);
         const ArrowOrientation orientation = horizontal ? (reverseLayout ? ArrowRight : ArrowLeft) : ArrowUp;
-        _helper->renderArrow(painter, r.adjusted(3, 3, -3, -3), color, orientation);
+        _helper->renderMotifArrow(painter, r, pressed ? _helper->bevelSelect(button) : button, button, orientation, pressed);
         return true;
     }
 
