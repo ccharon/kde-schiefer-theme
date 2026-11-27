@@ -66,6 +66,23 @@ PlasmoidItem {
     }
     Ledge { row: row }
 
+    // Edges of the raised box the console sits in, as around the workspace switch of the CDE
+    // front panel: light line on the left, dark line on the right, 1 px each, over the full
+    // height from the panel's top bevel down to the ledge (or the panel's lower edge).
+    // Vertical panels keep the etched lines in the layout.
+    Item {
+        id: boxEdges
+        visible: row.active
+        readonly property var motif: Scheme.motifColors(Kirigami.Theme.backgroundColor)
+        // reaches across the panel spacing up to the neighbors, so the tabs end at the box as in CDE
+        x: -Math.max(0, row.gapBefore)
+        y: -Math.max(0, row.me.y - row.edgeT)
+        width: root.width + Math.max(0, row.gapBefore) + Math.max(0, row.gapAfter)
+        height: (row.ledge ? row.ledgeY : row.winSize.height - row.me.y) - y
+        Rectangle { x: 0; width: 1; height: parent.height; color: boxEdges.motif.top }
+        Rectangle { x: parent.width - 1; width: 1; height: parent.height; color: boxEdges.motif.bottom }
+    }
+
     Layout.preferredWidth: layout.implicitWidth + 2 * margin
     Layout.minimumWidth: Layout.preferredWidth - (cfg.showTasks ? taskPreferred - taskMinimum : 0)
     Layout.maximumWidth: Layout.preferredWidth
@@ -134,7 +151,7 @@ PlasmoidItem {
         anchors.bottomMargin: root.bottomMargin
         spacing: Kirigami.Units.smallSpacing + 2
 
-        Etch {}
+        Etch { visible: !row.active }
 
         // ---------- left: lock ----------
         ColumnLayout {
@@ -340,7 +357,7 @@ PlasmoidItem {
             }
         }
 
-        Etch {}
+        Etch { visible: !row.active }
     }
 
     PlasmaCore.Dialog {
