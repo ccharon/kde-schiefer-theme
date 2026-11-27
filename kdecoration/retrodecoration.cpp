@@ -14,11 +14,13 @@
 #include <KSharedConfig>
 
 #include <cmath>
+#include <functional>
 
 #include <QDBusConnection>
 #include <QFontMetricsF>
 #include <QGuiApplication>
 #include <QHoverEvent>
+#include <QImage>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPolygonF>
@@ -680,7 +682,7 @@ void Button::paint(QPainter *painter, const QRectF &repaintRegion)
     if (isHovered() && !isPressed()) {
         face = face.lighter(110);
     }
-    const QColor hi = d->lightColor(), lo = d->darkColor(), fg = d->fontColor();
+    const QColor hi = d->lightColor(), lo = d->darkColor();
     const bool sunken = isPressed() || (isChecked() && type() != DecorationButtonType::Maximize);
 
     painter->save();
@@ -705,6 +707,65 @@ void Button::paint(QPainter *painter, const QRectF &repaintRegion)
         painter->fillRect(rr, face);
         bevel(painter, rr, hi, lo, bevelPx, scale, in);
     };
+    // raised shape in whole device pixels, like the boxes: inside(x, y, w, h) on the device pixel
+    // grid of r; filled with the face, an edge pixel is light when the outside lies above or left
+    // of it and dark when below or right (in = sunken: swapped)
+    auto paintShape = [&](const QRect &dr, bool in, const std::function<bool(int, int)> &inside) {
+        const QColor light = in ? lo : hi, dark = in ? hi : lo;
+        for (int y = 0; y < dr.height(); ++y) {
+            for (int x = 0; x < dr.width(); ++x) {
+                if (!inside(x, y)) {
+                    continue;
+                }
+                bool up = false, left = false, down = false, right = false;
+                for (int k = 1; k <= bevelPx; ++k) {
+                    up = up || !inside(x, y - k);
+                    left = left || !inside(x - k, y);
+                    down = down || !inside(x, y + k);
+                    right = right || !inside(x + k, y);
+                }
+                const int score = int(up) + int(left) - int(down) - int(right);
+                QColor col = face;
+                if (score > 0 || (score == 0 && up)) {
+                    col = light;
+                } else if (score < 0 || (score == 0 && down)) {
+                    col = dark;
+                }
+                painter->fillRect(QRect(dr.left() + x, dr.top() + y, 1, 1), col);
+            }
+        }
+    };
+    // switch the painter to device pixels for r; returns r in device pixels
+    auto toDevice = [&](const QRectF &r) {
+        const QTransform dt = painter->deviceTransform();
+        const QRect dr = dt.mapRect(KDecoration3::snapToPixelGrid(r, scale)).toAlignedRect();
+        painter->setWorldTransform(dt.inverted() * painter->worldTransform());
+        return dr;
+    };
+    auto raisedShape = [&](const QRectF &r, bool in, const std::function<bool(int, int, int, int)> &shape) {
+        painter->save();
+        const QRect dr = toDevice(r);
+        const int w = dr.width(), h = dr.height();
+        paintShape(dr, in, [&](int x, int y) {
+            return x >= 0 && y >= 0 && x < w && y < h && shape(x, y, w, h);
+        });
+        painter->restore();
+    };
+    // raised shape from a drawing (text glyphs): draw(maskPainter, box) paints white on a mask
+    auto raisedMask = [&](const QRectF &r, bool in, const std::function<void(QPainter *, const QRect &)> &draw) {
+        painter->save();
+        const QRect dr = toDevice(r);
+        QImage mask(dr.size(), QImage::Format_Grayscale8);
+        mask.fill(0);
+        {
+            QPainter mp(&mask);
+            draw(&mp, QRect(QPoint(0, 0), dr.size()));
+        }
+        paintShape(dr, in, [&](int x, int y) {
+            return x >= 0 && y >= 0 && x < mask.width() && y < mask.height() && qGray(mask.pixel(x, y)) > 110;
+        });
+        painter->restore();
+    };
 
     switch (type()) {
     case DecorationButtonType::Menu: {
@@ -728,85 +789,68 @@ void Button::paint(QPainter *painter, const QRectF &repaintRegion)
         break;
     }
     case DecorationButtonType::Close: {
-        // Schiefer: raised X in the frame color like the minimize and maximize boxes, drawn in
-        // whole device pixels: two crossed bars filled with the face; an edge pixel is light when
-        // the outside lies above or left of it, dark when below or right (sunken while pressed)
-        const QRectF r = KDecoration3::snapToPixelGrid(centered(snap(s * 0.6), snap(s * 0.6)), scale);
-        const QTransform dt = painter->deviceTransform();
-        const QRect dr = dt.mapRect(r).toAlignedRect();
-        painter->setWorldTransform(dt.inverted() * painter->worldTransform());
-        const int n = dr.width();
+        // raised X like the minimize and maximize boxes: two crossed bars
+        const qreal q = snap(s * 0.6);
         const int half = std::max(1, int(std::lround(s * 0.22 * scale / 2))); // bar = 2 * half + 1
-        auto inside = [&](int x, int y) {
-            if (x < 0 || y < 0 || x >= n || y >= n) {
-                return false;
-            }
-            return std::abs(x - y) <= half || std::abs(x - (n - 1 - y)) <= half;
-        };
-        const bool in = isPressed();
-        const QColor light = in ? lo : hi, dark = in ? hi : lo;
-        for (int y = 0; y < n; ++y) {
-            for (int x = 0; x < n; ++x) {
-                if (!inside(x, y)) {
-                    continue;
-                }
-                bool up = false, left = false, down = false, right = false;
-                for (int k = 1; k <= bevelPx; ++k) {
-                    up = up || !inside(x, y - k);
-                    left = left || !inside(x - k, y);
-                    down = down || !inside(x, y + k);
-                    right = right || !inside(x + k, y);
-                }
-                const int score = int(up) + int(left) - int(down) - int(right);
-                QColor c = face;
-                if (score > 0 || (score == 0 && up)) {
-                    c = light;
-                } else if (score < 0 || (score == 0 && down)) {
-                    c = dark;
-                }
-                painter->fillRect(QRect(dr.left() + x, dr.top() + y, 1, 1), c);
-            }
-        }
+        raisedShape(centered(q, q), isPressed(), [half](int x, int y, int w, int h) {
+            Q_UNUSED(h)
+            return std::abs(x - y) <= half || std::abs(x - (w - 1 - y)) <= half;
+        });
         break;
     }
     case DecorationButtonType::KeepAbove:
     case DecorationButtonType::KeepBelow: {
-        painter->setRenderHint(QPainter::Antialiasing, true);
-        painter->setPen(Qt::NoPen);
-        painter->setBrush(fg);
-        const qreal h = s * 0.18, w = s * 0.26;
-        const qreal dir = type() == DecorationButtonType::KeepAbove ? -1 : 1;
-        painter->drawPolygon(QPolygonF({QPointF(c.x() - w, c.y() - dir * h), QPointF(c.x() + w, c.y() - dir * h), QPointF(c.x(), c.y() + dir * h)}));
+        // raised triangle pointing up (keep above) or down (keep below); sunken while on
+        const bool up = type() == DecorationButtonType::KeepAbove;
+        const qreal w = snap(s * 0.6), h = snap(s * 0.36);
+        raisedShape(centered(w, h), isChecked() != isPressed(), [up](int x, int y, int w, int h) {
+            const int row = up ? y : h - 1 - y;          // 0 at the tip
+            const qreal halfSpan = (row + 1) * w / (2.0 * h);
+            return std::abs(x + 0.5 - w / 2.0) <= halfSpan;
+        });
         break;
     }
     case DecorationButtonType::OnAllDesktops: {
-        painter->setRenderHint(QPainter::Antialiasing, true);
-        painter->setPen(Qt::NoPen);
-        painter->setBrush(fg);
-        const qreal r = s * 0.12;
-        painter->drawEllipse(c, r, r);
+        // pin: raised disc, sunken while the window is on all desktops
+        const qreal dia = snap(s * 0.42);
+        raisedShape(centered(dia, dia), isChecked() != isPressed(), [](int x, int y, int w, int h) {
+            const qreal cx = x + 0.5 - w / 2.0, cy = y + 0.5 - h / 2.0;
+            return cx * cx + cy * cy <= (w / 2.0) * (h / 2.0);
+        });
         break;
     }
     case DecorationButtonType::ContextHelp: {
+        // raised question mark: the glyph of the bold title font as the shape
         QFont f = d->settings()->font();
         f.setBold(true);
-        painter->setFont(f);
-        painter->setPen(fg);
-        painter->drawText(g, Qt::AlignCenter, QStringLiteral("?"));
+        f.setPixelSize(std::max(8, int(std::lround(s * 0.7 * scale))));
+        const QRectF r = centered(snap(s * 0.6), snap(s * 0.7));
+        raisedMask(r, isPressed(), [&](QPainter *mp, const QRect &box) {
+            mp->setFont(f);
+            mp->setPen(Qt::white);
+            mp->drawText(box, Qt::AlignCenter, QStringLiteral("?"));
+        });
         break;
     }
     case DecorationButtonType::ApplicationMenu: {
-        const qreal w = snap(s * 0.5), y0 = snap(c.y() - s * 0.18);
+        // three small raised bars
+        const qreal w = snap(s * 0.56), bh = std::max<qreal>(snap(3), snap(s * 0.16)), gap = snap(s * 0.08);
+        const qreal top = snap(c.y() - (3 * bh + 2 * gap) / 2);
         for (int i = 0; i < 3; ++i) {
-            painter->fillRect(QRectF(snap(c.x() - w / 2), y0 + i * snap(s * 0.18), w, snap(2)), fg);
+            box(QRectF(snap(c.x() - w / 2), top + i * (bh + gap), w, bh), isPressed());
         }
         break;
     }
     case DecorationButtonType::ExcludeFromCapture: {
-        painter->setRenderHint(QPainter::Antialiasing, true);
-        painter->setPen(QPen(fg, 2));
-        painter->setBrush(Qt::NoBrush);
-        painter->drawEllipse(c, s * 0.2, s * 0.2);
+        // raised ring
+        const qreal dd = snap(s * 0.5);
+        const int ring = std::max(3, int(std::lround(s * 0.16 * scale)));
+        raisedShape(centered(dd, dd), isChecked() != isPressed(), [ring](int x, int y, int w, int h) {
+            const qreal cx = x + 0.5 - w / 2.0, cy = y + 0.5 - h / 2.0;
+            const qreal r2 = cx * cx + cy * cy, ro = w / 2.0, ri = std::max(0.0, ro - ring);
+            Q_UNUSED(h)
+            return r2 <= ro * ro && r2 >= ri * ri;
+        });
         break;
     }
     default:

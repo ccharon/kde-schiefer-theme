@@ -45,6 +45,7 @@ struct Fixture {
         settings = std::make_shared<KDecoration3::DecorationSettings>(&bridge);
         ms = bridge.lastCreatedSettings();
         ms->setLargeSpacing(largeSpacing);
+        ms->setOnAllDesktopsAvailabe(true);
         auto factory = KPluginFactory::loadFactory(KPluginMetaData(s_plugin)).plugin;
         Q_ASSERT(factory);
         deco = factory->create<KDecoration3::Decoration>(nullptr, QVariantList({QVariantMap({{QStringLiteral("bridge"), QVariant::fromValue(&bridge)}})}));
@@ -56,6 +57,8 @@ struct Fixture {
         win->setCloseable(true);
         win->setMinimizable(true);
         win->setMaximizable(true);
+        win->setProvidesContextHelp(true);
+        win->setShadeable(true);
         // same order as KWin (decorations/decorationbridge.cpp: create, setSettings, init)
         deco->create();
         deco->setSettings(settings);
