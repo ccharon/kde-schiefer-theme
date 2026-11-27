@@ -126,7 +126,7 @@ PlasmoidItem {
 
         Etch {}
 
-        // ---------- links: Schloss ----------
+        // ---------- left: lock ----------
         ColumnLayout {
             visible: root.cfg.showLockButton
             Layout.fillHeight: true

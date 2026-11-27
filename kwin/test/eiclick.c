@@ -1,4 +1,4 @@
-// eiclick FD X Y BUTTON(evdev: 272 links, 273 rechts, 274 mitte) HOLD_SECONDS
+// eiclick FD X Y BUTTON(evdev: 272 left, 273 right, 274 middle) HOLD_SECONDS
 #include <libei.h>
 #include <stdio.h>
 #include <stdlib.h>

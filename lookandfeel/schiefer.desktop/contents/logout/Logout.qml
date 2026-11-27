@@ -103,7 +103,7 @@ Item {
             RowLayout {
                 spacing: pal.u
                 Layout.fillWidth: true
-                // Motif-Dialogsymbol links
+                // Motif dialog symbol on the left
                 Kirigami.Icon {
                     source: sdtype === ShutdownType.ShutdownTypeReboot ? "system-reboot"
                           : sdtype === ShutdownType.ShutdownTypeHalt ? "system-shutdown"

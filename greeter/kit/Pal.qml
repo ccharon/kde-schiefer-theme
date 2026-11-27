@@ -18,7 +18,7 @@ QtObject {
     property color panel: "#969eb8"       // Frontpanel (Farbsatz 8)
     property color panelText: "#000000"
     property color alert: "#a02828"
-    property color lamp: "#e0a030"        // Startlampe wie am Dock
+    property color lamp: "#e0a030"        // launch lamp as on the dock
     // Font: the system font (lock/logout: Kirigami, SDDM: sddm.conf, often only 8 pt there),
     // at least 10 pt; fontPoints > 0 fixes the size (SDDM: theme.conf).
     property font baseFont: Qt.application.font

@@ -8,7 +8,7 @@
 
 #include "breeze.h"
 #include "breezepropertynames.h"
-#include "breezestyleconfigdata.h" // Schiefer: Schalter RadioDiamond
+#include "breezestyleconfigdata.h" // Schiefer: option RadioDiamond
 #include "schiefercolors.h" // Schiefer: Motif-Farbkern
 
 #include <KColorScheme>
@@ -76,10 +76,10 @@ void fillBevel(QPainter *painter, const QRect &rect, const QColor &hi, const QCo
         if (w <= 0 || h <= 0) {
             break;
         }
-        painter->fillRect(QRect(x, y, w, 1), hi); // oben
-        painter->fillRect(QRect(x, y, 1, h), hi); // links
-        painter->fillRect(QRect(x + 1, y + h - 1, w - 1, 1), lo); // unten
-        painter->fillRect(QRect(x + w - 1, y + 1, 1, h - 1), lo); // rechts
+        painter->fillRect(QRect(x, y, w, 1), hi); // top
+        painter->fillRect(QRect(x, y, 1, h), hi); // left
+        painter->fillRect(QRect(x + 1, y + h - 1, w - 1, 1), lo); // bottom
+        painter->fillRect(QRect(x + w - 1, y + 1, 1, h - 1), lo); // right
     }
 }
 }
@@ -1013,7 +1013,7 @@ void Helper::renderRadioButtonBackground(QPainter *painter,
                                          bool sunken,
                                          qreal animation) const
 {
-    // Schiefer: Motif/CDE-Raute (Schalter [Style] RadioDiamond)
+    // Schiefer: Motif/CDE diamond (option [Style] RadioDiamond)
     if (StyleConfigData::radioDiamond()) {
         const QColor base = palette.color(QPalette::Window);
         // checked (also from halfway through a toggle animation): Motif selectColor

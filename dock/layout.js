@@ -113,7 +113,7 @@ restore(box.addWidget("org.kde.schiefer.iconbox"));
 // hidden in the same panel and hosts the entries
 var tiles = new Panel;
 tiles.location = "right";
-tiles.height = Math.round(gridUnit * 3.4);   // 61 px bei 18 px Rastereinheit
+tiles.height = Math.round(gridUnit * 3.4);   // 61 px at an 18 px grid unit
 tiles.floating = false;
 tiles.alignment = "left";
 tiles.lengthMode = "fit";

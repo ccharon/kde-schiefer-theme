@@ -13,7 +13,7 @@ import org.kde.taskmanager as TaskManager
 Column {
     id: section
 
-    required property var box            // PlasmoidItem der Icon Box
+    required property var box            // PlasmoidItem of the icon box
     required property string desktopId
     property string headerText
     property color headerColor: Kirigami.Theme.backgroundColor

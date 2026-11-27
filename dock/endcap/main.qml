@@ -16,7 +16,7 @@ PlasmoidItem {
 
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
     readonly property bool rightSide: Plasmoid.configuration.side === "right"
-    // wie org.kde.schiefer.drawer
+    // same as org.kde.schiefer.drawer
     readonly property int tabSize: Math.max(10, Math.round(Kirigami.Units.gridUnit * 0.7))
     readonly property int pad: Kirigami.Units.smallSpacing
     readonly property int thickness: Math.max(12, Kirigami.Units.gridUnit)

@@ -77,7 +77,7 @@ Item {
                         visible: row.sel
                         base: menu.pal.bg
                     }
-                    // Raute (XmONE_OF_MANY_DIAMOND)
+                    // diamond (XmONE_OF_MANY_DIAMOND)
                     Item {
                         visible: row.modelData.type === "radio"
                         width: Math.round(menu.pal.u * 0.7); height: width
