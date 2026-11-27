@@ -33,7 +33,7 @@ SchieferScheme::SchieferScheme(QObject *parent)
     m_watcher = KConfigWatcher::create(cfg);
     connect(m_watcher.data(), &KConfigWatcher::configChanged, this, [this](const KConfigGroup &group, const QByteArrayList &) {
         const QString n = group.name();
-        if (n == QLatin1String("General") || n == QLatin1String("Schiefer")) {
+        if (n == QLatin1String("General") || n == QLatin1String("Schiefer") || n == QLatin1String("WM")) {
             scheduleReload();
         }
     });
@@ -141,6 +141,10 @@ void SchieferScheme::reload()
     const bool panelEnabled = dock.readEntry("FrontPanelColor", true);
     const int tabRaise = std::clamp(dock.readEntry("TabRaise", 3), 0, 16);
     const bool ledge = dock.readEntry("Ledge", true);
+    // KDE writes the scheme's [WM] group into kdeglobals
+    const KConfigGroup wm = globals->group(QStringLiteral("WM"));
+    const QColor activeTitle = wm.readEntry("activeBackground", QColor());
+    const QColor activeTitleText = wm.readEntry("activeForeground", QColor());
 
     // watch the file (an atomic rewrite removes the watch, so add it again every time)
     if (!m_files.files().isEmpty()) {
@@ -159,7 +163,9 @@ void SchieferScheme::reload()
     }
 
     if (name != m_name || file != m_file || colors != m_desktopColors || panel != m_frontPanel || panelEnabled != m_panelEnabled
-        || tabRaise != m_tabRaise || ledge != m_ledge) {
+        || tabRaise != m_tabRaise || ledge != m_ledge || activeTitle != m_activeTitle || activeTitleText != m_activeTitleText) {
+        m_activeTitle = activeTitle;
+        m_activeTitleText = activeTitleText;
         m_panelEnabled = panelEnabled;
         m_tabRaise = tabRaise;
         m_ledge = ledge;

@@ -1,5 +1,10 @@
 /*
- * Content of the open drawer: title, drop field, launcher list
+ * Content of the open drawer, laid out like a CDE subpanel (dtwm UI.c, CreateSubpanel):
+ * thin raised window frame, dtwm title bar with window menu button in the active title
+ * color, drop field ("Install Icon") with an etched separator below it, then flat entries.
+ * Entries have no bevel of their own: hover shows the 1 px focus frame in the active title
+ * color, pressing sinks the entry. Spacing 5 px as in the subpanel form.
+ * The dialog has no Plasma background; the frame is drawn here.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -21,11 +26,16 @@ Item {
     required property var helper
 
     readonly property int rowHeight: Kirigami.Units.iconSizes.medium + 2 * Kirigami.Units.smallSpacing + 4
+    // outer frame 1 px, form bevel 1 px, then the 5 px offset of the subpanel form
+    readonly property int frameWidth: 1
+    readonly property int bodyPad: 5
+    readonly property color titleColor: Scheme.activeTitle.valid ? Scheme.activeTitle : Kirigami.Theme.highlightColor
+    readonly property color titleTextColor: Scheme.activeTitleText.valid ? Scheme.activeTitleText : Kirigami.Theme.highlightedTextColor
     readonly property int listWidth: Math.max(Kirigami.Units.gridUnit * (drawer.isSystem ? 15 : 11), maxLabel + Kirigami.Units.iconSizes.medium + 4 * Kirigami.Units.largeSpacing)
     property int maxLabel: 0
 
-    implicitWidth: listWidth
-    implicitHeight: column.implicitHeight
+    implicitWidth: listWidth + 2 * (frameWidth + 1 + bodyPad)
+    implicitHeight: titleBar.height + column.implicitHeight + 2 * frameWidth + 2 * (1 + bodyPad)
     width: implicitWidth
     height: implicitHeight
 
@@ -35,26 +45,91 @@ Item {
     Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
     FrameTint {}
 
-    ColumnLayout {
-        id: column
-        anchors.fill: parent
-        spacing: 2
+    // entry without a bevel of its own: focus frame on hover, sunken while pressed
+    component EntryFrame: Item {
+        property bool hovered: false
+        property bool pressed: false
+        Rectangle {
+            anchors.fill: parent
+            visible: parent.hovered
+            color: "transparent"
+            border.width: 1
+            border.color: content.titleColor
+        }
+        Bevel {
+            anchors.fill: parent
+            anchors.margins: 1
+            visible: parent.pressed
+            sunken: true
+            depth: 1
+            filled: false
+        }
+    }
 
-        // title like the header of a CDE subpanel
+    // thin raised window frame like dtwm around a subpanel
+    Bevel {
+        anchors.fill: parent
+        depth: content.frameWidth
+    }
+
+    // dtwm title bar: window menu button, title
+    Item {
+        id: titleBar
+        x: content.frameWidth
+        y: content.frameWidth
+        width: parent.width - 2 * content.frameWidth
+        height: titleLabel.implicitHeight + 4
+
         Item {
-            Layout.fillWidth: true
-            implicitHeight: titleLabel.implicitHeight + 2 * Kirigami.Units.smallSpacing + 4
-            Bevel { anchors.fill: parent; base: Kirigami.Theme.highlightColor }
+            id: menuButton
+            width: parent.height
+            height: parent.height
+            Bevel {
+                anchors.fill: parent
+                depth: 1
+                sunken: menuMouse.pressed && menuMouse.containsMouse
+                base: content.titleColor
+            }
+            // the bar of the Motif window menu button
+            Bevel {
+                anchors.centerIn: parent
+                width: Math.round(parent.width * 0.55)
+                height: 3
+                depth: 1
+                base: content.titleColor
+            }
+            MouseArea {
+                id: menuMouse
+                anchors.fill: parent
+                onClicked: content.drawer.closeDrawer()
+            }
+        }
+        Item {
+            anchors { left: menuButton.right; right: parent.right; top: parent.top; bottom: parent.bottom }
+            Bevel { anchors.fill: parent; depth: 1; base: content.titleColor }
             PlasmaComponents3.Label {
                 id: titleLabel
                 anchors.centerIn: parent
-                width: parent.width - 2 * Kirigami.Units.largeSpacing
+                width: parent.width - 2 * Kirigami.Units.smallSpacing
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 text: content.drawer.drawerTitle
-                color: Kirigami.Theme.highlightedTextColor
+                color: content.titleTextColor
             }
         }
+    }
+
+    // subpanel form
+    Bevel {
+        id: body
+        anchors { left: parent.left; right: parent.right; top: titleBar.bottom; bottom: parent.bottom; margins: content.frameWidth; topMargin: 0 }
+        depth: 1
+    }
+
+    ColumnLayout {
+        id: column
+        anchors { fill: body; margins: 1 + content.bodyPad }
+        spacing: 3
 
         // system drawer: system tray entries
         Repeater {
@@ -66,10 +141,10 @@ Item {
                 Layout.fillWidth: true
                 implicitHeight: content.rowHeight
 
-                Bevel {
+                EntryFrame {
                     anchors.fill: parent
-                    sunken: (trayMouse.pressed && trayMouse.containsMouse) || trayIcon.expanded
-                    base: trayMouse.containsMouse ? Scheme.hoverColor(Kirigami.Theme.backgroundColor) : Kirigami.Theme.backgroundColor
+                    hovered: trayMouse.containsMouse
+                    pressed: (trayMouse.pressed && trayMouse.containsMouse) || trayIcon.expanded
                 }
                 RowLayout {
                     anchors.fill: parent
@@ -122,10 +197,10 @@ Item {
             Layout.fillWidth: true
             visible: content.drawer.isSystem
             implicitHeight: content.rowHeight
-            Bevel {
+            EntryFrame {
                 anchors.fill: parent
-                sunken: cfgMouse.pressed && cfgMouse.containsMouse
-                base: cfgMouse.containsMouse ? Scheme.hoverColor(Kirigami.Theme.backgroundColor) : Kirigami.Theme.backgroundColor
+                hovered: cfgMouse.containsMouse
+                pressed: cfgMouse.pressed && cfgMouse.containsMouse
             }
             RowLayout {
                 anchors.fill: parent
@@ -161,7 +236,7 @@ Item {
             Layout.fillWidth: true
             readonly property int maxRows: Math.max(4, Math.floor((Screen.height * 0.6) / (content.rowHeight + spacing)))
             Layout.preferredHeight: visible ? Math.min(count, maxRows) * (content.rowHeight + spacing) - (count ? spacing : 0) : 0
-            spacing: 2
+            spacing: 3
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             model: content.drawer.isFolder ? content.drawer.folder : null
@@ -176,10 +251,10 @@ Item {
                 width: folderList.width - (folderList.count > folderList.maxRows ? Kirigami.Units.gridUnit : 0)
                 height: content.rowHeight
 
-                Bevel {
+                EntryFrame {
                     anchors.fill: parent
-                    sunken: fileMouse.pressed && fileMouse.containsMouse
-                    base: fileMouse.containsMouse ? Scheme.hoverColor(Kirigami.Theme.backgroundColor) : Kirigami.Theme.backgroundColor
+                    hovered: fileMouse.containsMouse
+                    pressed: fileMouse.pressed && fileMouse.containsMouse
                 }
                 RowLayout {
                     anchors.fill: parent
@@ -232,26 +307,32 @@ Item {
             visible: !content.drawer.isSystem && !content.drawer.isFolder
             Layout.fillWidth: true
             implicitHeight: content.rowHeight
-            Bevel { anchors.fill: parent; sunken: true; filled: dropZone.containsDrag; fill: Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(1, 1, 1, 0.25)) }
+            EntryFrame {
+                anchors.fill: parent
+                hovered: dropMouse.containsMouse
+                pressed: dropMouse.pressed && dropMouse.containsMouse
+            }
             RowLayout {
                 anchors.fill: parent
                 anchors.margins: Kirigami.Units.smallSpacing + 2
                 spacing: Kirigami.Units.largeSpacing
-                Kirigami.Icon {
+                // empty sunken well in place of an icon, lighter while something is dragged over it
+                Bevel {
                     Layout.preferredWidth: Kirigami.Units.iconSizes.medium
                     Layout.preferredHeight: Kirigami.Units.iconSizes.medium
-                    source: "list-add"
-                    opacity: 0.6
+                    sunken: true
+                    fill: dropZone.containsDrag ? Qt.tint(base, Qt.rgba(1, 1, 1, 0.35)) : Qt.tint(base, Qt.rgba(1, 1, 1, 0.12))
                 }
                 PlasmaComponents3.Label {
                     Layout.fillWidth: true
                     text: i18n("Drop an icon here")
-                    opacity: 0.7
                     elide: Text.ElideRight
                 }
             }
             MouseArea {
+                id: dropMouse
                 anchors.fill: parent
+                hoverEnabled: true
                 onClicked: content.helper.chooseLauncher("drawer")
             }
             DragAndDrop.DropArea {
@@ -265,6 +346,19 @@ Item {
                     event.mimeData.urls.forEach(u => content.drawer.addToDrawer(u.toString(), -1));
                 }
             }
+        }
+        // etched separator between drop field and entries, reaching to 1 px from the form edge
+        Item {
+            visible: !content.drawer.isSystem && !content.drawer.isFolder
+            Layout.fillWidth: true
+            Layout.leftMargin: 1 - content.bodyPad
+            Layout.rightMargin: 1 - content.bodyPad
+            Layout.topMargin: 2
+            Layout.bottomMargin: 2
+            implicitHeight: 2
+            readonly property var motif: Scheme.motifColors(Kirigami.Theme.backgroundColor)
+            Rectangle { width: parent.width; height: 1; color: parent.motif.bottom }
+            Rectangle { y: 1; width: parent.width; height: 1; color: parent.motif.top }
         }
 
         Repeater {
@@ -281,10 +375,10 @@ Item {
                 Layout.fillWidth: true
                 implicitHeight: content.rowHeight
 
-                Bevel {
+                EntryFrame {
                     anchors.fill: parent
-                    sunken: mouse.pressed && mouse.containsMouse
-                    base: mouse.containsMouse ? Scheme.hoverColor(Kirigami.Theme.backgroundColor) : Kirigami.Theme.backgroundColor
+                    hovered: mouse.containsMouse
+                    pressed: mouse.pressed && mouse.containsMouse
                 }
                 RowLayout {
                     anchors.fill: parent

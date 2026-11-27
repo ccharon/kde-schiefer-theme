@@ -9,6 +9,9 @@
  *    window color stays (Kirigami.Theme.backgroundColor).
  *  - tabRaise / ledge: schieferrc [Dock] TabRaise (pixels the drawer tabs grow upward, default 3)
  *    and Ledge (ledge at the bottom of the front panel, default on).
+ *  - activeTitle / activeTitleText: title bar colors of the active window (kdeglobals [WM]
+ *    activeBackground/activeForeground), for the drawer title and the focus frame like dtwm;
+ *    invalid if the scheme has none.
  *  - hoverColor(): hover tint from the Motif formula, a third of the way to the light edge.
  *  - tintFrames(): tints the Plasma frames (panel background, popup background) in the window
  *    of an item with the front panel color, or resets them.
@@ -43,6 +46,8 @@ class SchieferScheme : public QObject
     Q_PROPERTY(QColor panelColor READ panelColor NOTIFY changed)
     Q_PROPERTY(int tabRaise READ tabRaise NOTIFY changed)
     Q_PROPERTY(bool ledge READ ledge NOTIFY changed)
+    Q_PROPERTY(QColor activeTitle READ activeTitle NOTIFY changed)
+    Q_PROPERTY(QColor activeTitleText READ activeTitleText NOTIFY changed)
 
 public:
     explicit SchieferScheme(QObject *parent = nullptr);
@@ -55,6 +60,8 @@ public:
     QColor panelColor() const { return usePanelColor() ? m_frontPanel : QColor(); }
     int tabRaise() const { return m_tabRaise; }
     bool ledge() const { return m_ledge; }
+    QColor activeTitle() const { return m_activeTitle; }
+    QColor activeTitleText() const { return m_activeTitleText; }
 
     // {top, bottom, select, foreground} for the base color, Motif formula
     Q_INVOKABLE QVariantMap motifColors(const QColor &base) const;
@@ -81,5 +88,7 @@ private:
     bool m_panelEnabled = true;
     int m_tabRaise = 3;
     bool m_ledge = true;
+    QColor m_activeTitle;
+    QColor m_activeTitleText;
     KConfigWatcher::Ptr m_dockWatcher;
 };

@@ -444,16 +444,29 @@ PlasmoidItem {
     signal launchFeedbackRequested()
     Timer { id: launchFeedback; interval: 1; onTriggered: root.launchFeedbackRequested() }
 
+    // Where the drawer opens on a horizontal panel, as in CDE: left edge flush with the tab,
+    // directly on the panel's outer edge. Plasma centers a popup over its visual parent and
+    // puts it against the parent's edge, so this anchor is as wide as the popup and lies on
+    // the panel window's edge (top edge for a bottom panel, bottom edge for a top panel).
+    Item {
+        id: popupAnchor
+        readonly property bool below: Plasmoid.location === PlasmaCore.Types.TopEdge
+        x: tab.x
+        y: below ? row.winSize.height - row.me.y - 1 : -row.me.y
+        width: popup.width
+        height: 1
+    }
+
     PlasmaCore.Dialog {
         id: popup
         type: PlasmaCore.Dialog.PopupMenu
         flags: Qt.WindowStaysOnTopHint
         hideOnWindowDeactivate: true
-        // Floating on horizontal panels: Plasma leaves out the popup border facing the panel
-        // otherwise, and the popup then looks cut off; it sits on the tab, which reaches above the applet
-        location: root.vertical ? Plasmoid.location : PlasmaCore.Types.Floating
-        visualParent: root.vertical ? root : tab
-        backgroundHints: PlasmaCore.Dialog.SolidBackground
+        location: Plasmoid.location
+        visualParent: root.vertical ? root : popupAnchor
+        // DrawerPopup draws the thin dtwm frame itself; a Plasma background would add its
+        // margins and leave out the border facing the panel
+        backgroundHints: PlasmaCore.Dialog.NoBackground
         mainItem: DrawerPopup {
             drawer: root
             helper: helper
