@@ -22,10 +22,10 @@ Run `make_plymouth.py` after changing the template or the colors. Its output in 
 ## How it works
 
 - Plymouth 22 copies neither its label plugin nor fonts into the initramfs, so `Image.Text` is not available
-  during early boot. The script crops glyphs from the atlases instead. The UI scale gives a log line about
-  6 mm on the screen: `schiefer-plymouth-info` reads the screen height in mm from the EDID (built-in panel
-  first) and writes it into the script. Without it the scale follows the pixel height (up to about 1200 px: 1,
-  4K: 2). At least 30 lines of the small font stay on the screen.
+  during early boot. The script crops glyphs from the atlases instead. The UI scale follows the pixel height
+  (below 1550 px: 1, up to 4K: 2). With exactly one connected screen `schiefer-plymouth-info` reads its height
+  in mm from the EDID and writes it into the script; a dense panel (laptop) then goes up until a log line gets
+  about 6 mm. The EDID never lowers the scale, because large monitors are viewed from further away. At least 30 lines of the small font stay on the screen.
 - Plymouth's progress is an estimate from the unit times of the last boot (`/var/lib/plymouth/boot-duration`).
   The dracut module copies that file into the initramfs, otherwise Plymouth assumes 60 s there and slows the bar
   to a crawl at about 27 %. Plymouth writes the file with the locale's decimal separator (`0,159` in German),
