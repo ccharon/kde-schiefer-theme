@@ -5,6 +5,7 @@
 
 SCHIEFER_INFO=/usr/libexec/schiefer/schiefer-plymouth-info
 SCHIEFER_SCRIPT=/var/lib/schiefer/plymouth/schiefer.script
+PLYMOUTH_BOOT_DURATION=/var/lib/plymouth/boot-duration
 
 check() {
     [[ -x "${dracutsysrootdir-}$SCHIEFER_INFO" ]] || return 1
@@ -24,4 +25,8 @@ install() {
         dwarn "schiefer-plymouth: could not write $SCHIEFER_SCRIPT"
     fi
     inst_simple "$SCHIEFER_SCRIPT"
+    # Plymouth's progress estimate: without the times of the last boot it assumes 60 s and slows the
+    # bar to a crawl at about 27 %. dracut's plymouth module leaves the file out, so the whole
+    # initramfs part of the boot would run without it.
+    [[ -r "${dracutsysrootdir-}$PLYMOUTH_BOOT_DURATION" ]] && inst_simple "$PLYMOUTH_BOOT_DURATION"
 }

@@ -5,7 +5,7 @@
 
 Plymouth 22 cannot draw text inside the initramfs (the label plugin and the fonts are not copied
 there), so the text comes from glyph atlases rendered here: Noto Sans Mono for the log and Noto Sans
-Bold for the host name, each in three sizes for UI scale 1, 2 and 3. The script crops single glyphs
+Bold for the host name, each in five sizes for UI scale 1, 1.5, 2, 2.5 and 3. The script crops single glyphs
 from the atlas. The machine details are filled in later by schiefer-plymouth-info (see README).
 """
 import os
@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.join(ROOT, "common"))
 import schiefercolors as sc  # noqa: E402
 
 FONT_DIRS = ["/usr/share/fonts/noto", "/usr/share/fonts/google-noto", "/usr/share/fonts/truetype/noto"]
-SCALES = (1, 2, 3)
+SCALES = (1, 1.5, 2, 2.5, 3)   # file suffix "%g"; the script takes it from a string table
 MONO_PX = 14          # log and header lines at scale 1
 HOST_PX = 26          # host name at scale 1
 EMBLEM_PX = 64        # emblem tile at scale 1
@@ -86,9 +86,9 @@ def script_string(s):
 
 def render_emblems():
     for k in SCALES:
-        out = os.path.join(OUT, f"emblem-{k}.png")
+        out = os.path.join(OUT, f"emblem-{k:g}.png")
         r = subprocess.run(["qml6", "-platform", "offscreen", os.path.join(HERE, "render_emblem.qml"),
-                            "--", out, str(EMBLEM_PX * k)], capture_output=True, text=True, timeout=60)
+                            "--", out, str(round(EMBLEM_PX * k))], capture_output=True, text=True, timeout=60)
         if r.returncode != 0 or not os.path.exists(out):
             sys.exit(f"emblem rendering failed: {r.stderr}")
 
@@ -101,9 +101,9 @@ def main():
     tables = []
     for k in SCALES:
         for name, ttf, px, color, is_mono in (
-                (f"mono-lit-{k}", mono, MONO_PX * k, LIT, True),
-                (f"mono-dark-{k}", mono, MONO_PX * k, BLACK, True),
-                (f"host-{k}", bold, HOST_PX * k, BLACK, False)):
+                (f"mono-lit-{k:g}", mono, round(MONO_PX * k), LIT, True),
+                (f"mono-dark-{k:g}", mono, round(MONO_PX * k), BLACK, True),
+                (f"host-{k:g}", bold, round(HOST_PX * k), BLACK, False)):
             xs, ws, advs, h = atlas(name, ttf, px, color, is_mono)
             tables.append(f'MakeFont({script_string(name)}, {h}, '
                           f'[{", ".join(map(str, xs))}], [{", ".join(map(str, ws))}], '
@@ -124,6 +124,8 @@ def main():
         code = f.read()
     code = (code.replace("@CHARS@", chars)
                 .replace("@FONTS@", "\n".join(tables))
+                .replace("@SCALES@", ", ".join(f"{k:g}" for k in SCALES))
+                .replace("@SCALE_NAMES@", ", ".join(script_string(f"{k:g}") for k in SCALES))
                 .replace("@SCREEN@", ", ".join("%.4f" % (c / 255) for c in SCREEN))
                 .replace("@EMBLEM_PX@", str(EMBLEM_PX)))
     with open(os.path.join(OUT, "schiefer.script.in"), "w") as f:

@@ -1,18 +1,21 @@
 #!/bin/bash
 # Writes the Schiefer boot screen script with the details of this machine (host name, system,
 # kernel, machine, CPU, memory, boot device). Plymouth cannot read them itself at boot time.
-#   schiefer-plymouth-info [--kernel VERSION] [--template FILE] [--out FILE]
+#   schiefer-plymouth-info [--kernel VERSION] [--template FILE] [--out FILE] [--screen-mm MM]
+# --screen-mm: screen height in mm for the UI scale (default: from the EDID, 0 = by pixel height)
 # Called by the dracut module 90schiefer-plymouth for every initramfs build.
 set -u
 TEMPLATE=/usr/share/plymouth/themes/schiefer/schiefer.script.in
 OUT=/var/lib/schiefer/plymouth/schiefer.script
 KERNEL="$(uname -r)"
+SCREEN_MM=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --kernel) KERNEL="$2"; shift 2 ;;
         --template) TEMPLATE="$2"; shift 2 ;;
         --out) OUT="$2"; shift 2 ;;
-        *) echo "usage: $0 [--kernel VERSION] [--template FILE] [--out FILE]" >&2; exit 2 ;;
+        --screen-mm) SCREEN_MM="$2"; shift 2 ;;
+        *) echo "usage: $0 [--kernel VERSION] [--template FILE] [--out FILE] [--screen-mm MM]" >&2; exit 2 ;;
     esac
 done
 
@@ -55,6 +58,28 @@ if [ "${root#zfs}" != "$root" ] && command -v zpool >/dev/null; then
     [ -n "$bootfs" ] && root="zfs:$bootfs"
 fi
 
+# height of the screen in mm from the EDID: the built-in panel first, else the first connected screen.
+# The first detailed timing descriptor has it in mm, the basic block only in cm (0 for projectors).
+edid_mm() {
+    local b
+    b=($(od -An -tu1 -v -N 128 "$1" 2>/dev/null)) || return 1
+    [ "${#b[@]}" -eq 128 ] && [ "${b[0]}" -eq 0 ] && [ "${b[1]}" -eq 255 ] || return 1
+    if [ $((b[54] + b[55])) -gt 0 ]; then
+        echo $(( ((b[68] & 15) << 8) + b[67] ))
+    else
+        echo $(( b[22] * 10 ))
+    fi
+}
+if [ -z "$SCREEN_MM" ]; then
+    SCREEN_MM=0
+    for c in /sys/class/drm/card*-eDP-* /sys/class/drm/card*-LVDS-* /sys/class/drm/card*-DSI-* /sys/class/drm/card*-*; do
+        [ "$(cat "$c/status" 2>/dev/null)" = connected ] || continue
+        mm="$(edid_mm "$c/edid")" || continue
+        [ "$mm" -ge 50 ] && [ "$mm" -le 2000 ] && { SCREEN_MM="$mm"; break; }
+    done
+fi
+case "$SCREEN_MM" in ""|*[!0-9]*) SCREEN_MM=0 ;; esac
+
 [ -r "$TEMPLATE" ] || { echo "$0: template $TEMPLATE missing" >&2; exit 1; }
 mkdir -p "$(dirname "$OUT")" || exit 1
 tmp="$(mktemp "$OUT.XXXXXX")" || exit 1
@@ -67,6 +92,7 @@ tmp="$(mktemp "$OUT.XXXXXX")" || exit 1
     printf 'mem = "%s";\n' "$(printf %s "$mem" | clean)"
     printf 'root = "%s";\n' "$(printf %s "${root:-?}" | clean)"
     printf 'lang = "%s";\n' "$lang"
+    printf 'screen_mm = %d;\n' "$SCREEN_MM"
 } > "$tmp.info"
 sed -e "/^#@INFO@\$/{r $tmp.info" -e 'd}' "$TEMPLATE" > "$tmp" && chmod 644 "$tmp" && mv "$tmp" "$OUT"
 rc=$?
