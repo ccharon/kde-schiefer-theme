@@ -84,7 +84,7 @@ X0 = Window.GetX();
 Y0 = Window.GetY();
 # UI scale, one of the atlas sizes. With the screen height in mm (screen_mm, from the EDID, written by
 # schiefer-plymouth-info) a log line gets about LINE_MM, otherwise the scale follows the pixel height
-# (1 up to about 1200 px, 2 for 4K). At least MIN_ROWS lines of the small font fit on the screen.
+# (1 below 1550 px, 2 up to 4K). At least MIN_ROWS lines of the small font fit on the screen.
 # The names come from a table: Plymouth prints numbers with %g of the current locale ("1,5").
 Scales = [1, 1.5, 2, 2.5, 3];
 ScaleNames = ["1", "1.5", "2", "2.5", "3"];
@@ -92,7 +92,7 @@ LINE_MM = 6;
 MIN_ROWS = 30;
 Line1 = Fonts["mono-lit-1"].h;
 if (screen_mm > 0) Want = H / screen_mm * LINE_MM / Line1;
-else Want = Math.Int(H / 1000 + 0.35);
+else Want = Math.Int(H / 1000 + 0.45);
 Most = H / (MIN_ROWS * Line1);
 K = 1;
 KName = ScaleNames[0];
