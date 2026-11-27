@@ -28,7 +28,9 @@ Run `make_plymouth.py` after changing the template or the colors. Its output in 
   4K: 2). At least 30 lines of the small font stay on the screen.
 - Plymouth's progress is an estimate from the unit times of the last boot (`/var/lib/plymouth/boot-duration`).
   The dracut module copies that file into the initramfs, otherwise Plymouth assumes 60 s there and slows the bar
-  to a crawl at about 27 %. The bar holds while a prompt waits and shows 100 % when Plymouth quits.
+  to a crawl at about 27 %. Plymouth writes the file with the locale's decimal separator (`0,159` in German),
+  but reads it in the initramfs in the C locale and ignores it there, so the copy gets decimal points. The bar
+  holds while a prompt waits and shows 100 % when Plymouth quits.
 - Plymouth cannot read machine details at boot. `schiefer.plymouth` points `ScriptFile` to
   `/var/lib/schiefer/plymouth/schiefer.script`, which `schiefer-plymouth-info` writes at every dracut run
   (and once at installation). The shutdown screen reads the same file from the root file system.

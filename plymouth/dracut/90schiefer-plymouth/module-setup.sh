@@ -28,5 +28,12 @@ install() {
     # Plymouth's progress estimate: without the times of the last boot it assumes 60 s and slows the
     # bar to a crawl at about 27 %. dracut's plymouth module leaves the file out, so the whole
     # initramfs part of the boot would run without it.
-    [[ -r "${dracutsysrootdir-}$PLYMOUTH_BOOT_DURATION" ]] && inst_simple "$PLYMOUTH_BOOT_DURATION"
+    # plymouthd writes the file with the decimal separator of the system locale ("0,159:unit" for
+    # de_DE), but in the initramfs it has no locale data and stays in the C locale, where fscanf
+    # stops at the comma and drops the whole file. The copy in the initramfs gets decimal points.
+    local src="${dracutsysrootdir-}$PLYMOUTH_BOOT_DURATION"
+    if [[ -r "$src" ]]; then
+        inst_dir "${PLYMOUTH_BOOT_DURATION%/*}"
+        LC_ALL=C sed -E 's/^([0-9]+),([0-9]+):/\1.\2:/' "$src" > "${initdir}$PLYMOUTH_BOOT_DURATION"
+    fi
 }
