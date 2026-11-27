@@ -35,11 +35,15 @@ PlasmoidItem {
 
     readonly property bool showTitle: cfg.showTitle
     readonly property int titleHeight: showTitle ? titleLabel.implicitHeight + pad + 4 : 0
+    // dtwm icon box: title bar and well in the inactive frame color (CDE color set 2)
+    readonly property color boxColor: Scheme.inactiveTitle.valid ? Scheme.inactiveTitle : Kirigami.Theme.backgroundColor
+    readonly property color boxTextColor: Scheme.inactiveTitleText.valid ? Scheme.inactiveTitleText : Kirigami.Theme.textColor
 
     // icon view: image size from the column width, cell = image + two text lines
     readonly property int laneWidth: Math.floor((sections.width) / lanes)
     readonly property int iconSize: Math.max(Kirigami.Units.iconSizes.small, Math.min(Kirigami.Units.iconSizes.large, Math.floor(laneWidth * 0.5)))
-    readonly property int cellLength: iconSize + 10 + 2 * pad + 2 * Math.ceil(fontMetrics.height) + 8
+    // tile + 1 px gap + one-line label strip (dtwm icon) + spacing
+    readonly property int cellLength: iconSize + 10 + 2 * pad + Math.ceil(fontMetrics.height) + 4 + 1
     // height of an entry in the list view (WindowRow)
     readonly property int rowHeight: Kirigami.Units.iconSizes.medium + 2 * Kirigami.Units.smallSpacing + 4
 
@@ -221,22 +225,73 @@ PlasmoidItem {
         height: fit.alone ? fit.innerHeight : root.height - 2 * root.pad
     }
 
-    // ---------- Title bar like the header of the mwm icon box window ----------
+    // ---------- Title bar like the dtwm icon box window: window menu button and title field,
+    // in the inactive frame color (the icon box is never the active window in dtwm) ----------
     Item {
         id: title
         visible: root.showTitle
         anchors { left: area.left; right: area.right; top: area.top }
         height: root.titleHeight
-        Bevel { anchors.fill: parent; base: Kirigami.Theme.highlightColor }
-        PlasmaComponents3.Label {
-            id: titleLabel
-            anchors.centerIn: parent
-            width: parent.width - 2 * root.pad
-            horizontalAlignment: Text.AlignHCenter
-            elide: Text.ElideRight
-            text: i18n("Windows")
-            font: Kirigami.Theme.smallFont
-            color: Kirigami.Theme.highlightedTextColor
+        Item {
+            id: boxMenuButton
+            width: parent.height
+            height: parent.height
+            Bevel {
+                anchors.fill: parent
+                depth: 1
+                sunken: boxMenuMouse.pressed || boxMenu.status === PlasmaExtras.Menu.Open
+                base: root.boxColor
+            }
+            // the bar of the Motif window menu button
+            Bevel {
+                anchors.centerIn: parent
+                width: Math.round(parent.width * 0.55)
+                height: 3
+                depth: 1
+                base: root.boxColor
+            }
+            MouseArea {
+                id: boxMenuMouse
+                anchors.fill: parent
+                onPressed: boxMenu.openRelative()
+            }
+            PlasmaExtras.Menu {
+                id: boxMenu
+                visualParent: boxMenuButton
+                placement: root.vertical && Plasmoid.location === PlasmaCore.Types.RightEdge ? PlasmaExtras.Menu.LeftPosedTopAlignedPopup
+                         : root.vertical ? PlasmaExtras.Menu.RightPosedTopAlignedPopup : PlasmaExtras.Menu.TopPosedLeftAlignedPopup
+                PlasmaExtras.MenuItem {
+                    text: root.cfg.display === "icons" ? i18n("Show as List") : i18n("Show as Icons")
+                    icon: root.cfg.display === "icons" ? "view-list-details" : "view-list-icons"
+                    onClicked: Plasmoid.configuration.display = root.cfg.display === "icons" ? "list" : "icons"
+                }
+                PlasmaExtras.MenuItem {
+                    text: i18n("Only the Current Desktop")
+                    checkable: true
+                    checked: root.cfg.onlyCurrentDesktop
+                    onClicked: Plasmoid.configuration.onlyCurrentDesktop = !root.cfg.onlyCurrentDesktop
+                }
+                PlasmaExtras.MenuItem { separator: true }
+                PlasmaExtras.MenuItem {
+                    text: i18n("Configure Icon Box…")
+                    icon: "configure"
+                    onClicked: Plasmoid.internalAction("configure").trigger()
+                }
+            }
+        }
+        Item {
+            anchors { left: boxMenuButton.right; right: parent.right; top: parent.top; bottom: parent.bottom }
+            Bevel { anchors.fill: parent; depth: 1; base: root.boxColor }
+            PlasmaComponents3.Label {
+                id: titleLabel
+                anchors.centerIn: parent
+                width: parent.width - 2 * root.pad
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                text: i18n("Windows")
+                font: Kirigami.Theme.smallFont
+                color: root.boxTextColor
+            }
         }
     }
 
@@ -250,7 +305,9 @@ PlasmoidItem {
         }
         sunken: true
         depth: 1
-        filled: false
+        // dtwm: the icon box well in the inactive frame color
+        base: Kirigami.Theme.backgroundColor
+        fill: root.boxColor
     }
 
     Flickable {

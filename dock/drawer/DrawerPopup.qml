@@ -4,7 +4,8 @@
  * color, drop field ("Install Icon") with an etched separator below it, then flat entries.
  * Entries have no bevel of their own: hover shows the 1 px focus frame in the active title
  * color, pressing sinks the entry. Spacing 5 px as in the subpanel form.
- * The dialog has no Plasma background; the frame is drawn here.
+ * The dialog has no Plasma background; frame, title bar and form come from common/Subpanel.qml,
+ * the entry frame from common/EntryFrame.qml.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 pragma ComponentBehavior: Bound
@@ -13,31 +14,28 @@ import QtQml
 import QtQuick
 import QtQuick.Layouts
 import org.kde.plasma.components as PlasmaComponents3
+import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.extras as PlasmaExtras
 import org.kde.kirigami as Kirigami
 import org.kde.draganddrop as DragAndDrop
 import QtQuick.Controls as QQC2
 import QtQuick.Window
 
-Item {
+Subpanel {
     id: content
 
     required property var drawer
     required property var helper
 
     readonly property int rowHeight: Kirigami.Units.iconSizes.medium + 2 * Kirigami.Units.smallSpacing + 4
-    // outer frame 1 px, form bevel 1 px, then the 5 px offset of the subpanel form
-    readonly property int frameWidth: 1
-    readonly property int bodyPad: 5
-    readonly property color titleColor: Scheme.activeTitle.valid ? Scheme.activeTitle : Kirigami.Theme.highlightColor
-    readonly property color titleTextColor: Scheme.activeTitleText.valid ? Scheme.activeTitleText : Kirigami.Theme.highlightedTextColor
     readonly property int listWidth: Math.max(Kirigami.Units.gridUnit * (drawer.isSystem ? 15 : 11), maxLabel + Kirigami.Units.iconSizes.medium + 4 * Kirigami.Units.largeSpacing)
     property int maxLabel: 0
 
-    implicitWidth: listWidth + 2 * (frameWidth + 1 + bodyPad)
-    implicitHeight: titleBar.height + column.implicitHeight + 2 * frameWidth + 2 * (1 + bodyPad)
-    width: implicitWidth
-    height: implicitHeight
+    // frame, dtwm title bar and form: common/Subpanel.qml
+    title: drawer.drawerTitle
+    contentWidth: listWidth
+    contentHeight: column.implicitHeight
+    onCloseRequested: drawer.closeDrawer()
 
     Keys.onEscapePressed: content.Window.window.visible = false
     // popup in the front panel color like CDE drawers (option frontpanel-color)
@@ -45,90 +43,9 @@ Item {
     Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
     FrameTint {}
 
-    // entry without a bevel of its own: focus frame on hover, sunken while pressed
-    component EntryFrame: Item {
-        property bool hovered: false
-        property bool pressed: false
-        Rectangle {
-            anchors.fill: parent
-            visible: parent.hovered
-            color: "transparent"
-            border.width: 1
-            border.color: content.titleColor
-        }
-        Bevel {
-            anchors.fill: parent
-            anchors.margins: 1
-            visible: parent.pressed
-            sunken: true
-            depth: 1
-            filled: false
-        }
-    }
-
-    // thin raised window frame like dtwm around a subpanel
-    Bevel {
-        anchors.fill: parent
-        depth: content.frameWidth
-    }
-
-    // dtwm title bar: window menu button, title
-    Item {
-        id: titleBar
-        x: content.frameWidth
-        y: content.frameWidth
-        width: parent.width - 2 * content.frameWidth
-        height: titleLabel.implicitHeight + 4
-
-        Item {
-            id: menuButton
-            width: parent.height
-            height: parent.height
-            Bevel {
-                anchors.fill: parent
-                depth: 1
-                sunken: menuMouse.pressed && menuMouse.containsMouse
-                base: content.titleColor
-            }
-            // the bar of the Motif window menu button
-            Bevel {
-                anchors.centerIn: parent
-                width: Math.round(parent.width * 0.55)
-                height: 3
-                depth: 1
-                base: content.titleColor
-            }
-            MouseArea {
-                id: menuMouse
-                anchors.fill: parent
-                onClicked: content.drawer.closeDrawer()
-            }
-        }
-        Item {
-            anchors { left: menuButton.right; right: parent.right; top: parent.top; bottom: parent.bottom }
-            Bevel { anchors.fill: parent; depth: 1; base: content.titleColor }
-            PlasmaComponents3.Label {
-                id: titleLabel
-                anchors.centerIn: parent
-                width: parent.width - 2 * Kirigami.Units.smallSpacing
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                text: content.drawer.drawerTitle
-                color: content.titleTextColor
-            }
-        }
-    }
-
-    // subpanel form
-    Bevel {
-        id: body
-        anchors { left: parent.left; right: parent.right; top: titleBar.bottom; bottom: parent.bottom; margins: content.frameWidth; topMargin: 0 }
-        depth: 1
-    }
-
     ColumnLayout {
         id: column
-        anchors { fill: body; margins: 1 + content.bodyPad }
+        anchors.fill: parent
         spacing: 3
 
         // system drawer: system tray entries
@@ -145,6 +62,13 @@ Item {
                     anchors.fill: parent
                     hovered: trayMouse.containsMouse
                     pressed: (trayMouse.pressed && trayMouse.containsMouse) || trayIcon.expanded
+                }
+                // CDE indicator lamp of a monitored control: lit while the entry wants attention
+                Lamp {
+                    x: 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: Math.round(parent.height * 0.5)
+                    on: trayRow.model.effectiveStatus === PlasmaCore.Types.NeedsAttentionStatus
                 }
                 RowLayout {
                     anchors.fill: parent

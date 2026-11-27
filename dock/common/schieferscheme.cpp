@@ -145,6 +145,8 @@ void SchieferScheme::reload()
     const KConfigGroup wm = globals->group(QStringLiteral("WM"));
     const QColor activeTitle = wm.readEntry("activeBackground", QColor());
     const QColor activeTitleText = wm.readEntry("activeForeground", QColor());
+    const QColor inactiveTitle = wm.readEntry("inactiveBackground", QColor());
+    const QColor inactiveTitleText = wm.readEntry("inactiveForeground", QColor());
 
     // watch the file (an atomic rewrite removes the watch, so add it again every time)
     if (!m_files.files().isEmpty()) {
@@ -163,7 +165,10 @@ void SchieferScheme::reload()
     }
 
     if (name != m_name || file != m_file || colors != m_desktopColors || panel != m_frontPanel || panelEnabled != m_panelEnabled
-        || tabRaise != m_tabRaise || ledge != m_ledge || activeTitle != m_activeTitle || activeTitleText != m_activeTitleText) {
+        || tabRaise != m_tabRaise || ledge != m_ledge || activeTitle != m_activeTitle || activeTitleText != m_activeTitleText
+        || inactiveTitle != m_inactiveTitle || inactiveTitleText != m_inactiveTitleText) {
+        m_inactiveTitle = inactiveTitle;
+        m_inactiveTitleText = inactiveTitleText;
         m_activeTitle = activeTitle;
         m_activeTitleText = activeTitleText;
         m_panelEnabled = panelEnabled;

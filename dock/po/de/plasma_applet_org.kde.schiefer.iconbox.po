@@ -118,3 +118,15 @@ msgstr "Papierkorb"
 
 msgid "Order of the applications. Windows of one application always stay together in the order they were opened. With \"Most recently used first\" the order changes only after the mouse leaves the box."
 msgstr "Reihenfolge der Programme. Fenster eines Programms stehen immer zusammen, in der Reihenfolge, in der sie geöffnet wurden. Bei „Zuletzt benutzt zuerst“ ändert sich die Reihenfolge erst, wenn die Maus die Box verlässt."
+
+msgid "Show as List"
+msgstr "Als Liste anzeigen"
+
+msgid "Show as Icons"
+msgstr "Als Symbole anzeigen"
+
+msgid "Only the Current Desktop"
+msgstr "Nur die aktuelle Arbeitsfläche"
+
+msgid "Configure Icon Box…"
+msgstr "Icon-Box einrichten …"

@@ -12,6 +12,8 @@
  *  - activeTitle / activeTitleText: title bar colors of the active window (kdeglobals [WM]
  *    activeBackground/activeForeground), for the drawer title and the focus frame like dtwm;
  *    invalid if the scheme has none.
+ *  - inactiveTitle / inactiveTitleText: the same for inactive windows (CDE color set 2), for the
+ *    icon box (title, well and icon labels as in dtwm).
  *  - hoverColor(): hover tint from the Motif formula, a third of the way to the light edge.
  *  - tintFrames(): tints the Plasma frames (panel background, popup background) in the window
  *    of an item with the front panel color, or resets them.
@@ -48,6 +50,8 @@ class SchieferScheme : public QObject
     Q_PROPERTY(bool ledge READ ledge NOTIFY changed)
     Q_PROPERTY(QColor activeTitle READ activeTitle NOTIFY changed)
     Q_PROPERTY(QColor activeTitleText READ activeTitleText NOTIFY changed)
+    Q_PROPERTY(QColor inactiveTitle READ inactiveTitle NOTIFY changed)
+    Q_PROPERTY(QColor inactiveTitleText READ inactiveTitleText NOTIFY changed)
 
 public:
     explicit SchieferScheme(QObject *parent = nullptr);
@@ -62,6 +66,8 @@ public:
     bool ledge() const { return m_ledge; }
     QColor activeTitle() const { return m_activeTitle; }
     QColor activeTitleText() const { return m_activeTitleText; }
+    QColor inactiveTitle() const { return m_inactiveTitle; }
+    QColor inactiveTitleText() const { return m_inactiveTitleText; }
 
     // {top, bottom, select, foreground} for the base color, Motif formula
     Q_INVOKABLE QVariantMap motifColors(const QColor &base) const;
@@ -90,5 +96,7 @@ private:
     bool m_ledge = true;
     QColor m_activeTitle;
     QColor m_activeTitleText;
+    QColor m_inactiveTitle;
+    QColor m_inactiveTitleText;
     KConfigWatcher::Ptr m_dockWatcher;
 };

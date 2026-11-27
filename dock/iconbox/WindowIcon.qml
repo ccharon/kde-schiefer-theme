@@ -1,7 +1,10 @@
 /*
- * An icon box entry in the icon view (mwm): image in a frame, label below.
- * State through the relief as in the list view: open = raised, active = pressed in
- * + highlighted label, minimized = flat + italic, attention = orange.
+ * An icon box entry in the icon view, drawn like a dtwm icon (WmIDecor.c): the image on its
+ * own raised tile, below it a raised label strip as wide as the tile in the inactive frame
+ * color, the name cut to the strip. The active window's label and the one under the mouse
+ * widen to the full name in the active frame color, as dtwm does for the active icon.
+ * State through the relief: open = raised, active = pressed in, minimized = flat tile + italic
+ * name, attention = orange.
  * Groups carry a count badge; a click brings the most recently used window forward, or opens
  * the windows to the side when the application is already active.
  * SPDX-License-Identifier: GPL-2.0-or-later
@@ -33,6 +36,9 @@ Item {
     readonly property color base: attention ? Qt.tint(Kirigami.Theme.backgroundColor, Qt.rgba(0.85, 0.6, 0.2, 0.45))
                                             : Kirigami.Theme.backgroundColor
     readonly property string title: isGroup ? (model?.AppName || model?.display || "") : (model?.display ?? "")
+    // label strip open to the full name (dtwm active icon label)
+    readonly property bool labelOpen: active || mouse.containsMouse
+    z: labelOpen ? 1 : 0
 
     // ---------- Frame with image ----------
     Item {
@@ -46,7 +52,7 @@ Item {
         Bevel {
             anchors.fill: parent
             visible: !win.minimized || win.sunken || mouse.containsMouse
-            depth: win.minimized && !win.sunken ? 1 : 2
+            depth: 1
             sunken: win.sunken
             base: win.base
             fill: mouse.containsMouse ? Scheme.hoverColor(base) : base
@@ -86,30 +92,43 @@ Item {
         }
     }
 
-    // ---------- Label ----------
-    Rectangle {
+    // ---------- Label strip ----------
+    Item {
+        id: strip
+        readonly property color stripColor: win.labelOpen ? (Scheme.activeTitle.valid ? Scheme.activeTitle : Kirigami.Theme.highlightColor)
+                                                          : win.box.boxColor
+        readonly property color stripText: win.labelOpen ? (Scheme.activeTitleText.valid ? Scheme.activeTitleText : Kirigami.Theme.highlightedTextColor)
+                                                         : win.box.boxTextColor
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: iconFrame.bottom
-        anchors.topMargin: 2
-        width: Math.min(parent.width - 4, label.implicitWidth + 6)
-        height: label.height + 2
-        color: win.active ? Kirigami.Theme.highlightColor : "transparent"
+        anchors.topMargin: 1
+        // tile width; open: as wide as the name needs, at most the whole cell
+        width: win.labelOpen ? Math.min(win.width, Math.max(iconFrame.width, label.implicitWidth + 6)) : iconFrame.width
+        height: label.implicitHeight + 4
+        Bevel {
+            anchors.fill: parent
+            depth: 1
+            base: strip.stripColor
+        }
         PlasmaComponents3.Label {
             id: label
-            anchors.centerIn: parent
-            width: win.width - 10
-            horizontalAlignment: Text.AlignHCenter
+            anchors.fill: parent
+            anchors.leftMargin: 3
+            anchors.rightMargin: 3
+            verticalAlignment: Text.AlignVCenter
+            // dtwm cuts the name at the strip edge; open, it is centered and elided only if the
+            // cell is too narrow
+            horizontalAlignment: win.labelOpen ? Text.AlignHCenter : Text.AlignLeft
+            clip: true
             text: win.title
             textFormat: Text.PlainText
-            wrapMode: Text.Wrap
-            maximumLineCount: 2
-            elide: Text.ElideRight
+            maximumLineCount: 1
+            elide: win.labelOpen ? Text.ElideRight : Text.ElideNone
             font.pointSize: Kirigami.Theme.smallFont.pointSize
             font.italic: win.minimized
-            color: win.active ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
+            color: strip.stripText
         }
     }
-
     MouseArea {
         id: mouse
         anchors.fill: parent

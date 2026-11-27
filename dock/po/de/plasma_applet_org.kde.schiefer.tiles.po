@@ -39,3 +39,6 @@ msgstr[1] "%1 weitere Einträge"
 
 msgid "No system tray in the same panel"
 msgstr "Kein Systemabschnitt im selben Panel"
+
+msgid "Status"
+msgstr "Status"
