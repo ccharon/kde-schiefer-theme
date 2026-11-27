@@ -83,11 +83,14 @@ public:
     QColor fontColor() const;
 
     qreal frameWidth() const;   // frame width (0 when maximized)
-    qreal titleHeight() const;  // title row height = button size
+    qreal titleHeight() const   // title row height = button size
+    {
+        return m_titleHeight;
+    }
 
     // scale and edge widths in whole device pixels (logical values rounded to the grid)
     qreal scale() const;
-    int devicePixels(qreal logical) const; // mindestens 1
+    int devicePixels(qreal logical) const; // at least 1
     qreal snap(qreal logical) const;
 
     const DecorationConfig &config() const
@@ -114,6 +117,8 @@ private Q_SLOTS:
 
 private:
     void readColors();
+    // from the title font and the scale; cached because hit testing needs it on every pointer move
+    void updateTitleHeight();
     bool isMaximized() const;
     // left/right inset of the title row: 0 if that side has no border at the screen edge
     qreal leftInset() const;
@@ -128,6 +133,7 @@ private:
     std::shared_ptr<ColorCache> m_colors;
     std::shared_ptr<DecorationConfig> m_config;
     QColor m_activeBg, m_activeFg, m_inactiveBg, m_inactiveFg;
+    qreal m_titleHeight = 0;
 };
 
 class Button : public KDecoration3::DecorationButton

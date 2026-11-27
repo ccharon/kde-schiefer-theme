@@ -67,10 +67,10 @@ void bevel(QPainter *p, const QRectF &r, QColor hi, QColor lo, int width, qreal 
         if (w <= 0 || h <= 0) {
             break;
         }
-        p->fillRect(fromDevice(x, y, w, 1, scale), hi);                 // oben
-        p->fillRect(fromDevice(x, y, 1, h, scale), hi);                 // links
-        p->fillRect(fromDevice(x + 1, y + h - 1, w - 1, 1, scale), lo); // unten
-        p->fillRect(fromDevice(x + w - 1, y + 1, 1, h - 1, scale), lo); // rechts
+        p->fillRect(fromDevice(x, y, w, 1, scale), hi);                 // top
+        p->fillRect(fromDevice(x, y, 1, h, scale), hi);                 // left
+        p->fillRect(fromDevice(x + 1, y + h - 1, w - 1, 1, scale), lo); // bottom
+        p->fillRect(fromDevice(x + w - 1, y + 1, 1, h - 1, scale), lo); // right
     }
 }
 } // namespace
@@ -202,6 +202,7 @@ bool Decoration::init()
     connect(w, &KDecoration3::DecoratedWindow::nextScaleChanged, this, &Decoration::recalculateBorders);
     connect(this, &KDecoration3::Decoration::bordersChanged, this, &Decoration::updateLayout);
 
+    updateTitleHeight();
     m_leftButtons = new KDecoration3::DecorationButtonGroup(KDecoration3::DecorationButtonGroup::Position::Left, this, &Button::create);
     m_rightButtons = new KDecoration3::DecorationButtonGroup(KDecoration3::DecorationButtonGroup::Position::Right, this, &Button::create);
 
@@ -295,14 +296,15 @@ qreal Decoration::frameWidth() const
     }
 }
 
-qreal Decoration::titleHeight() const
+void Decoration::updateTitleHeight()
 {
     const QFontMetricsF fm(settings()->font());
-    return snap(std::max<qreal>(MinTitleHeight, std::ceil(fm.height()) + 4));
+    m_titleHeight = snap(std::max<qreal>(MinTitleHeight, std::ceil(fm.height()) + 4));
 }
 
 void Decoration::recalculateBorders()
 {
+    updateTitleHeight();
     const qreal b = frameWidth();
     const auto edges = window()->adjacentScreenEdges();
     const qreal side = b;
@@ -319,7 +321,6 @@ void Decoration::recalculateBorders()
     // keep the sides grabbable even without borders
     const qreal ext = (side == 0 && !isMaximized()) ? 4 : 0;
     setResizeOnlyBorders(QMarginsF(ext, 0, ext, ext));
-    updateLayout();
     update();
 }
 
@@ -357,7 +358,7 @@ Qt::WindowFrameSection Decoration::motifSection(const QPointF &pos) const
         return Qt::NoSection;
     }
     const QSizeF sz = size();
-    const QPointF p(std::floor(pos.x()), std::floor(pos.y())); // wie KDecoration3
+    const QPointF p(std::floor(pos.x()), std::floor(pos.y())); // as KDecoration3 does
     if (titleBar().toRect().contains(p.toPoint())) {
         return Qt::NoSection;
     }
@@ -535,7 +536,7 @@ void Decoration::paint(QPainter *painter, const QRectF &repaintRegion)
         }
     }
 
-    // Titelfeld zwischen den Knopfgruppen
+    // title field between the button groups
     const qreal left = m_leftButtons->buttons().isEmpty() ? leftInset() : m_leftButtons->geometry().right();
     const qreal right = m_rightButtons->buttons().isEmpty() ? full.width() - rightInset() : m_rightButtons->geometry().left();
     const QRectF label(left, b, std::max<qreal>(0, right - left), t);
