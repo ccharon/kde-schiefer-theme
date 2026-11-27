@@ -1,7 +1,10 @@
 /*
  * Schiefer end piece: purely decorative end of the dock like the handles on the left and
  * right edge of the CDE front panel. At the top a raised button at the height of the tab row
- * (left with a bar, right with a small square), below it a ribbed grip.
+ * (left with a raised bar, right with a small raised square), below it the ribbed grip.
+ * As measured on CDE 2.5.3: button and grip are one block across the whole width; under the
+ * button's dark lower edge the ribs alternate 1 px light and 1 px dark, with no surface between
+ * them and no well, down to the ledge (or the panel's lower edge).
  * Sizes match the drawer (tab height, spacing).
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -64,51 +67,44 @@ PlasmoidItem {
             // only slightly raised, like the tabs next to it
             depth: 1
         }
-        // left: engraved bar, right: small raised square
+        // left: raised bar, right: small raised square (CDE: 12x4 and 4x4 px in a 19x13 button)
         Bevel {
             anchors.centerIn: parent
             // centered over the end piece itself, not over the part reaching into the gaps
             anchors.horizontalCenterOffset: (row.tabLeft - row.tabRight) / 2
-            readonly property int len: Math.max(4, Math.round(Math.min(knob.width, knob.height) * (root.rightSide ? 0.36 : 0.5)))
-            width: root.rightSide ? len : (root.vertical ? 3 : len)
-            height: root.rightSide ? len : (root.vertical ? len : 3)
+            readonly property int thick: Math.max(4, Math.round(Math.min(knob.width, knob.height) * 0.3))
+            readonly property int len: Math.max(6, Math.round((root.vertical ? root.height : root.width) * 0.6))
+            width: root.rightSide ? thick : (root.vertical ? thick : len)
+            height: root.rightSide ? thick : (root.vertical ? len : thick)
             depth: 1
-            sunken: !root.rightSide
         }
     }
 
-    // ribbed grip in a flat well
-    Bevel {
-        id: well
-        anchors {
-            left: root.vertical ? knob.right : parent.left
-            top: root.vertical ? parent.top : knob.bottom
-            right: parent.right
-            bottom: parent.bottom
-            leftMargin: root.vertical ? root.pad : 1
-            rightMargin: root.vertical ? root.pad : 1
-            topMargin: root.vertical ? 1 : root.pad
-            bottomMargin: root.vertical ? 1 : Math.max(root.pad, row.ledgeOverlap + 1)
-        }
-        sunken: true
-        depth: 1
-    }
+    // ribbed grip: from the button down to the ledge (or the panel's lower edge), as wide as the
+    // button, so on the outside it reaches the panel edge. Lines alternate light and dark, the
+    // first one light right under the button's dark edge (vertical panel: columns, right of it).
     Canvas {
         id: ribs
-        anchors.fill: well
-        anchors.margins: 2
+        x: root.vertical ? knob.width : knob.x
+        y: root.vertical ? 1 : knob.y + knob.height
+        width: root.vertical ? root.width - knob.width : knob.width
+        height: root.vertical ? root.height - 2
+                              : Math.max(0, (row.ledge ? row.ledgeY : row.winSize.height - row.me.y) - y)
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
+        Connections {
+            target: root
+            function onLightColorChanged() { ribs.requestPaint(); }
+            function onDarkColorChanged() { ribs.requestPaint(); }
+        }
         onPaint: {
             const ctx = getContext("2d");
             ctx.reset();
             const w = Math.floor(width), h = Math.floor(height);
-            // grooves: dark line with a light line below, one row of background between them
-            for (let p = 0; p + 1 < (root.vertical ? w : h); p += 3) {
-                ctx.fillStyle = root.darkColor;
+            const n = root.vertical ? w : h;
+            for (let p = 0; p < n; ++p) {
+                ctx.fillStyle = p % 2 === 0 ? root.lightColor : root.darkColor;
                 root.vertical ? ctx.fillRect(p, 0, 1, h) : ctx.fillRect(0, p, w, 1);
-                ctx.fillStyle = root.lightColor;
-                root.vertical ? ctx.fillRect(p + 1, 0, 1, h) : ctx.fillRect(0, p + 1, w, 1);
             }
         }
     }
