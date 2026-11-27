@@ -53,9 +53,18 @@ once per user. To rebuild only the panels later: **Add Panel > Schiefer Front Pa
 | `schiefer-dock` | dock widgets |
 | `schiefer-backdrop` | backdrop plugin |
 | `schiefer-plymouth` | boot screen (Plymouth theme and dracut module) |
-| `schiefer` | global theme, lock screen, SDDM theme, `schiefer-config`; pulls in all of the above, the boot screen with USE `plymouth` |
+| `schiefer` | global theme, lock screen, SDDM theme, `schiefer-config`; pulls in all of the above |
 
-Boot screen: install `schiefer-plymouth` and run `plymouth-set-default-theme -R schiefer` as root. This
+Each part comes with a USE flag of `x11-themes/schiefer`, all enabled by default: `backdrop`, `dock`, `icons`,
+`kde` (schiefer-kde), `plymouth` and `themes`. To leave a part out, for example the boot screen and the dock:
+
+```bash
+echo "x11-themes/schiefer -plymouth -dock" >> /etc/portage/package.use/schiefer
+```
+
+Without `dock` the global theme's layout sets up the Plasma default panel, without `backdrop` the image wallpaper.
+
+Boot screen: with `schiefer-plymouth` installed, run `plymouth-set-default-theme -R schiefer` as root. This
 rebuilds the initramfs with dracut. The kernel command line needs `splash`. The previous theme comes back with
 `plymouth-set-default-theme -R <name>`.
 
