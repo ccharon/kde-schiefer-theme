@@ -81,7 +81,7 @@ headerbar .title {
 
 headerbar:backdrop .title {
     border-color: @retro_light @retro_dark @retro_dark @retro_light;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background-color: @theme_titlebar_background_backdrop_breeze;
     color: @theme_titlebar_foreground_backdrop_breeze;
 }
@@ -137,7 +137,7 @@ headerbar button:backdrop:hover {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_light @retro_dark @retro_dark @retro_light;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background-image: none;
     background-color: @theme_titlebar_background_backdrop_breeze;
     color: @theme_titlebar_foreground_backdrop_breeze;
@@ -150,7 +150,7 @@ headerbar button:backdrop:checked {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light;
     background-image: none;
     background-color: shade(@theme_titlebar_background_backdrop_breeze, 0.92);
     color: @theme_titlebar_foreground_backdrop_breeze;

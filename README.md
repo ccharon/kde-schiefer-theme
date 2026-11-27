@@ -1,9 +1,9 @@
 # Schiefer
 
 A Motif/CDE look for KDE Plasma 6, derived from Breeze. Spacing and behavior stay as in Breeze; only the
-drawing changes: 2 px bevels (light top left, dark bottom right), sunken fields, raised buttons and a light
-slate blue palette. Every Motif feature that can reasonably be switched off has an option in
-`schiefer-config`; the default is the Motif behavior.
+drawing changes: bevels as in CDE (light top left, dark bottom right; 1 px on controls, 2 px on window
+frames), sunken fields, raised buttons and a light slate blue palette. Every Motif feature that can
+reasonably be switched off has an option in `schiefer-config`; the default is the CDE behavior.
 
 The user interface is available in English and German.
 
@@ -14,7 +14,7 @@ The user interface is available in English and German.
 | `kdecoration/` | window decoration (plugin ID `schiefer`) |
 | `kstyle/` | Qt widget style, fork of Breeze 6.7.6 (key `Schiefer`); updating: `UPSTREAM.md` |
 | `common/` | color core: the Motif formula for light, shadow and select colors from Motif 2.3.8 `lib/Xm/Color.c` (LGPL-2.1+), as C++ header and Python module |
-| `palettes/`, `colors/` | five palettes (Schiefer, Sandstein, Jade, Granit, Basalt) and the KDE color schemes generated from them |
+| `palettes/`, `colors/` | six palettes (Schiefer, Broica, Sandstein, Jade, Granit, Basalt) and the KDE color schemes generated from them; Broica is the CDE default palette, lightened, with menu bar and menus in its own color as in CDE |
 | `plasma/` | generator for the Plasma style `schiefer` |
 | `gtk/Schiefer/` | GTK 3/4 theme on top of Breeze GTK; optional parts are `opt-*.css`, listed in `options.txt` |
 | `make_theme.py` | generates the icon theme `schiefer` from breeze-icons |
@@ -74,7 +74,7 @@ Other distributions: each part builds with CMake or a Python generator; the ebui
 
 ```bash
 schiefer-config                   # list options with state and default
-schiefer-config diamond off       # set an option; takes effect immediately where possible
+schiefer-config diamond on        # set an option; takes effect immediately where possible
 schiefer-config defaults          # all options to the Motif defaults
 schiefer-config palette basalt    # color scheme and desktop colors
 ```
@@ -84,7 +84,8 @@ The command affects only the calling user. German command names (`liste`, `stand
 
 | Option | Default | Effect | Stored in |
 |---|---|---|---|
-| `diamond` | on | radio buttons as a sunken diamond (Qt and GTK) | `schieferrc [Style] RadioDiamond`, GTK overlay |
+| `diamond` | off | radio buttons as a sunken diamond as in Motif 1.2 (Qt and GTK); off: round as in CDE | `schieferrc [Style] RadioDiamond`, GTK overlay |
+| `thin-bevels` | on | 1 px edges on buttons, fields, lists and scroll bars as in CDE (Qt and GTK); off: 2 px as in Motif 1.2 | `schieferrc [Style] ThinBevels`, GTK overlay |
 | `animations` | off | Breeze transitions in the Qt style | `schieferrc [Style] AnimationsEnabled` |
 | `plasma-animations` | on | KWin and Plasma animations | `kdeglobals [KDE] AnimationDurationFactor` |
 | `double-click-close` | on | double click on the window menu button closes the window; a single click opens the menu after the double-click interval | `schieferrc [Decoration] DoubleClickClose` |

@@ -3,6 +3,9 @@
 //   retrogallery --grab out.png        -> render offscreen to PNG (including an open menu)
 //   extras (do not change the default image):
 //     --menu view     show the "View" menu with radio items (exclusive checks) instead of "File"
+//     --menu title    show a menu with a section title (like the desktop window list)
+//     --active n      highlight item n of the shown menu (hover look)
+//     --no-menubar    hide the menu bar, --no-toolbar the tool bar (applications that hide them)
 //     --busy out2.png busy progress bar; out2.png is captured 400 ms after out.png
 //     --delay ms      capture after ms (default 300)
 #include <QAction>
@@ -192,6 +195,13 @@ int main(int argc, char **argv)
     view->addSeparator();
     view->addAction(QStringLiteral("Status bar"))->setCheckable(true);
     win.menuBar()->addMenu(QStringLiteral("&Help"));
+    // menu with a section title, like the window list on the desktop (visible only with --menu title)
+    auto *titled = new QMenu(&win);
+    titled->addSection(QStringLiteral("Windows"));
+    titled->addAction(QStringLiteral("Terminal"));
+    titled->addAction(QStringLiteral("Text Editor"));
+    titled->addSection(QStringLiteral("Desktop 2"));
+    titled->addAction(QStringLiteral("File Manager"));
 
     auto *toolbar = win.addToolBar(QStringLiteral("Tools"));
     toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
@@ -208,6 +218,12 @@ int main(int argc, char **argv)
     tabs->addTab(new QLabel(QStringLiteral("Third page")), QStringLiteral("Windows"));
     win.setCentralWidget(tabs);
     win.statusBar()->showMessage(QStringLiteral("17 Items 1 Hidden"));
+    if (args.contains(QStringLiteral("--no-menubar"))) {
+        win.menuBar()->hide();
+    }
+    if (args.contains(QStringLiteral("--no-toolbar"))) {
+        toolbar->hide();
+    }
     win.resize(980, 600);
 
     if (grabIdx < 0 || grabIdx + 1 >= args.size()) {
@@ -220,6 +236,9 @@ int main(int argc, char **argv)
     const int menuIdx = args.indexOf(QStringLiteral("--menu"));
     if (menuIdx >= 0 && menuIdx + 1 < args.size() && args.at(menuIdx + 1) == QStringLiteral("view")) {
         shown = view;
+    }
+    if (menuIdx >= 0 && menuIdx + 1 < args.size() && args.at(menuIdx + 1) == QStringLiteral("title")) {
+        shown = titled;
     }
     const int busyIdx = args.indexOf(QStringLiteral("--busy"));
     if (busyIdx >= 0 && busyIdx + 1 < args.size()) {
@@ -239,6 +258,14 @@ int main(int argc, char **argv)
         // render the menu separately and place it to the right of the window
         shown->adjustSize();
         shown->ensurePolished();
+        const int activeIdx = args.indexOf(QStringLiteral("--active"));
+        if (activeIdx >= 0 && activeIdx + 1 < args.size()) {
+            const auto acts = shown->actions();
+            const int n = args.at(activeIdx + 1).toInt();
+            if (n >= 0 && n < acts.size()) {
+                shown->setActiveAction(acts.at(n));
+            }
+        }
         const QImage menu = shown->grab().toImage();
         // compose in logical units, image in device pixels (QT_SCALE_FACTOR=1.5 keeps the pixels unchanged)
         const qreal dpr = shot.devicePixelRatio();

@@ -267,7 +267,8 @@ def gtk_set(name, on):
                  f" * Disabled: {', '.join(sorted(disabled)) or '-'} */\n"]
         with open(os.path.join(base, v, "gtk.css"), encoding="utf-8") as f:
             for line in f:
-                m = re.match(r'\s*@import\s+url\("([^"]+)"\)\s*;', line)
+                # options that are off by default: /* off: @import url("..."); */
+                m = re.match(r'\s*(?:/\*\s*off:\s*)?@import\s+url\("([^"]+)"\)\s*;', line)
                 if not m:
                     continue
                 url = m.group(1)
@@ -337,22 +338,24 @@ def schieferrc_int(group, key, default, limits):
     return read, write
 
 
-def diamond_read():
-    qt = as_bool(kread("schieferrc", ["Style"], "RadioDiamond"), True)
-    try:
-        gtk = gtk_state().get("diamond", True)
-    except Error:
-        gtk = qt
-    return qt if qt == gtk else None
+def qt_gtk_option(key, gtk_name, default):
+    """Option shared by the Qt style (schieferrc [Style] key) and the GTK theme (option gtk_name)."""
+    def read():
+        qt = as_bool(kread("schieferrc", ["Style"], key), default)
+        try:
+            gtk = gtk_state().get(gtk_name, default)
+        except Error:
+            gtk = qt
+        return qt if qt == gtk else None
 
-
-def diamond_write(on):
-    kwrite("schieferrc", ["Style"], "RadioDiamond", on, notify=True)
-    RELOAD.add("style")
-    try:
-        gtk_set("diamond", on)
-    except Error as e:
-        warn(tr(f"GTK unchanged: {e}", f"GTK nicht geändert: {e}"))
+    def write(on):
+        kwrite("schieferrc", ["Style"], key, on, notify=True)
+        RELOAD.add("style")
+        try:
+            gtk_set(gtk_name, on)
+        except Error as e:
+            warn(tr(f"GTK unchanged: {e}", f"GTK nicht geändert: {e}"))
+    return read, write
 
 
 def headerbar_read():
@@ -555,9 +558,13 @@ def anim_write(on):
 
 OPTIONS = [
     Option("diamond", "raute", "Qt+GTK",
-           "radio buttons as a sunken diamond (Motif 1.2/CDE) instead of round",
-           "Optionsfelder als versenkte Raute (Motif 1.2/CDE) statt rund",
-           True, diamond_read, diamond_write),
+           "radio buttons as a sunken diamond (Motif 1.2) instead of round as in CDE",
+           "Optionsfelder als versenkte Raute (Motif 1.2) statt rund wie in CDE",
+           False, *qt_gtk_option("RadioDiamond", "diamond", False)),
+    Option("thin-bevels", "duenne-kanten", "Qt+GTK",
+           "1 px edges on buttons, fields, lists and scroll bars as in CDE; off: 2 px (Motif 1.2)",
+           "1-px-Kanten an Knöpfen, Feldern, Listen und Rollbalken wie in CDE; aus: 2 px (Motif 1.2)",
+           True, *qt_gtk_option("ThinBevels", "thin", True)),
     Option("animations", "animationen", "Qt",
            "transitions in the Qt style (Breeze animations); Motif reacts instantly",
            "Übergänge im Qt-Stil (Breeze-Animationen); Motif reagiert sofort",

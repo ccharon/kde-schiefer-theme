@@ -3,4 +3,5 @@
 # gtk.css imports Breeze GTK, retro.css, then the option files in the order of this list.
 # The theme stays complete with any subset of options.
 headerbar|opt-headerbar.css|Motif header bar for windows with client-side decorations: title in a raised field, square raised window buttons with decoration symbols, frame without shadow; off: Breeze-like header bar|on
-diamond|opt-diamond.css|radio buttons as a sunken diamond as in Motif 1.2/CDE; off: round radio buttons|on
+diamond|opt-diamond.css|radio buttons as a sunken diamond as in Motif 1.2; off: round radio buttons as in CDE|off
+thin|opt-thin.css|1 px edges on controls as in CDE (Motif enableThinThickness); off: 2 px Motif 1.2 edges|on

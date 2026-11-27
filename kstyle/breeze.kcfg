@@ -47,8 +47,13 @@
       <default>false</default>
     </entry>
 
-    <!-- Schiefer: radio buttons as a Motif/CDE diamond (false = round) -->
+    <!-- Schiefer: radio buttons as a Motif 1.2 diamond (false = round as in CDE with Motif 2) -->
     <entry name="RadioDiamond" type="Bool">
+      <default>false</default>
+    </entry>
+
+    <!-- Schiefer: 1 px edges on controls as CDE (enableThinThickness); false = 2 px Motif 1.2 edges -->
+    <entry name="ThinBevels" type="Bool">
       <default>true</default>
     </entry>
 

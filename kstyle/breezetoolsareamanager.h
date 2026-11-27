@@ -51,6 +51,7 @@ private:
     void appendIfNotAlreadyExists(const QMainWindow *window, const QPointer<QToolBar> &toolBar);
     void removeWindowToolBar(const QMainWindow *window, const QPointer<QToolBar> &toolBar);
     void removeWindow(const QMainWindow *window);
+    void applyMenuPalette(QWidget *menu);
 
     friend class AppListener;
 
@@ -72,6 +73,8 @@ public:
 
     void registerApplication(QApplication *application);
     void registerWidget(QWidget *widget);
+    //* Schiefer: menus in the header colors (CDE: menu bar and menus share color set 6)
+    void registerMenu(QWidget *menu);
     void unregisterWidget(QWidget *widget);
 
     QRect toolsAreaRect(const QMainWindow &window) const;

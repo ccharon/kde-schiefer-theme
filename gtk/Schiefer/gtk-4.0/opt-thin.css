@@ -1,0 +1,5 @@
+/* Schiefer option thin-bevels: 1 px edges on controls as in CDE (Motif enableThinThickness).
+ * retro.css draws Motif edges as border (outer line) plus box-shadow (inner line); here the inner
+ * line becomes transparent, so the surface shows through. Sizes and spacing stay the same. */
+@define-color retro_inner_light transparent;
+@define-color retro_inner_dark transparent;

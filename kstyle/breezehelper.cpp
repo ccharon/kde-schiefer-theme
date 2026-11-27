@@ -577,6 +577,11 @@ QColor Helper::bevelSelect(const QColor &base) const
     return SchieferColors::selectColor(base);
 }
 
+int Helper::bevelWidth() const
+{
+    return StyleConfigData::thinBevels() ? 1 : 2;
+}
+
 void Helper::renderBevel(QPainter *painter, const QRectF &rectF, const QColor &base, bool sunken, int width) const
 {
     const QRect rect = rectF.toAlignedRect();
@@ -647,6 +652,20 @@ void Helper::renderEtchedFrame(QPainter *painter, const QRectF &rectF, const QCo
 void Helper::renderSunkenField(QPainter *painter, const QRectF &rect, const QPalette &palette, bool hasFocus, bool fill) const
 {
     const QRect r = rect.toAlignedRect();
+    if (bevelWidth() == 1) {
+        // CDE (enableThinThickness): 1 px highlight ring outside, in the focus color when focused,
+        // then the 1 px sunken edge (Motif highlightThickness 1, shadowThickness 1)
+        renderBevelPanel(painter, r, fill ? palette.color(QPalette::Base) : QColor(), palette.color(QPalette::Window), true, 1, 1);
+        if (hasFocus) {
+            painter->save();
+            painter->setRenderHint(QPainter::Antialiasing, false);
+            painter->setPen(palette.color(QPalette::Highlight));
+            painter->setBrush(Qt::NoBrush);
+            painter->drawRect(r.adjusted(0, 0, -1, -1));
+            painter->restore();
+        }
+        return;
+    }
     renderBevelPanel(painter, r, fill ? palette.color(QPalette::Base) : QColor(), palette.color(QPalette::Window), true, 2);
     if (hasFocus) {
         painter->save();
@@ -709,7 +728,7 @@ void Helper::renderMenuFrame(QPainter *painter, const QRectF &rect, const QColor
     Q_UNUSED(roundCorners)
     Q_UNUSED(seamlessEdges)
     const QColor base = color.isValid() ? QColor(color.red(), color.green(), color.blue()) : QColor(Qt::gray);
-    renderBevelPanel(painter, rect, color, base, false, 2);
+    renderBevelPanel(painter, rect, color, base, false, bevelWidth());
 }
 
 QRegion Helper::menuFrameRegion(const QMenu *widget)
@@ -784,6 +803,26 @@ void Helper::renderButtonFrame(QPainter *painter,
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
 
+    if (bevelWidth() == 1 && !flat) {
+        // CDE (enableThinThickness, enableDefaultButton): the default button sits in its own
+        // sunken 1 px ring with a 1 px gap; keyboard focus is a 1 px ring in the focus color
+        // directly around the button's 1 px edge
+        int inset = 0;
+        if (defaultButton) {
+            renderBevel(painter, r, base, true, 1);
+            inset = 2;
+        }
+        const QRect focusRect = r.adjusted(inset, inset, -inset, -inset);
+        renderBevelPanel(painter, focusRect, fill, base, sunken, 1, 1);
+        if (visualFocus && enabled) {
+            painter->setPen(palette.color(QPalette::Highlight));
+            painter->setBrush(Qt::NoBrush);
+            painter->drawRect(focusRect.adjusted(0, 0, -1, -1));
+        }
+        painter->restore();
+        return;
+    }
+
     // default button: extra dark ring as in Motif
     if (defaultButton && !flat) {
         painter->setPen(Qt::NoPen);
@@ -852,7 +891,7 @@ void Helper::renderTabWidgetFrame(QPainter *painter, const QRectF &rect, const Q
     Q_UNUSED(outline)
     Q_UNUSED(corners)
     const QColor base = color.isValid() ? color : QColor(Qt::gray);
-    renderBevelPanel(painter, rect.adjusted(1, 1, -1, -1), color, base, false, 2);
+    renderBevelPanel(painter, rect.adjusted(1, 1, -1, -1), color, base, false, bevelWidth());
 }
 
 //______________________________________________________________________________
@@ -894,7 +933,7 @@ void Helper::renderCheckBoxBackground(QPainter *painter,
     if (neutalHighlight) {
         fill = KColorUtils::mix(fill, neutralText(palette), 0.25);
     }
-    renderBevelPanel(painter, box, fill, palette.color(QPalette::Window), true, 2);
+    renderBevelPanel(painter, box, fill, palette.color(QPalette::Window), true, bevelWidth());
 }
 
 //______________________________________________________________________________
@@ -1029,13 +1068,13 @@ void Helper::renderRadioButtonBackground(QPainter *painter,
         return;
     }
 
-    // Schiefer: sunken circle (CDE)
-    Q_UNUSED(state)
-    Q_UNUSED(animation)
+    // Schiefer: sunken circle (CDE, enableToggleVisual/enableToggleColor): checked, the whole
+    // circle is filled with the highlight color (in CDE the active frame color)
     const QRectF r = QRectF(rect).adjusted(3, 3, -3, -3);
     const QColor base = palette.color(QPalette::Window);
-    QColor fill = palette.color(QPalette::Base);
-    if (sunken) {
+    const bool on = state == RadioOn || (state == RadioAnimated && animation >= 0.5);
+    QColor fill = on ? palette.color(QPalette::Highlight) : palette.color(QPalette::Base);
+    if (sunken && !on) {
         fill = bevelSelect(fill); // Schiefer: Motif selectColor
     }
     if (neutalHighlight) {
@@ -1047,11 +1086,12 @@ void Helper::renderRadioButtonBackground(QPainter *painter,
     painter->setBrush(fill);
     painter->drawEllipse(r);
     // shadow top left, light bottom right
-    QPen pen(bevelDark(base), 2);
+    const int bw = bevelWidth();
+    QPen pen(bevelDark(base), bw);
     pen.setCapStyle(Qt::FlatCap);
     painter->setBrush(Qt::NoBrush);
     painter->setPen(pen);
-    const QRectF ring = r.adjusted(1, 1, -1, -1);
+    const QRectF ring = r.adjusted(bw / 2.0, bw / 2.0, -bw / 2.0, -bw / 2.0);
     painter->drawArc(ring, 45 * 16, 180 * 16);
     pen.setColor(bevelLight(base));
     painter->setPen(pen);
@@ -1097,6 +1137,11 @@ void Helper::renderRadioButton(QPainter *painter,
 
         painter->restore();
     }
+
+    // Schiefer: the background already fills the checked circle (CDE), no extra dot
+    Q_UNUSED(state)
+    Q_UNUSED(animation)
+    return;
 
     painter->setRenderHint(QPainter::Antialiasing, true);
     painter->setBrush(palette.color(QPalette::Highlight));
@@ -1197,7 +1242,7 @@ void Helper::renderSliderGroove(QPainter *painter, const QRectF &rect, const QCo
 {
     // Schiefer: sunken groove (fg is unused because Motif has no fill)
     Q_UNUSED(fg)
-    renderBevelPanel(painter, rect, bevelSelect(bg), bg, true, 2); // Schiefer: Motif troughColor = select
+    renderBevelPanel(painter, rect, bevelSelect(bg), bg, true, bevelWidth()); // Schiefer: Motif troughColor = select
 }
 
 //______________________________________________________________________________
@@ -1277,7 +1322,7 @@ void Helper::renderSliderHandle(QPainter *painter, const QRectF &rect, const QCo
     Q_UNUSED(shadow)
     Q_UNUSED(sunken)
     const QRect r = rect.toAlignedRect().adjusted(1, 1, -1, -1);
-    renderBevelPanel(painter, r, color, color, false, 2);
+    renderBevelPanel(painter, r, color, color, false, bevelWidth());
 }
 
 void Helper::renderRetroSliderThumb(QPainter *painter, const QRectF &rect, const QColor &color, bool horizontal) const
@@ -1292,7 +1337,7 @@ void Helper::renderRetroSliderThumb(QPainter *painter, const QRectF &rect, const
     if (r.isEmpty()) {
         return; // Schiefer: too small
     }
-    renderBevelPanel(painter, r, color, color, false, 2);
+    renderBevelPanel(painter, r, color, color, false, bevelWidth());
     // etched center line only if there is room inside the edges
     if ((horizontal ? r.height() : r.width()) <= 4) {
         return;
@@ -1315,7 +1360,7 @@ void Helper::renderProgressBarGroove(QPainter *painter, const QRectF &rect, cons
 {
     // Schiefer: sunken groove
     Q_UNUSED(fg)
-    renderBevelPanel(painter, rect, bevelSelect(bg), bg, true, 2); // Schiefer: Motif troughColor = select
+    renderBevelPanel(painter, rect, bevelSelect(bg), bg, true, bevelWidth()); // Schiefer: Motif troughColor = select
 }
 
 //______________________________________________________________________________
@@ -1375,7 +1420,7 @@ void Helper::renderScrollBarHandle(QPainter *painter, const QRectF &rect, const 
 {
     // Schiefer: raised Motif slider (fg = button color)
     Q_UNUSED(bg)
-    renderBevelPanel(painter, rect, fg, fg, false, 2);
+    renderBevelPanel(painter, rect, fg, fg, false, bevelWidth());
 }
 
 //______________________________________________________________________________
@@ -1420,7 +1465,7 @@ void Helper::renderStaticTabBarTab(QPainter *painter,
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
     painter->fillRect(r, selected ? base : KColorUtils::mix(base, Qt::black, 0.07));
-    const int w = 2;
+    const int w = bevelWidth();
     for (int i = 0; i < w; ++i) {
         const QRect q = r.adjusted(i, i, -i, -i);
         if (north || (!south && !west && !east)) {
@@ -1476,7 +1521,7 @@ void Helper::renderTabBarTab(QPainter *painter,
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, false);
     painter->fillRect(r, selected ? base : KColorUtils::mix(base, Qt::black, 0.07));
-    const int w = 2;
+    const int w = bevelWidth();
     for (int i = 0; i < w; ++i) {
         const QRect q = r.adjusted(i, i, -i, -i);
         if (north || (!south && !west && !east)) {
@@ -1958,7 +2003,7 @@ void Helper::renderOptionMenuIndicator(QPainter *painter, const QRectF &rect, co
         return;
     }
     const QRect bar(r.left() + (r.width() - w) / 2, r.top() + (r.height() - h) / 2, w, h);
-    renderBevelPanel(painter, bar, enabled ? base : QColor(), base, false, 2);
+    renderBevelPanel(painter, bar, enabled ? base : QColor(), base, false, bevelWidth());
 }
 
 //______________________________________________________________________________
@@ -1977,10 +2022,11 @@ void Helper::renderRetroDial(QPainter *painter, const QRectF &rect, const QPalet
     painter->setPen(Qt::NoPen);
     painter->setBrush(bevelSelect(base)); // Schiefer: Mulde in Motif-Auswahlfarbe
     painter->drawEllipse(outer);
-    QPen pen(bevelDark(base), 2);
+    const int bw = bevelWidth();
+    QPen pen(bevelDark(base), bw);
     pen.setCapStyle(Qt::FlatCap);
     painter->setBrush(Qt::NoBrush);
-    const QRectF ring = outer.adjusted(1, 1, -1, -1);
+    const QRectF ring = outer.adjusted(bw / 2.0, bw / 2.0, -bw / 2.0, -bw / 2.0);
     painter->setPen(pen);
     painter->drawArc(ring, 45 * 16, 180 * 16);
     pen.setColor(bevelLight(base));

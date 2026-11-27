@@ -214,6 +214,14 @@ void ToolsAreaManager::configUpdated()
     _palette.setBrush(QPalette::Disabled, QPalette::WindowText, disabled.foreground());
     _palette.setBrush(QPalette::Inactive, QPalette::Window, inactive.background());
     _palette.setBrush(QPalette::Inactive, QPalette::WindowText, inactive.foreground());
+    // Schiefer: buttons in the tools area (flat tool buttons, combo boxes) on the header color too,
+    // so hover and press bevels match the bar
+    _palette.setBrush(QPalette::Active, QPalette::Button, active.background());
+    _palette.setBrush(QPalette::Active, QPalette::ButtonText, active.foreground());
+    _palette.setBrush(QPalette::Disabled, QPalette::Button, disabled.background());
+    _palette.setBrush(QPalette::Disabled, QPalette::ButtonText, disabled.foreground());
+    _palette.setBrush(QPalette::Inactive, QPalette::Button, inactive.background());
+    _palette.setBrush(QPalette::Inactive, QPalette::ButtonText, inactive.foreground());
 
     for (const WindowToolBars &windowToolBars : _windows) {
         for (const auto &toolbar : windowToolBars.toolBars) {
@@ -230,6 +238,30 @@ void ToolsAreaManager::configUpdated()
     }
 
     _colorSchemeHasHeaderColor = _config ? KColorScheme::isColorSetSupported(_config, KColorScheme::Header) : false;
+
+    // Schiefer: follow scheme changes in open menus
+    const auto widgets = qApp->allWidgets();
+    for (QWidget *w : widgets) {
+        if (w->property("schiefer_header_menu").toBool()) {
+            applyMenuPalette(w);
+        }
+    }
+}
+
+void ToolsAreaManager::registerMenu(QWidget *menu)
+{
+    menu->setProperty("schiefer_header_menu", true);
+    applyMenuPalette(menu);
+}
+
+void ToolsAreaManager::applyMenuPalette(QWidget *menu)
+{
+    // only for schemes with header colors; otherwise the menu inherits the application palette
+    if (_colorSchemeHasHeaderColor) {
+        menu->setPalette(_palette);
+    } else if (menu->testAttribute(Qt::WA_SetPalette)) {
+        menu->setPalette(QPalette());
+    }
 }
 
 bool AppListener::eventFilter(QObject *watched, QEvent *event)

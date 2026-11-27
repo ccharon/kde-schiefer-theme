@@ -188,6 +188,8 @@ public:
     QColor bevelDark(const QColor &base) const;
     //* Schiefer: Motif select color for pressed buttons, grooves and checked boxes
     QColor bevelSelect(const QColor &base) const;
+    //* Schiefer: edge width of controls; 1 as in CDE (enableThinThickness), 2 with ThinBevels off
+    int bevelWidth() const;
     //* bevel: light top/left, dark bottom/right (sunken: reversed); corners split diagonally
     void renderBevel(QPainter *, const QRectF &, const QColor &base, bool sunken, int width = 2) const;
     //* raised/sunken panel: fill plus bevel; inset = number of line widths to move inward

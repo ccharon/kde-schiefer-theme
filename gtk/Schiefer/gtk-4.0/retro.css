@@ -1,7 +1,7 @@
 /* Schiefer: Motif/CDE drawing on top of Breeze GTK4 (derived from gtk-3.0/retro.css).
  *
  * Breeze has a 1 px border. Motif edges are 2 px wide: outer line = border,
- * inner line = box-shadow inset. All sizes and spacing stay as in Breeze.
+ * inner line = box-shadow inset (@retro_inner_*; opt-thin.css hides it for 1 px CDE edges). All sizes and spacing stay as in Breeze.
  * Light, shadow and select colors follow the Motif formula like the Qt style, decoration and Plasma style (common/schiefercolors.*).
  * CSS cannot compute the formula (in Motif the fractions depend on the surface brightness),
  * so it uses fixed fractions taken at reference colors of the "Schiefer" palette (schiefercolors.factors()):
@@ -13,6 +13,9 @@
 
 @define-color retro_light mix(@theme_bg_color_breeze, white, 0.57);
 @define-color retro_dark mix(@theme_bg_color_breeze, black, 0.45);
+/* inner line of the 2 px edges (box-shadow); opt-thin.css makes it transparent for 1 px edges as in CDE */
+@define-color retro_inner_light @retro_light;
+@define-color retro_inner_dark @retro_dark;
 @define-color retro_select mix(@theme_bg_color_breeze, black, 0.15);
 @define-color retro_trough @retro_select;
 @define-color retro_hover mix(@theme_button_background_normal_breeze, white, 0.12);
@@ -31,7 +34,7 @@ button:backdrop:disabled {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_light @retro_dark @retro_dark @retro_light;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background: @theme_button_background_normal_breeze;
     background-image: none;
 }
@@ -49,13 +52,13 @@ button:checked:disabled,
 button:active:hover,
 button:checked:hover {
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light;
     background: @retro_pressed;
 }
 
 button:focus {
     /* Motif focus: dark line inside the edge */
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark, inset 0 0 0 2px @retro_focus;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark, inset 0 0 0 2px @retro_focus;
 }
 
 button.suggested-action,
@@ -94,7 +97,7 @@ toolbar button:hover,
 headerbar button:hover,
 .titlebar button:hover {
     border-color: @retro_light @retro_dark @retro_dark @retro_light;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background: @retro_hover;
 }
 
@@ -108,7 +111,7 @@ headerbar button:checked,
 .titlebar button:active,
 .titlebar button:checked {
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light;
     background: @retro_pressed;
 }
 
@@ -159,7 +162,7 @@ spinbutton:not(.vertical):disabled {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light;
     background-color: @theme_base_color_breeze;
     background-image: none;
 }
@@ -167,7 +170,7 @@ spinbutton:not(.vertical):disabled {
 entry:focus,
 spinbutton:not(.vertical):focus {
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light, inset 0 0 0 2px @retro_focus;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light, inset 0 0 0 2px @retro_focus;
 }
 
 /* entry inside a spin button or a linked group: no double edge */
@@ -182,11 +185,11 @@ combobox entry + button,
 .linked > entry,
 .linked > entry:focus {
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light;
 }
 
 .linked > entry:focus {
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light, inset 0 0 0 2px @retro_focus;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light, inset 0 0 0 2px @retro_focus;
 }
 
 /* spin button buttons: small raised fields */
@@ -194,14 +197,14 @@ spinbutton:not(.vertical) button,
 spinbutton:not(.vertical) button:backdrop {
     border: 1px solid;
     border-color: @retro_light @retro_dark @retro_dark @retro_light;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background: @theme_button_background_normal_breeze;
     margin: 2px 2px 2px 0;
 }
 
 spinbutton:not(.vertical) button:active {
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light;
     background: @retro_pressed;
 }
 
@@ -213,7 +216,7 @@ radio,
 radio:backdrop {
     border: 1px solid;
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light;
     background-color: @theme_base_color_breeze;
     background-image: none;
 }
@@ -256,7 +259,7 @@ switch:backdrop {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light;
     background-color: @retro_trough;
     background-image: none;
 }
@@ -273,7 +276,7 @@ switch:hover slider {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_light @retro_dark @retro_dark @retro_light;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background: @theme_button_background_normal_breeze;
 }
 
@@ -289,7 +292,7 @@ levelbar trough:backdrop {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light;
     background: @retro_trough;
 }
 
@@ -344,7 +347,7 @@ scale slider:disabled {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_light @retro_dark @retro_dark @retro_light;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background: @theme_button_background_normal_breeze;
 }
 
@@ -388,7 +391,7 @@ scrollbar,
 scrollbar:backdrop {
     border: 1px solid;
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light;
     background: @retro_trough;
     padding: 1px;
 }
@@ -421,7 +424,7 @@ scrollbar slider:backdrop {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_light @retro_dark @retro_dark @retro_light;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background: @theme_button_background_normal_breeze;
     background-image: none;
 }
@@ -455,7 +458,7 @@ frame:backdrop > border {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
 }
 
 frame.flat > border,
@@ -470,7 +473,7 @@ frame.view > border {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_dark @retro_light @retro_light @retro_dark;
-    box-shadow: inset 1px 1px @retro_dark, inset -1px -1px @retro_light;
+    box-shadow: inset 1px 1px @retro_inner_dark, inset -1px -1px @retro_inner_light;
     padding: 1px;
 }
 
@@ -533,7 +536,7 @@ notebook > header > tabs > tab:checked:hover {
 notebook > header.top > tabs > tab {
     border-color: @retro_light @retro_dark transparent @retro_light;
     border-bottom-width: 0;
-    box-shadow: inset 1px 1px @retro_light, inset -1px 0 @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px 0 @retro_inner_dark;
     margin-top: 2px;
 }
 
@@ -544,7 +547,7 @@ notebook > header.top > tabs > tab:checked {
 notebook > header.bottom > tabs > tab {
     border-color: transparent @retro_dark @retro_dark @retro_light;
     border-top-width: 0;
-    box-shadow: inset 1px 0 @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 0 @retro_inner_light, inset -1px -1px @retro_inner_dark;
     margin-bottom: 2px;
 }
 
@@ -555,14 +558,14 @@ notebook > header.bottom > tabs > tab:checked {
 notebook > header.left > tabs > tab {
     border-color: @retro_light transparent @retro_dark @retro_light;
     border-right-width: 0;
-    box-shadow: inset 1px 1px @retro_light, inset 0 -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset 0 -1px @retro_inner_dark;
     margin-left: 2px;
 }
 
 notebook > header.right > tabs > tab {
     border-color: @retro_light @retro_dark @retro_dark transparent;
     border-left-width: 0;
-    box-shadow: inset 0 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 0 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     margin-right: 2px;
 }
 
@@ -578,7 +581,7 @@ notebook.frame:backdrop {
 
 notebook > stack:not(:only-child) {
     background: @theme_bg_color_breeze;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
 }
 
 /* ------------------------------------------------------------------ Menus and popovers */
@@ -590,7 +593,7 @@ menu:backdrop {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_light @retro_dark @retro_dark @retro_light;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background-color: @theme_bg_color_breeze;
 }
 
@@ -609,7 +612,7 @@ popover modelbutton.flat:hover {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_light @retro_dark @retro_dark @retro_light;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background: @theme_bg_color_breeze;
     color: @theme_fg_color_breeze;
 }
@@ -628,7 +631,7 @@ menubar > menuitem {
 popover.background:not(.menu) > contents {
     border-radius: 0;
     border: 1px solid @retro_outline;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background-color: @theme_bg_color_breeze;
 }
 
@@ -664,7 +667,7 @@ popover.menu > contents,
 popover > contents {
     border-radius: 0;
     border: 1px solid @retro_outline;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background-color: @theme_bg_color_breeze;
 }
 
@@ -679,7 +682,7 @@ popover.menu > contents modelbutton:hover {
     border-radius: 0;
     border: 1px solid;
     border-color: @retro_light @retro_dark @retro_dark @retro_light;
-    box-shadow: inset 1px 1px @retro_light, inset -1px -1px @retro_dark;
+    box-shadow: inset 1px 1px @retro_inner_light, inset -1px -1px @retro_inner_dark;
     background: @theme_bg_color_breeze;
     color: @theme_fg_color_breeze;
 }

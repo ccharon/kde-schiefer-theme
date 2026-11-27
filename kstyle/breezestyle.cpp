@@ -416,6 +416,7 @@ void Style::polish(QWidget *widget)
 
     } else if (qobject_cast<QMenu *>(widget)) {
         setTranslucentBackground(widget);
+        _toolsAreaManager->registerMenu(widget);
 
         if (_helper->hasAlphaChannel(widget) && StyleConfigData::menuOpacity() < 100) {
             _blurHelper->registerWidget(widget->window());
@@ -1328,7 +1329,9 @@ bool Style::drawWidgetPrimitive(const QStyleOption *option, QPainter *painter, c
         auto rect = _toolsAreaManager->toolsAreaRect(*mw);
 
         if (rect.height() == 0) {
-            if (mw->property(PropertyNames::noSeparator).toBool() || mw->isFullScreen()) {
+            // Schiefer: with header colors (CDE menu bar color) a window without menu bar and
+            // tool bar stays plain like a Motif window; no line under the title bar
+            if (drawBackground || mw->property(PropertyNames::noSeparator).toBool() || mw->isFullScreen()) {
                 painter->restore();
                 return true;
             }
@@ -1341,9 +1344,11 @@ bool Style::drawWidgetPrimitive(const QStyleOption *option, QPainter *painter, c
         auto color = _toolsAreaManager->palette().brush(mw->isActiveWindow() ? QPalette::Active : QPalette::Inactive, QPalette::Window);
 
         if (drawBackground) {
-            painter->setPen(Qt::transparent);
-            painter->setBrush(color);
-            painter->drawRect(rect);
+            // Schiefer: the bar area raised like the CDE menu bar (Motif shadow on XmMenuBar)
+            const QColor base = color.color();
+            _helper->renderBevelPanel(painter, rect, base, base, false, _helper->bevelWidth());
+            painter->restore();
+            return true;
         }
 
         painter->setPen(_helper->separatorColor(_toolsAreaManager->palette()));
@@ -1378,9 +1383,10 @@ bool Style::drawWidgetPrimitive(const QStyleOption *option, QPainter *painter, c
                 rect.setHeight(rect.height() + widget->devicePixelRatio() + vLayout->contentsMargins().top());
 
                 if (drawBackground) {
-                    painter->setPen(Qt::transparent);
-                    painter->setBrush(color);
-                    painter->drawRect(rect);
+                    // Schiefer: raised like the CDE menu bar
+                    const QColor base = color.color();
+                    _helper->renderBevelPanel(painter, rect, base, base, false, _helper->bevelWidth());
+                    return true;
                 }
 
                 painter->setPen(QPen(_helper->separatorColor(_toolsAreaManager->palette()), widget->devicePixelRatio()));
@@ -1390,6 +1396,9 @@ bool Style::drawWidgetPrimitive(const QStyleOption *option, QPainter *painter, c
             }
         }
 
+        if (drawBackground) {
+            return true; // Schiefer: plain dialog without bars, no line under the title bar
+        }
         painter->setPen(QPen(_helper->separatorColor(_toolsAreaManager->palette()), PenWidth::Frame * widget->devicePixelRatio()));
         painter->drawLine(widget->rect().topLeft(), widget->rect().topRight());
     } else if (widget && widget->inherits("KMultiTabBar")) {
@@ -3705,6 +3714,7 @@ QSize Style::menuItemSizeFromContents(const QStyleOption *option, const QSize &c
 
             h = qMax(h, Metrics::MenuButton_IndicatorWidth);
             h += Metrics::MenuItem_MarginHeight; // extra top padding
+            h += 6; // Schiefer: double etched line under the title (dtwm menu title)
         }
 
         return {w + Metrics::MenuItem_MarginWidth * 2, h + Metrics::MenuItem_MarginHeight};
@@ -5881,9 +5891,15 @@ bool Style::drawMenuBarItemControl(const QStyleOption *option, QPainter *painter
             color = _helper->hoverColor(palette);
         }
 
-        // Schiefer: raised menu bar item
+        // Schiefer: active menu bar item; CDE (enableEtchedInMenu, thin edges): sunken 1 px with the
+        // select color, Motif 1.2 (ThinBevels off): raised 2 px
         Q_UNUSED(color)
-        _helper->renderBevelPanel(painter, rect, palette.color(QPalette::Window), palette.color(QPalette::Window), false, 2);
+        const QColor base = palette.color(QPalette::Window);
+        if (_helper->bevelWidth() == 1) {
+            _helper->renderBevelPanel(painter, rect, _helper->bevelSelect(base), base, true, 1);
+        } else {
+            _helper->renderBevelPanel(painter, rect, base, base, false, 2);
+        }
     }
 
     /*
@@ -5994,32 +6010,18 @@ bool Style::drawMenuItemControl(const QStyleOption *option, QPainter *painter, c
         }
 
         if (!menuItemOption->text.isEmpty()) { // icon is ignored on purpose
-            contentsRect.adjust(0, Metrics::MenuItem_MarginHeight, 0, 0);
-            int flags = visualAlignment(option->direction, Qt::AlignLeft) | Qt::AlignVCenter;
-            flags |= Qt::TextSingleLine | Qt::TextHideMnemonic | Qt::TextDontClip;
-            auto font = menuItemOption->font;
-            font.setBold(true);
-            QFontMetrics fm(font);
-            auto textRect = fm.boundingRect(contentsRect, flags, menuItemOption->text);
-            const auto &labelColor = palette.color(QPalette::Current, QPalette::WindowText);
-            painter->setFont(font);
+            // Schiefer: menu title as in dtwm (Workspace Menu, window menu): centered title, below
+            // it a double etched line across the whole menu (XmDOUBLE_LINE separator)
+            contentsRect.adjust(0, Metrics::MenuItem_MarginHeight, 0, -6);
+            const int flags = Qt::AlignHCenter | Qt::AlignVCenter | Qt::TextSingleLine | Qt::TextHideMnemonic;
+            painter->setFont(menuItemOption->font);
             painter->setBrush(Qt::NoBrush);
-            // 0.7 is from Kirigami ListSectionHeader.
-            // Not using painter->setOpacity() because it disables text antialiasing.
-            painter->setPen(_helper->alphaColor(labelColor, 0.7));
-            painter->drawText(textRect, flags, menuItemOption->text);
-            // Make spacing between label and line the same as
-            // the margin from the label to the left menu outline.
-            // This is intentionally not factored into CT_MenuItem
-            // size calculations since the line is meant to fill the
-            // remaining available area after the label has been rendered.
-            const qreal spacing = pixelMetric(PM_MenuHMargin, option, widget)
-                                + Metrics::MenuItem_MarginWidth - 1;
-            if (reverseLayout) {
-                contentsRect.setRight(textRect.left() - spacing);
-            } else {
-                contentsRect.setLeft(textRect.right() + spacing);
-            }
+            painter->setPen(palette.color(QPalette::Current, QPalette::WindowText));
+            painter->drawText(contentsRect, flags, menuItemOption->text);
+            const int y = rect.bottom() - 5;
+            _helper->renderSeparator(painter, QRect(rect.left(), y, rect.width(), 2), separatorColor);
+            _helper->renderSeparator(painter, QRect(rect.left(), y + 3, rect.width(), 2), separatorColor);
+            return true;
         }
 
         _helper->renderSeparator(painter, contentsRect, separatorColor);
@@ -6055,11 +6057,17 @@ bool Style::drawMenuItemControl(const QStyleOption *option, QPainter *painter, c
             }
         }
 
-        // Schiefer: Motif; the active item is raised in the window color
+        // Schiefer: active menu item; CDE (enableEtchedInMenu, thin edges): sunken 1 px with the
+        // select color, Motif 1.2 (ThinBevels off): raised 2 px in the window color
         Q_UNUSED(color)
         Q_UNUSED(outlineColor)
         Q_UNUSED(sides)
-        _helper->renderBevelPanel(painter, rect, palette.color(QPalette::Window), palette.color(QPalette::Window), false, 2);
+        const QColor base = palette.color(QPalette::Window);
+        if (_helper->bevelWidth() == 1) {
+            _helper->renderBevelPanel(painter, rect, _helper->bevelSelect(base), base, true, 1);
+        } else {
+            _helper->renderBevelPanel(painter, rect, base, base, false, 2);
+        }
     }
 
     // get rect available for contents
@@ -6463,7 +6471,7 @@ bool Style::drawScrollBarAddLineControl(const QStyleOption *option, QPainter *pa
         }
         const bool pressed = (state & State_Sunken) && (sliderOption->activeSubControls & SC_ScrollBarAddLine);
         const QColor button = option->palette.color(QPalette::Button);
-        _helper->renderBevelPanel(painter, r, button, button, pressed, 2);
+        _helper->renderBevelPanel(painter, r, button, button, pressed, _helper->bevelWidth());
         QStyleOptionSlider arrowCopy(*sliderOption);
         arrowCopy.rect = r;
         const QColor color = scrollBarArrowColor(&arrowCopy, SC_ScrollBarAddLine, widget);
@@ -6561,7 +6569,7 @@ bool Style::drawScrollBarSubLineControl(const QStyleOption *option, QPainter *pa
         }
         const bool pressed = (state & State_Sunken) && (sliderOption->activeSubControls & SC_ScrollBarSubLine);
         const QColor button = option->palette.color(QPalette::Button);
-        _helper->renderBevelPanel(painter, r, button, button, pressed, 2);
+        _helper->renderBevelPanel(painter, r, button, button, pressed, _helper->bevelWidth());
         QStyleOptionSlider arrowCopy(*sliderOption);
         arrowCopy.rect = r;
         const QColor color = scrollBarArrowColor(&arrowCopy, SC_ScrollBarSubLine, widget);
@@ -8309,7 +8317,7 @@ bool Style::drawScrollBarComplexControl(const QStyleOptionComplex *option, QPain
     // Schiefer: sunken Motif groove across the whole bar
     {
         const QColor window = option->palette.color(QPalette::Window);
-        _helper->renderBevelPanel(painter, option->rect, _helper->bevelSelect(window), window, true, 2); // Schiefer: Motif troughColor = select
+        _helper->renderBevelPanel(painter, option->rect, _helper->bevelSelect(window), window, true, _helper->bevelWidth()); // Schiefer: Motif troughColor = select
     }
 
     // call base class primitive
