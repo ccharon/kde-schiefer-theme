@@ -25,7 +25,7 @@ The user interface is available in English and German.
 | `greeter/` | SDDM login, lock screen, and the shared Motif QML kit used by splash and logout |
 | `lookandfeel/` | global theme `Schiefer` including splash screen and logout dialog |
 | `plymouth/` | boot screen: Plymouth script theme with machine banner, systemd units as they start, progress bar and passphrase prompt; generator, dracut module, test tools |
-| `konsole/` | Konsole color scheme and profile `Schiefer` (black on the light text field, contrast-checked by `make_konsole.py`) and the matching Midnight Commander skin |
+| `konsole/` | Konsole color schemes and profiles `Schiefer` and `Schiefer Broica` (black on the light text field of the palette, contrast-checked by `make_konsole.py`) and the Midnight Commander skin shared by both |
 | `tools/schiefer-config` | command line tool for options and palettes |
 | `packaging/` | ebuild templates for `x11-themes/schiefer{,-kde,-icons,-themes,-dock,-backdrop,-plymouth}` |
 
@@ -49,7 +49,7 @@ once per user. To rebuild only the panels later: **Add Panel > Schiefer Front Pa
 |---|---|
 | `schiefer-kde` | window decoration and Qt style |
 | `schiefer-icons` | icons, generated from the installed breeze-icons at build time |
-| `schiefer-themes` | color schemes, Plasma style, GTK theme, cursors, window switcher, image wallpaper, `schiefer-wallpaper`, Konsole scheme and profile, mc skin |
+| `schiefer-themes` | color schemes, Plasma style, GTK theme, cursors, window switcher, image wallpaper, `schiefer-wallpaper`, Konsole schemes and profiles, mc skin |
 | `schiefer-dock` | dock widgets |
 | `schiefer-backdrop` | backdrop plugin |
 | `schiefer-plymouth` | boot screen (Plymouth theme and dracut module) |
@@ -123,7 +123,7 @@ kstyle/render.sh out.png                   # Qt gallery offscreen
 greeter/test-sddm.sh out.png               # SDDM theme offscreen
 greeter/test-lock.sh out.png dialog        # lock screen in an isolated session
 plymouth/make_plymouth.py                  # boot screen images and script template
-python3 konsole/make_konsole.py            # Konsole scheme and profile; fails if a color pair is hard to read
+python3 konsole/make_konsole.py            # Konsole schemes and profiles; fails if a color pair is hard to read
 PLY_PREFIX=... plymouth/test-plymouth.sh out.png [boot|password|shutdown]   # see plymouth/README.md
 tools/make-dist.sh                         # release tarball and ebuilds in dist/
 ```

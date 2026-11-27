@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Konsole color scheme and profile "Schiefer", and a matching Midnight Commander skin.
+"""Konsole color schemes and profiles "Schiefer" and "Schiefer Broica", and a matching Midnight Commander skin.
 
-   python3 konsole/make_konsole.py          -> Schiefer.colorscheme, Schiefer.profile; checks mc-schiefer.ini
+   python3 konsole/make_konsole.py          -> <id>.colorscheme, <id>.profile per scheme; checks mc-schiefer.ini
 
-Black text on the light text field color of the Motif palette, like a dtterm. The script checks the WCAG
-contrast of every color pair that matters and fails if one is too low:
+Black text on the light text field color of the palette, like a dtterm. Both schemes share the skin, which
+names only ANSI colors: light gray is the dialog and menu color of each palette. The script checks the WCAG
+contrast of every color pair that matters, for each scheme, and fails if one is too low:
   - shell: the normal colors as text on the background; the intense colors too, because Konsole draws
     bold text (ls, grep, git) with them
   - Midnight Commander with its default skin (light gray, white, yellow and bright green on blue,
@@ -18,30 +19,59 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-BACKGROUND = (0xe2, 0xe5, 0xed)    # text field color of the Schiefer palette (greeter Pal.field)
-FOREGROUND = (0x00, 0x00, 0x00)
+class Scheme:
+    def __init__(self, id, name, background, normal, intense):
+        self.id, self.name, self.background, self.normal, self.intense = id, name, background, normal, intense
 
-# ANSI colors 0-7 and their intense variants 8-15
-NORMAL = [
-    (0x00, 0x00, 0x00),   # 0 black
-    (0xbd, 0x2f, 0x2f),   # 1 red
-    (0x2e, 0x73, 0x2e),   # 2 green
-    (0x81, 0x60, 0x00),   # 3 brown / yellow
-    (0x22, 0x31, 0x66),   # 4 blue: dark, so mc's default skin stays readable on it
-    (0x9b, 0x40, 0x9b),   # 5 magenta
-    (0x1c, 0x6f, 0x7d),   # 6 cyan: between black and white text (mc default skin)
-    (0xbe, 0xc2, 0xd3),   # 7 light gray = dialog color of the palette
+
+SCHEMES = [
+    # text field color of the Schiefer palette (greeter Pal.field)
+    Scheme("Schiefer", "Schiefer", (0xe2, 0xe5, 0xed), [
+        (0x00, 0x00, 0x00),   # 0 black
+        (0xbd, 0x2f, 0x2f),   # 1 red
+        (0x2e, 0x73, 0x2e),   # 2 green
+        (0x81, 0x60, 0x00),   # 3 brown / yellow
+        (0x22, 0x31, 0x66),   # 4 blue: dark, so mc's default skin stays readable on it
+        (0x9b, 0x40, 0x9b),   # 5 magenta
+        (0x1c, 0x6f, 0x7d),   # 6 cyan: between black and white text (mc default skin)
+        (0xbe, 0xc2, 0xd3),   # 7 light gray = dialog color of the palette
+    ], [
+        (0x55, 0x5b, 0x6b),   # 8 gray
+        (0xcc, 0x56, 0x56),   # 9 bright red
+        (0x33, 0x86, 0x33),   # 10 bright green
+        (0x96, 0x72, 0x00),   # 11 yellow
+        (0x36, 0x69, 0xcb),   # 12 bright blue (bold directories in ls)
+        (0xb4, 0x59, 0xb4),   # 13 bright magenta
+        (0x1f, 0x82, 0x92),   # 14 bright cyan
+        (0xff, 0xff, 0xff),   # 15 white
+    ]),
+    # Broica: text field color of palettes/Broica.toml (CDE set 4), hues warmer and taken from the CDE
+    # palette where it has one: blue from the slate of set 3, cyan from the petrol of set 6, magenta
+    # from the rose of set 7
+    Scheme("SchieferBroica", "Schiefer Broica", (0xeb, 0xe6, 0xe2), [
+        (0x00, 0x00, 0x00),   # 0 black
+        (0xbc, 0x33, 0x2c),   # 1 red
+        (0x3d, 0x74, 0x2c),   # 2 green
+        (0x85, 0x5e, 0x10),   # 3 brown / yellow
+        (0x2a, 0x3d, 0x5c),   # 4 blue: CDE slate, dark for the mc panel cursor and mc's default skin
+        (0x9e, 0x47, 0x6a),   # 5 magenta: CDE rose
+        (0x22, 0x6f, 0x82),   # 6 cyan: CDE petrol, between black and white text (mc default skin)
+        (0x96, 0xc5, 0xd1),   # 7 light gray: menu and dialog color of the palette (CDE set 6), a touch lighter
+    ], [
+        (0x5f, 0x5a, 0x57),   # 8 gray
+        (0xc9, 0x4a, 0x3c),   # 9 bright red
+        (0x4a, 0x82, 0x36),   # 10 bright green
+        (0x94, 0x6c, 0x00),   # 11 yellow
+        (0x3c, 0x68, 0xb0),   # 12 bright blue (bold directories in ls)
+        (0xa8, 0x50, 0x7a),   # 13 bright magenta
+        (0x23, 0x7f, 0x95),   # 14 bright cyan
+        (0xff, 0xff, 0xff),   # 15 white
+    ]),
 ]
-INTENSE = [
-    (0x55, 0x5b, 0x6b),   # 8 gray
-    (0xcc, 0x56, 0x56),   # 9 bright red
-    (0x33, 0x86, 0x33),   # 10 bright green
-    (0x96, 0x72, 0x00),   # 11 yellow
-    (0x36, 0x69, 0xcb),   # 12 bright blue (bold directories in ls)
-    (0xb4, 0x59, 0xb4),   # 13 bright magenta
-    (0x1f, 0x82, 0x92),   # 14 bright cyan
-    (0xff, 0xff, 0xff),   # 15 white
-]
+FOREGROUND = (0x00, 0x00, 0x00)
+# ANSI colors 0-7, their intense variants 8-15 and the background of the scheme being checked
+NORMAL = INTENSE = BACKGROUND = None
+
 FAINT_MIX = 0.45
 
 # Konsole's default scheme Breeze, as reference for the mc default skin: that skin has weak pairs with
@@ -140,7 +170,10 @@ def check_skin(path, need, editor_need, skip_sections=(), against_breeze=False):
             check(f"[{sec}] {key} = {val.strip()}", fg_rgb, bg_rgb, editor_need if sec == "editor" else need, ref)
 
 
-def main():
+def check_scheme(scheme):
+    global NORMAL, INTENSE, BACKGROUND, core_bg
+    NORMAL, INTENSE, BACKGROUND = scheme.normal, scheme.intense, scheme.background
+    print(f"===== {scheme.name}")
     print("Shell: normal colors on the background (need 4.5)")
     for i in range(1, 7):
         check(f"color {i}", NORMAL[i], BACKGROUND, 4.5)
@@ -150,7 +183,6 @@ def main():
     for i in range(9, 15):
         check(f"color {i}", INTENSE[i - 8], BACKGROUND, 3.0)
 
-    global core_bg
     print("Midnight Commander, default skin (need 3.0, or at least what Breeze gives)")
     core_bg = "blue"
     check_skin("/usr/share/mc/skins/default.ini", 3.0, 3.0,
@@ -165,38 +197,43 @@ def main():
                  "magenta", "red", "brown", "green", "lightgray", "brightblue"):
         check(f"mcedit syntax {name} on black", color(MC_NAMES[name]), (0, 0, 0), 3.5)
 
-    write_scheme()
+
+def main():
+    for scheme in SCHEMES:
+        check_scheme(scheme)
+        write_scheme(scheme)
     if problems:
         print(f"\n{len(problems)} pair(s) below the target", file=sys.stderr)
         sys.exit(1)
 
 
-def write_scheme():
+def write_scheme(scheme):
     def block(name, rgb):
         return f"[{name}]\nColor={rgb[0]},{rgb[1]},{rgb[2]}\n\n"
+    bg = scheme.background
     out = ""
-    out += block("Background", BACKGROUND)
-    out += block("BackgroundFaint", BACKGROUND)
-    out += block("BackgroundIntense", BACKGROUND)
+    out += block("Background", bg)
+    out += block("BackgroundFaint", bg)
+    out += block("BackgroundIntense", bg)
     for i in range(8):
-        out += block(f"Color{i}", NORMAL[i])
-        out += block(f"Color{i}Faint", mix(NORMAL[i], BACKGROUND, FAINT_MIX))
-        out += block(f"Color{i}Intense", INTENSE[i])
+        out += block(f"Color{i}", scheme.normal[i])
+        out += block(f"Color{i}Faint", mix(scheme.normal[i], bg, FAINT_MIX))
+        out += block(f"Color{i}Intense", scheme.intense[i])
     out += block("Foreground", FOREGROUND)
-    out += block("ForegroundFaint", mix(FOREGROUND, BACKGROUND, FAINT_MIX))
+    out += block("ForegroundFaint", mix(FOREGROUND, bg, FAINT_MIX))
     out += block("ForegroundIntense", FOREGROUND)
     out += ("[General]\nAnchor=0.5,0.5\nBlur=false\nColorRandomization=false\n"
-            "Description=Schiefer\nFillStyle=Tile\nOpacity=1\nWallpaper=\nWallpaperFlipType=NoFlip\n"
+            f"Description={scheme.name}\nFillStyle=Tile\nOpacity=1\nWallpaper=\nWallpaperFlipType=NoFlip\n"
             "WallpaperOpacity=1\n")
-    with open(os.path.join(HERE, "Schiefer.colorscheme"), "w") as f:
+    with open(os.path.join(HERE, f"{scheme.id}.colorscheme"), "w") as f:
         f.write("# Generated by make_konsole.py\n" + out)
     # profile: dtterm-like scroll bar on the left; MC_SKIN makes Midnight Commander use mc-schiefer.ini
-    with open(os.path.join(HERE, "Schiefer.profile"), "w") as f:
+    with open(os.path.join(HERE, f"{scheme.id}.profile"), "w") as f:
         f.write("# Generated by make_konsole.py\n"
-                "[Appearance]\nColorScheme=Schiefer\n"
+                f"[Appearance]\nColorScheme={scheme.id}\n"
                 "Font=Noto Sans Mono,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1\n\n"
                 "[General]\nEnvironment=TERM=xterm-256color,COLORTERM=truecolor,MC_SKIN=schiefer\n"
-                "Name=Schiefer\nParent=FALLBACK/\n\n"
+                f"Name={scheme.name}\nParent=FALLBACK/\n\n"
                 "[Scrolling]\nScrollBarPosition=0\n")
 
 
