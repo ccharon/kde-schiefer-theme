@@ -61,6 +61,8 @@ PlasmoidItem {
             anchors.fill: parent
             anchors.topMargin: root.vertical ? 1 : 0
             anchors.bottomMargin: root.vertical ? 1 : 0
+            // only slightly raised, like the tabs next to it
+            depth: 1
         }
         // left: engraved bar, right: small raised square
         Bevel {

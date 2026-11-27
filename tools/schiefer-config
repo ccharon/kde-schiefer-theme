@@ -629,7 +629,7 @@ OPTIONS = [
     Option("tab-raise", "laschen-hoehe", "Dock",
            "pixels the drawer tabs and end piece buttons of the Schiefer dock grow upward (0-16)",
            "Pixel, um die Schubladen-Laschen und Endstück-Knöpfe des Schiefer-Docks nach oben wachsen (0-16)",
-           2, *schieferrc_int("Dock", "TabRaise", 2, (0, 16)), limits=(0, 16)),
+           3, *schieferrc_int("Dock", "TabRaise", 3, (0, 16)), limits=(0, 16)),
 ]
 BY_NAME = {s.name: s for s in OPTIONS}
 BY_NAME.update({s.alias: s for s in OPTIONS})

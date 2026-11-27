@@ -101,7 +101,7 @@ The command affects only the calling user. German command names (`liste`, `stand
 | `lockscreen` | on | Schiefer lock screen | copy of the Plasma shell in `~/.local/share/plasma/shells/` |
 | `frontpanel-color` | on | dock, its panels and drawers in the CDE front panel color of the palette | `schieferrc [Dock] FrontPanelColor` |
 | `dock-ledge` | on | raised ledge along the bottom of the dock, only under Schiefer widgets | `schieferrc [Dock] Ledge` |
-| `tab-raise` | 2 | pixels (0-16) the drawer tabs and end piece buttons grow upward; what does not fit above the widget makes the tab taller downward | `schieferrc [Dock] TabRaise` |
+| `tab-raise` | 3 | pixels (0-16) the drawer tabs and end piece buttons grow upward; what does not fit above the widget makes the tab taller downward | `schieferrc [Dock] TabRaise` |
 
 The SDDM theme reads `/usr/share/sddm/themes/schiefer/theme.conf`:
 

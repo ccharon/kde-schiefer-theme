@@ -449,8 +449,10 @@ PlasmoidItem {
         type: PlasmaCore.Dialog.PopupMenu
         flags: Qt.WindowStaysOnTopHint
         hideOnWindowDeactivate: true
-        location: Plasmoid.location
-        visualParent: root
+        // Floating on horizontal panels: Plasma leaves out the popup border facing the panel
+        // otherwise, and the popup then looks cut off; it sits on the tab, which reaches above the applet
+        location: root.vertical ? Plasmoid.location : PlasmaCore.Types.Floating
+        visualParent: root.vertical ? root : tab
         backgroundHints: PlasmaCore.Dialog.SolidBackground
         mainItem: DrawerPopup {
             drawer: root

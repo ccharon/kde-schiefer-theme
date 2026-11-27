@@ -139,7 +139,7 @@ void SchieferScheme::reload()
     rc->reparseConfiguration();
     const KConfigGroup dock = rc->group(QStringLiteral("Dock"));
     const bool panelEnabled = dock.readEntry("FrontPanelColor", true);
-    const int tabRaise = std::clamp(dock.readEntry("TabRaise", 2), 0, 16);
+    const int tabRaise = std::clamp(dock.readEntry("TabRaise", 3), 0, 16);
     const bool ledge = dock.readEntry("Ledge", true);
 
     // watch the file (an atomic rewrite removes the watch, so add it again every time)

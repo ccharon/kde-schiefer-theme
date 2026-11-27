@@ -7,7 +7,7 @@
  *  - usePanelColor / panelColor: option `frontpanel-color` (schieferrc [Dock] FrontPanelColor,
  *    default on). Applies only if the scheme has a FrontPanel color; otherwise the
  *    window color stays (Kirigami.Theme.backgroundColor).
- *  - tabRaise / ledge: schieferrc [Dock] TabRaise (pixels the drawer tabs grow upward, default 2)
+ *  - tabRaise / ledge: schieferrc [Dock] TabRaise (pixels the drawer tabs grow upward, default 3)
  *    and Ledge (ledge at the bottom of the front panel, default on).
  *  - hoverColor(): hover tint from the Motif formula, a third of the way to the light edge.
  *  - tintFrames(): tints the Plasma frames (panel background, popup background) in the window
@@ -79,7 +79,7 @@ private:
     QStringList m_desktopColors;
     QColor m_frontPanel;
     bool m_panelEnabled = true;
-    int m_tabRaise = 2;
+    int m_tabRaise = 3;
     bool m_ledge = true;
     KConfigWatcher::Ptr m_dockWatcher;
 };
