@@ -316,7 +316,7 @@ def schieferrc(group, key, default, reload):
         return as_bool(kread("schieferrc", [group], key), default)
 
     def write(on):
-        kwrite("schieferrc", [group], key, on)
+        kwrite("schieferrc", [group], key, on, notify=True)
         RELOAD.add(reload)
     return read, write
 
@@ -331,7 +331,7 @@ def diamond_read():
 
 
 def diamond_write(on):
-    kwrite("schieferrc", ["Style"], "RadioDiamond", on)
+    kwrite("schieferrc", ["Style"], "RadioDiamond", on, notify=True)
     RELOAD.add("style")
     try:
         gtk_set("diamond", on)
@@ -601,7 +601,7 @@ OPTIONS = [
            "Sperrbildschirm im Schiefer-Stil (Kopie der Plasma-Shell in ~/.local/share/plasma/shells; "
            "aus: Plasma-Sperrbildschirm)",
            True, lambda: lock_read(), lambda on: lock_write(on)),
-    # The dock widgets watch schieferrc themselves, so no reload is needed.
+    # The dock widgets follow the change notification of schieferrc, so no reload is needed.
     Option("frontpanel-color", "frontpanel-farbe", "Dock",
            "Schiefer dock, its panels and drawers in the palette's CDE front panel color (off: window color)",
            "Schiefer-Dock, seine Leisten und Schubladen in der CDE-Frontpanel-Farbe der Palette (aus: Fensterfarbe)",

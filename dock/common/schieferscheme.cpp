@@ -36,14 +36,13 @@ SchieferScheme::SchieferScheme(QObject *parent)
             scheduleReload();
         }
     });
-    // Schalter frontpanel-farbe: schieferrc [Dock] FrontPanelColor
+    // option frontpanel-color: schieferrc [Dock] FrontPanelColor
     m_dockWatcher = KConfigWatcher::create(KSharedConfig::openConfig(QStringLiteral("schieferrc"), KConfig::NoGlobals));
     connect(m_dockWatcher.data(), &KConfigWatcher::configChanged, this, [this](const KConfigGroup &group, const QByteArrayList &) {
         if (group.name() == QLatin1String("Dock")) {
             scheduleReload();
         }
     });
-    connect(&m_files, &QFileSystemWatcher::directoryChanged, this, &SchieferScheme::scheduleReload);
     reload();
 }
 
@@ -111,7 +110,7 @@ void SchieferScheme::reload()
     globals->reparseConfiguration();
     const QString name = globals->group(QStringLiteral("General")).readEntry("ColorScheme", QString());
 
-    // Schemadatei: color-schemes/<Name>.colors, ~/.local/share vor /usr/share
+    // scheme file color-schemes/<name>.colors; ~/.local/share comes before /usr/share
     QString file;
     if (!name.isEmpty()) {
         file = QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("color-schemes/") + name + QStringLiteral(".colors"));
@@ -143,21 +142,16 @@ void SchieferScheme::reload()
     if (!m_files.files().isEmpty()) {
         m_files.removePaths(m_files.files());
     }
-    if (!m_files.directories().isEmpty()) {
-        m_files.removePaths(m_files.directories());
-    }
     if (!file.isEmpty()) {
         m_files.addPath(file);
     }
     // kdeglobals itself too (scheme changes without a D-Bus notification, for example kwriteconfig6 without --notify)
     const QString configDir = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
     m_files.addPath(configDir + QStringLiteral("/kdeglobals"));
-    // schieferrc (schiefer-config writes without a D-Bus notification); if missing, wait for it to appear
+    // schieferrc edited by hand; schiefer-config notifies through m_dockWatcher, which also covers a new file
     const QString rcFile = configDir + QStringLiteral("/schieferrc");
     if (QFile::exists(rcFile)) {
         m_files.addPath(rcFile);
-    } else {
-        m_files.addPath(configDir);
     }
 
     if (name != m_name || file != m_file || colors != m_desktopColors || panel != m_frontPanel || panelEnabled != m_panelEnabled) {
