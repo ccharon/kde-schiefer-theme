@@ -34,6 +34,8 @@ install() {
     local src="${dracutsysrootdir-}$PLYMOUTH_BOOT_DURATION"
     if [[ -r "$src" ]]; then
         inst_dir "${PLYMOUTH_BOOT_DURATION%/*}"
+        # never write through a link another module may have put there (it could point to the host file)
+        rm -f "${initdir}$PLYMOUTH_BOOT_DURATION"
         LC_ALL=C sed -E 's/^([0-9]+),([0-9]+):/\1.\2:/' "$src" > "${initdir}$PLYMOUTH_BOOT_DURATION"
     fi
 }

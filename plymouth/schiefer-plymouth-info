@@ -58,8 +58,10 @@ if [ "${root#zfs}" != "$root" ] && command -v zpool >/dev/null; then
     [ -n "$bootfs" ] && root="zfs:$bootfs"
 fi
 
-# height of the screen in mm from the EDID: the built-in panel first, else the first connected screen.
-# The first detailed timing descriptor has it in mm, the basic block only in cm (0 for projectors).
+# height of the screen in mm from the EDID, only with exactly one connected screen: Plymouth scales by
+# its first head, and with several screens the EDID may belong to another one (for example a closed
+# laptop lid whose panel still reports "connected"). Otherwise 0, the scale then follows the pixel height.
+# The first detailed timing descriptor has the height in mm, the basic block only in cm (0 for projectors).
 edid_mm() {
     local b
     b=($(od -An -tu1 -v -N 128 "$1" 2>/dev/null)) || return 1
@@ -72,11 +74,14 @@ edid_mm() {
 }
 if [ -z "$SCREEN_MM" ]; then
     SCREEN_MM=0
-    for c in /sys/class/drm/card*-eDP-* /sys/class/drm/card*-LVDS-* /sys/class/drm/card*-DSI-* /sys/class/drm/card*-*; do
-        [ "$(cat "$c/status" 2>/dev/null)" = connected ] || continue
-        mm="$(edid_mm "$c/edid")" || continue
-        [ "$mm" -ge 50 ] && [ "$mm" -le 2000 ] && { SCREEN_MM="$mm"; break; }
+    connected=()
+    for c in /sys/class/drm/card*-*; do
+        [ "$(cat "$c/status" 2>/dev/null)" = connected ] && connected+=("$c")
     done
+    if [ "${#connected[@]}" -eq 1 ] && mm="$(edid_mm "${connected[0]}/edid")" \
+        && [ "$mm" -ge 50 ] && [ "$mm" -le 2000 ]; then
+        SCREEN_MM="$mm"
+    fi
 fi
 case "$SCREEN_MM" in ""|*[!0-9]*) SCREEN_MM=0 ;; esac
 
