@@ -20,6 +20,10 @@ find_package(PlasmaQuick REQUIRED)
 # Motif color formula (shared with kstyle/ and kdecoration/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common)
 
+# QML and C++ shared by the applets; ecm_target_qml_sources serves each QML file under its bare name
+set(DOCK_COMMON ${CMAKE_CURRENT_SOURCE_DIR}/common)
+include_directories(${DOCK_COMMON})
+
 add_subdirectory(drawer)
 add_subdirectory(console)
 add_subdirectory(iconbox)

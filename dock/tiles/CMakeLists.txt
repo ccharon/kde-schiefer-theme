@@ -1,6 +1,6 @@
 plasma_add_applet(org.kde.schiefer.tiles
-    QML_SOURCES main.qml Bevel.qml FrameTint.qml PanelFit.qml MotifArrow.qml TrayItemIcon.qml config.qml ConfigGeneral.qml
-    CPP_SOURCES schiefertray.cpp schieferscheme.cpp
+    QML_SOURCES main.qml ${DOCK_COMMON}/Bevel.qml ${DOCK_COMMON}/FrameTint.qml ${DOCK_COMMON}/PanelFit.qml ${DOCK_COMMON}/MotifArrow.qml ${DOCK_COMMON}/TrayItemIcon.qml config.qml ConfigGeneral.qml
+    CPP_SOURCES ${DOCK_COMMON}/schiefertray.cpp ${DOCK_COMMON}/schieferscheme.cpp
     RESOURCES main.xml
     GENERATE_APPLET_CLASS
 )
