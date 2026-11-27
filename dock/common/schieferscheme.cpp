@@ -18,6 +18,7 @@
 #include <QStandardPaths>
 #include <QtQml/qqml.h>
 
+#include <algorithm>
 #include <functional>
 
 SchieferScheme::SchieferScheme(QObject *parent)
@@ -36,7 +37,7 @@ SchieferScheme::SchieferScheme(QObject *parent)
             scheduleReload();
         }
     });
-    // option frontpanel-color: schieferrc [Dock] FrontPanelColor
+    // dock options: schieferrc [Dock]
     m_dockWatcher = KConfigWatcher::create(KSharedConfig::openConfig(QStringLiteral("schieferrc"), KConfig::NoGlobals));
     connect(m_dockWatcher.data(), &KConfigWatcher::configChanged, this, [this](const KConfigGroup &group, const QByteArrayList &) {
         if (group.name() == QLatin1String("Dock")) {
@@ -136,7 +137,10 @@ void SchieferScheme::reload()
 
     auto rc = KSharedConfig::openConfig(QStringLiteral("schieferrc"), KConfig::NoGlobals);
     rc->reparseConfiguration();
-    const bool panelEnabled = rc->group(QStringLiteral("Dock")).readEntry("FrontPanelColor", true);
+    const KConfigGroup dock = rc->group(QStringLiteral("Dock"));
+    const bool panelEnabled = dock.readEntry("FrontPanelColor", true);
+    const int tabRaise = std::clamp(dock.readEntry("TabRaise", 2), 0, 16);
+    const bool ledge = dock.readEntry("Ledge", true);
 
     // watch the file (an atomic rewrite removes the watch, so add it again every time)
     if (!m_files.files().isEmpty()) {
@@ -154,8 +158,11 @@ void SchieferScheme::reload()
         m_files.addPath(rcFile);
     }
 
-    if (name != m_name || file != m_file || colors != m_desktopColors || panel != m_frontPanel || panelEnabled != m_panelEnabled) {
+    if (name != m_name || file != m_file || colors != m_desktopColors || panel != m_frontPanel || panelEnabled != m_panelEnabled
+        || tabRaise != m_tabRaise || ledge != m_ledge) {
         m_panelEnabled = panelEnabled;
+        m_tabRaise = tabRaise;
+        m_ledge = ledge;
         m_name = name;
         m_file = file;
         m_desktopColors = colors;

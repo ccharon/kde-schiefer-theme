@@ -45,6 +45,7 @@ HELP_EN = """schiefer-config: toggle Schiefer options and palettes (Motif/CDE lo
   schiefer-config                      same as "list"
   schiefer-config list                 all options with state and default
   schiefer-config <option> on|off      set an option (takes effect immediately where possible)
+  schiefer-config <option> <number>    set a number option (tab-raise)
   schiefer-config palette [<name>]     list palettes, or apply one (color scheme and desktop colors)
   schiefer-config defaults             set all options to the Schiefer defaults
 
@@ -55,6 +56,7 @@ HELP_DE = """schiefer-config: Schalter und Paletten von Schiefer (Motif/CDE für
   schiefer-config                      wie „list“
   schiefer-config list                 alle Schalter mit Zustand und Vorgabe
   schiefer-config <schalter> on|off    Schalter setzen (sofort wirksam, soweit möglich)
+  schiefer-config <schalter> <zahl>    Zahlenwert setzen (laschen-hoehe)
   schiefer-config palette [<name>]     Paletten zeigen oder eine anwenden (Farbschema und Arbeitsflächenfarben)
   schiefer-config defaults             alle Schalter auf die Schiefer-Vorgabe setzen
 
@@ -304,10 +306,12 @@ def gtk_reload():
 # ---------------------------------------------------------------- Option registry
 
 class Option:
-    def __init__(self, name, alias, area, desc_en, desc_de, default, read, write):
+    def __init__(self, name, alias, area, desc_en, desc_de, default, read, write, limits=None):
         self.name, self.alias, self.area = name, alias, area
         self.description = tr(desc_en, desc_de)
         self.default, self.read, self.write = default, read, write
+        # (min, max) for a number option, None for on/off
+        self.limits = limits
         self.no_target = False
 
 
@@ -318,6 +322,18 @@ def schieferrc(group, key, default, reload):
     def write(on):
         kwrite("schieferrc", [group], key, on, notify=True)
         RELOAD.add(reload)
+    return read, write
+
+
+def schieferrc_int(group, key, default, limits):
+    def read():
+        try:
+            return min(max(int(kread("schieferrc", [group], key, default)), limits[0]), limits[1])
+        except ValueError:
+            return default
+
+    def write(value):
+        kwrite("schieferrc", [group], key, value, notify=True)
     return read, write
 
 
@@ -606,6 +622,14 @@ OPTIONS = [
            "Schiefer dock, its panels and drawers in the palette's CDE front panel color (off: window color)",
            "Schiefer-Dock, seine Leisten und Schubladen in der CDE-Frontpanel-Farbe der Palette (aus: Fensterfarbe)",
            True, *schieferrc("Dock", "FrontPanelColor", True, "dock")),
+    Option("dock-ledge", "dock-kante", "Dock",
+           "raised ledge along the bottom of the Schiefer dock as on the CDE front panel",
+           "erhabene Kante an der Unterseite des Schiefer-Docks wie am CDE-Frontpanel",
+           True, *schieferrc("Dock", "Ledge", True, "dock")),
+    Option("tab-raise", "laschen-hoehe", "Dock",
+           "pixels the drawer tabs and end piece buttons of the Schiefer dock grow upward (0-16)",
+           "Pixel, um die Schubladen-Laschen und Endstück-Knöpfe des Schiefer-Docks nach oben wachsen (0-16)",
+           2, *schieferrc_int("Dock", "TabRaise", 2, (0, 16)), limits=(0, 16)),
 ]
 BY_NAME = {s.name: s for s in OPTIONS}
 BY_NAME.update({s.alias: s for s in OPTIONS})
@@ -797,6 +821,8 @@ def lock_refresh():
 # ---------------------------------------------------------------- Commands
 
 def state_text(v):
+    if isinstance(v, int) and not isinstance(v, bool):
+        return str(v)
     return {True: tr("on", "an"), False: tr("off", "aus"), None: "?"}.get(v, str(v))
 
 
@@ -816,11 +842,21 @@ def list_options():
           f"{tr('Area', 'Bereich'):12} {tr('Description', 'Beschreibung')}")
     for n, z, default, area, desc in rows:
         print(f"{n:{w}}  {z:9} {default:9} {area:12} {desc}")
-    print(tr("\n? = mixed or unreadable (for example Plasma is not running).  Change: schiefer-config <option> on|off",
-             "\n? = gemischt oder nicht lesbar (z. B. Plasma läuft nicht).  Ändern: schiefer-config <schalter> on|off"))
+    print(tr("\n? = mixed or unreadable (for example Plasma is not running).  Change: schiefer-config <option> on|off (tab-raise: <number>)",
+             "\n? = gemischt oder nicht lesbar (z. B. Plasma läuft nicht).  Ändern: schiefer-config <schalter> on|off (laschen-hoehe: <zahl>)"))
 
 
 def set_option(s, value):
+    if s.limits:
+        try:
+            n = int(value)
+        except ValueError:
+            n = None
+        if n is None or not s.limits[0] <= n <= s.limits[1]:
+            raise Error(f"{s.name}: {s.limits[0]}..{s.limits[1]}")
+        s.write(n)
+        print(f"{s.name}: {n}")
+        return
     on = {"on": True, "an": True, "ein": True, "off": False, "aus": False}.get(value.lower())
     if on is None:
         raise Error(f"{s.name}: on|off")
@@ -836,7 +872,7 @@ def defaults():
             if z is None and s.no_target:
                 continue
             if z != s.default:
-                set_option(s, "on" if s.default else "off")
+                set_option(s, str(s.default) if s.limits else ("on" if s.default else "off"))
         except Error as e:
             print(f"{s.name}: {e}", file=sys.stderr)
             errors += 1
@@ -864,7 +900,7 @@ def main(argv):
             return 1 if n else 0
         elif cmd in BY_NAME:
             if len(argv) != 2:
-                raise Error(f"schiefer-config {cmd} on|off")
+                raise Error(f"schiefer-config {cmd} " + (f"{BY_NAME[cmd].limits[0]}..{BY_NAME[cmd].limits[1]}" if BY_NAME[cmd].limits else "on|off"))
             set_option(BY_NAME[cmd], argv[1])
         else:
             raise Error(tr(f"unknown command: {cmd} (schiefer-config help)",

@@ -21,7 +21,8 @@ PlasmoidItem {
     readonly property int rows: Math.max(1, cfg.rows)
     readonly property int sp: 2                                   // gap between buttons
     readonly property int margin: Kirigami.Units.smallSpacing
-    readonly property int rowHeight: Math.floor((height - 2 * margin - (rows - 1) * sp) / rows)
+    readonly property int bottomMargin: Math.max(margin, row.ledgeOverlap + 1)
+    readonly property int rowHeight: Math.floor((height - margin - bottomMargin - (rows - 1) * sp) / rows)
 
     readonly property int desktopCount: desktopInfo.numberOfDesktops
     readonly property int desktopColumns: Math.max(1, Math.ceil(desktopCount / rows))
@@ -56,6 +57,14 @@ PlasmoidItem {
     Kirigami.Theme.inherit: !Scheme.usePanelColor
     Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
     FrameTint {}
+    // DockRow: the ledge of the front panel runs underneath; no tab row
+    readonly property bool schieferLedge: true
+    DockRow {
+        id: row
+        target: root
+        vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
+    }
+    Ledge { row: row }
 
     Layout.preferredWidth: layout.implicitWidth + 2 * margin
     Layout.minimumWidth: Layout.preferredWidth - (cfg.showTasks ? taskPreferred - taskMinimum : 0)
@@ -122,6 +131,7 @@ PlasmoidItem {
         id: layout
         anchors.fill: parent
         anchors.margins: root.margin
+        anchors.bottomMargin: root.bottomMargin
         spacing: Kirigami.Units.smallSpacing + 2
 
         Etch {}

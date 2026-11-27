@@ -7,6 +7,8 @@
  *  - usePanelColor / panelColor: option `frontpanel-color` (schieferrc [Dock] FrontPanelColor,
  *    default on). Applies only if the scheme has a FrontPanel color; otherwise the
  *    window color stays (Kirigami.Theme.backgroundColor).
+ *  - tabRaise / ledge: schieferrc [Dock] TabRaise (pixels the drawer tabs grow upward, default 2)
+ *    and Ledge (ledge at the bottom of the front panel, default on).
  *  - hoverColor(): hover tint from the Motif formula, a third of the way to the light edge.
  *  - tintFrames(): tints the Plasma frames (panel background, popup background) in the window
  *    of an item with the front panel color, or resets them.
@@ -39,6 +41,8 @@ class SchieferScheme : public QObject
     Q_PROPERTY(bool usePanelColor READ usePanelColor NOTIFY changed)
     // front panel color if usePanelColor, otherwise invalid
     Q_PROPERTY(QColor panelColor READ panelColor NOTIFY changed)
+    Q_PROPERTY(int tabRaise READ tabRaise NOTIFY changed)
+    Q_PROPERTY(bool ledge READ ledge NOTIFY changed)
 
 public:
     explicit SchieferScheme(QObject *parent = nullptr);
@@ -49,6 +53,8 @@ public:
     bool hasFrontPanel() const { return m_frontPanel.isValid(); }
     bool usePanelColor() const { return m_panelEnabled && m_frontPanel.isValid(); }
     QColor panelColor() const { return usePanelColor() ? m_frontPanel : QColor(); }
+    int tabRaise() const { return m_tabRaise; }
+    bool ledge() const { return m_ledge; }
 
     // {top, bottom, select, foreground} for the base color, Motif formula
     Q_INVOKABLE QVariantMap motifColors(const QColor &base) const;
@@ -73,5 +79,7 @@ private:
     QStringList m_desktopColors;
     QColor m_frontPanel;
     bool m_panelEnabled = true;
+    int m_tabRaise = 2;
+    bool m_ledge = true;
     KConfigWatcher::Ptr m_dockWatcher;
 };

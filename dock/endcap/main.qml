@@ -33,6 +33,15 @@ PlasmoidItem {
     Kirigami.Theme.inherit: !Scheme.usePanelColor
     Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
     FrameTint {}
+    // DockRow: the button joins the tab row of the drawers, the ledge runs underneath
+    readonly property bool schieferTabRow: true
+    readonly property bool schieferLedge: true
+    DockRow {
+        id: row
+        target: root
+        vertical: root.vertical
+    }
+    Ledge { row: row }
     Plasmoid.icon: "align-horizontal-left"
     toolTipMainText: ""
 
@@ -44,19 +53,20 @@ PlasmoidItem {
     // button in the tab row (top, or left on a vertical panel)
     Item {
         id: knob
-        x: 0; y: 0
-        width: root.vertical ? root.tabSize : parent.width
-        height: root.vertical ? parent.height : root.tabSize
+        x: -row.tabLeft
+        y: -row.raiseAbove
+        width: root.vertical ? root.tabSize + Scheme.tabRaise : parent.width + row.tabLeft + row.tabRight
+        height: root.vertical ? parent.height : root.tabSize + Scheme.tabRaise
         Bevel {
             anchors.fill: parent
-            anchors.leftMargin: root.vertical ? 0 : 1
-            anchors.rightMargin: root.vertical ? 0 : 1
             anchors.topMargin: root.vertical ? 1 : 0
             anchors.bottomMargin: root.vertical ? 1 : 0
         }
         // left: engraved bar, right: small raised square
         Bevel {
             anchors.centerIn: parent
+            // centered over the end piece itself, not over the part reaching into the gaps
+            anchors.horizontalCenterOffset: (row.tabLeft - row.tabRight) / 2
             readonly property int len: Math.max(4, Math.round(Math.min(knob.width, knob.height) * (root.rightSide ? 0.36 : 0.5)))
             width: root.rightSide ? len : (root.vertical ? 3 : len)
             height: root.rightSide ? len : (root.vertical ? len : 3)
@@ -76,7 +86,7 @@ PlasmoidItem {
             leftMargin: root.vertical ? root.pad : 1
             rightMargin: root.vertical ? root.pad : 1
             topMargin: root.vertical ? 1 : root.pad
-            bottomMargin: root.vertical ? 1 : root.pad
+            bottomMargin: root.vertical ? 1 : Math.max(root.pad, row.ledgeOverlap + 1)
         }
         sunken: true
         depth: 1

@@ -1,5 +1,5 @@
 plasma_add_applet(org.kde.schiefer.console
-    QML_SOURCES main.qml ${DOCK_COMMON}/Bevel.qml ${DOCK_COMMON}/FrameTint.qml ${DOCK_COMMON}/MotifArrow.qml TaskButton.qml config.qml ConfigGeneral.qml
+    QML_SOURCES main.qml ${DOCK_COMMON}/Bevel.qml ${DOCK_COMMON}/DockRow.qml ${DOCK_COMMON}/Ledge.qml ${DOCK_COMMON}/FrameTint.qml ${DOCK_COMMON}/MotifArrow.qml TaskButton.qml config.qml ConfigGeneral.qml
     CPP_SOURCES ${DOCK_COMMON}/schieferhelper.cpp ${DOCK_COMMON}/schieferscheme.cpp
     RESOURCES main.xml
     GENERATE_APPLET_CLASS

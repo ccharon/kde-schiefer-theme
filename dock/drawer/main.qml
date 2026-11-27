@@ -36,7 +36,7 @@ PlasmoidItem {
     readonly property int tabSize: Math.max(10, Math.round(Kirigami.Units.gridUnit * 0.7))
     readonly property int pad: Kirigami.Units.smallSpacing
     // side length of the icon field, derived from the panel thickness
-    readonly property int faceSize: vertical ? width - 2 * pad : height - tabSize - 2 * pad
+    readonly property int faceSize: vertical ? width - 2 * pad : height - tabSize - row.raiseBelow - row.ledgeOverlap - 2 * pad
     readonly property bool drawerOpen: popup.visible
 
     // shared time for clock, calendar page and tooltip; ticks exactly on the full minute
@@ -62,12 +62,21 @@ PlasmoidItem {
     Kirigami.Theme.inherit: !Scheme.usePanelColor
     Kirigami.Theme.backgroundColor: Scheme.usePanelColor ? Scheme.panelColor : undefined
     FrameTint {}
+    // DockRow: neighbors with a tab row and a ledge
+    readonly property bool schieferTabRow: true
+    readonly property bool schieferLedge: true
+    DockRow {
+        id: row
+        target: root
+        vertical: root.vertical
+    }
+    Ledge { row: row }
     Plasmoid.icon: isSystem ? "preferences-system" : isFolder ? folder.folderIcon : (mainData.icon ?? "go-up")
     toolTipMainText: ""
 
     Layout.minimumWidth: vertical ? -1 : Math.max(faceSize, Kirigami.Units.iconSizes.medium) + 4 * pad
     Layout.maximumWidth: Layout.minimumWidth
-    Layout.minimumHeight: vertical ? width - 2 * pad + tabSize + 2 * pad : -1
+    Layout.minimumHeight: vertical ? width - 2 * pad + tabSize + Scheme.tabRaise + 2 * pad : -1
     Layout.maximumHeight: Layout.minimumHeight
 
     Helper {
@@ -296,17 +305,22 @@ PlasmoidItem {
     ]
 
     // ---------- Tab ----------
+    // Horizontal panel: reaches into the gaps so neighboring tabs touch, and grows upward
     Item {
         id: tab
-        anchors { left: parent.left; right: parent.right; top: parent.top }
-        height: root.tabSize
+        x: root.vertical ? 0 : -row.tabLeft
+        y: -row.raiseAbove
+        width: root.width + (root.vertical ? 0 : row.tabLeft + row.tabRight)
+        height: root.tabSize + Scheme.tabRaise
 
         Bevel {
             anchors.fill: parent
-            anchors.leftMargin: 1
-            anchors.rightMargin: 1
-            // sunken as in CDE; the well darkens when pressed
+            anchors.leftMargin: root.vertical ? 1 : 0
+            anchors.rightMargin: root.vertical ? 1 : 0
+            // sunken as in CDE; the well darkens when pressed. 1 px edges as in CDE: between
+            // two tabs only one light and one dark line
             sunken: true
+            depth: 1
             fill: tabMouse.pressed ? Qt.tint(base, Qt.rgba(0, 0, 0, 0.12)) : base
         }
         MotifArrow {
@@ -334,6 +348,7 @@ PlasmoidItem {
     Item {
         id: faceArea
         anchors { left: parent.left; right: parent.right; top: tab.bottom; bottom: parent.bottom }
+        anchors.bottomMargin: row.ledgeOverlap
 
         Bevel {
             anchors.fill: parent
