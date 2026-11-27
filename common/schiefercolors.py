@@ -189,3 +189,29 @@ def factors(rgb):
     bs = XmCOLOR_LO_BS_FACTOR + _cdiv(b * (XmCOLOR_HI_BS_FACTOR - XmCOLOR_LO_BS_FACTOR), XmMAX_SHORT)
     sel = XmCOLOR_LO_SEL_FACTOR + _cdiv(b * (XmCOLOR_HI_SEL_FACTOR - XmCOLOR_LO_SEL_FACTOR), XmMAX_SHORT)
     return (ts / 100, bs / 100, sel / 100)
+
+
+# ---------------------------------------------------------------- login and boot screens
+
+def login_roles(scheme_path):
+    """Colors of the login and boot screens from a KDE color scheme (colors/*.colors). The roles are the
+    ones the lock screen takes through Kirigami (greeter/kit/Pal.qml); schiefer-config maps them the
+    same way for SDDM."""
+    import configparser
+    cp = configparser.ConfigParser(interpolation=None, strict=False)
+    cp.optionxform = str
+    cp.read(scheme_path, encoding="utf-8")
+
+    def get(group, key):
+        return parse(cp.get(group, key))
+    return {
+        "bg": get("Colors:Window", "BackgroundNormal"),
+        "fg": get("Colors:Window", "ForegroundNormal"),
+        "field": get("Colors:View", "BackgroundNormal"),
+        "fieldText": get("Colors:View", "ForegroundNormal"),
+        "active": get("Colors:Selection", "BackgroundNormal"),
+        "activeText": get("Colors:Selection", "ForegroundNormal"),
+        "panel": get("Colors:Complementary", "BackgroundNormal"),
+        "alert": get("Colors:Window", "ForegroundNegative"),
+        "desktop": parse(cp.get("Schiefer", "DesktopColors").split(",")[0]),
+    }

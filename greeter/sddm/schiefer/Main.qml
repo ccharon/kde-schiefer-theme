@@ -24,7 +24,8 @@ Item {
         active: config.activeColor || "#60729e"
         activeText: config.activeTextColor || "#ffffff"
         fg: config.textColor || "#000000"
-        fieldText: fg
+        fieldText: config.fieldTextColor || fg
+        alert: config.alertColor || "#a02828"
         fontPoints: Number(config.fontSize) || 0
     }
 

@@ -1,23 +1,38 @@
 #!/bin/bash
 # Writes the Schiefer boot screen script with the details of this machine (host name, system,
 # kernel, machine, CPU, memory, boot device). Plymouth cannot read them itself at boot time.
+# Also copies the images of the system palette (/etc/schiefer/palette, set by
+# "schiefer-config system-palette") into the image directory, images/ next to the script.
 #   schiefer-plymouth-info [--kernel VERSION] [--template FILE] [--out FILE] [--screen-mm MM]
+#                          [--palette NAME] [--palettes DIR]
 # --screen-mm: screen height in mm for the UI scale (default: from the EDID, 0 = by pixel height)
 # Called by the dracut module 90schiefer-plymouth for every initramfs build.
 set -u
 TEMPLATE=/usr/share/plymouth/themes/schiefer/schiefer.script.in
 OUT=/var/lib/schiefer/plymouth/schiefer.script
+PALETTES=/usr/share/schiefer/plymouth
 KERNEL="$(uname -r)"
 SCREEN_MM=""
+PALETTE=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --kernel) KERNEL="$2"; shift 2 ;;
         --template) TEMPLATE="$2"; shift 2 ;;
         --out) OUT="$2"; shift 2 ;;
         --screen-mm) SCREEN_MM="$2"; shift 2 ;;
-        *) echo "usage: $0 [--kernel VERSION] [--template FILE] [--out FILE] [--screen-mm MM]" >&2; exit 2 ;;
+        --palette) PALETTE="$2"; shift 2 ;;
+        --palettes) PALETTES="$2"; shift 2 ;;
+        *) echo "usage: $0 [--kernel VERSION] [--template FILE] [--out FILE] [--screen-mm MM] [--palette NAME] [--palettes DIR]" >&2; exit 2 ;;
     esac
 done
+
+[ -n "$PALETTE" ] || PALETTE="$(sed -n '/^[[:space:]]*[^#[:space:]]/{s/[[:space:]]//g;p;q}' /etc/schiefer/palette 2>/dev/null)"
+PALETTE="$(printf %s "${PALETTE:-schiefer}" | tr 'A-Z' 'a-z')"
+case "$PALETTE" in */*|.*) PALETTE=schiefer ;; esac
+if [ ! -r "$PALETTES/$PALETTE/palette.script" ]; then
+    echo "$0: palette $PALETTE not found in $PALETTES, using schiefer" >&2
+    PALETTE=schiefer
+fi
 
 # one line, printable, without characters that end a script string
 clean() { tr -d '\000-\037"\\' | sed 's/  */ /g; s/^ //; s/ $//'; }
@@ -87,6 +102,18 @@ case "$SCREEN_MM" in ""|*[!0-9]*) SCREEN_MM=0 ;; esac
 
 [ -r "$TEMPLATE" ] || { echo "$0: template $TEMPLATE missing" >&2; exit 1; }
 mkdir -p "$(dirname "$OUT")" || exit 1
+
+# images of the palette: fill a new directory, then swap it in, so Plymouth never sees a half set
+IMAGES="$(dirname "$OUT")/images"
+new="$(mktemp -d "$IMAGES.new.XXXXXX")" || exit 1
+if ! cp "$PALETTES/$PALETTE"/*.png "$new/" || ! chmod 755 "$new" || ! chmod 644 "$new"/*.png; then
+    rm -rf "$new"; exit 1
+fi
+rm -rf "$IMAGES.old"
+[ -e "$IMAGES" ] && mv "$IMAGES" "$IMAGES.old"
+mv "$new" "$IMAGES" || exit 1
+rm -rf "$IMAGES.old"
+
 tmp="$(mktemp "$OUT.XXXXXX")" || exit 1
 {
     printf 'host = "%s";\n' "$(printf %s "$host" | clean)"
@@ -98,6 +125,8 @@ tmp="$(mktemp "$OUT.XXXXXX")" || exit 1
     printf 'root = "%s";\n' "$(printf %s "${root:-?}" | clean)"
     printf 'lang = "%s";\n' "$lang"
     printf 'screen_mm = %d;\n' "$SCREEN_MM"
+    printf 'palette = "%s";\n' "$PALETTE"
+    cat "$PALETTES/$PALETTE/palette.script"
 } > "$tmp.info"
 sed -e "/^#@INFO@\$/{r $tmp.info" -e 'd}' "$TEMPLATE" > "$tmp" && chmod 644 "$tmp" && mv "$tmp" "$OUT"
 rc=$?

@@ -4,6 +4,7 @@
 # local names (prefix l_) and only write to the globals below on purpose.
 
 screen_mm = 0;     # unknown unless schiefer-plymouth-info sets it below
+@SCREEN@     # palette "Schiefer"; schiefer-plymouth-info sets the system palette below
 #@INFO@
 
 # ------------------------------------------------------------------ texts
@@ -62,8 +63,8 @@ fun MakeFont(l_name, l_h, l_x, l_w, l_adv) {
 @FONTS@
 
 # ------------------------------------------------------------------ geometry
-Window.SetBackgroundTopColor(@SCREEN@);
-Window.SetBackgroundBottomColor(@SCREEN@);
+Window.SetBackgroundTopColor(screen_r, screen_g, screen_b);
+Window.SetBackgroundBottomColor(screen_r, screen_g, screen_b);
 W = Window.GetWidth();
 H = Window.GetHeight();
 X0 = Window.GetX();

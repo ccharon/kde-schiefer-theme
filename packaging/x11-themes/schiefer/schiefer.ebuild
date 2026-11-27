@@ -75,4 +75,5 @@ pkg_postinst() {
 	elog "Lock screen (per user):    schiefer-config lockscreen on"
 	elog "Login (SDDM, all users):   System Settings > Login Screen (SDDM) > Schiefer"
 	elog "  or /etc/sddm.conf.d/...: [Theme] Current=schiefer"
+	elog "Palette of login and boot screen: sudo schiefer-config system-palette broica"
 }

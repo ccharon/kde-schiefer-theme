@@ -4,6 +4,7 @@ Description=Workstation console: machine banner, systemd units as they start, pr
 ModuleName=script
 
 [script]
-ImageDir=/usr/share/plymouth/themes/schiefer
-# generated with the machine details by schiefer-plymouth-info (dracut module 90schiefer-plymouth)
+# images of the system palette and the script with the machine details, both written by
+# schiefer-plymouth-info (dracut module 90schiefer-plymouth)
+ImageDir=/var/lib/schiefer/plymouth/images
 ScriptFile=/var/lib/schiefer/plymouth/schiefer.script

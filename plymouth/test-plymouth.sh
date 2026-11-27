@@ -5,6 +5,7 @@
 #   PLY_PREFIX=<plymouth 22 build with --enable-tracing> plymouth/test-plymouth.sh out.png [scene]
 #   scenes: boot (default: units of this machine), password (ZFS passphrase prompt), shutdown
 #   BR_WIDTH/BR_HEIGHT: screen size (default 1600x1000), BR_MM: its height in mm (default 0: scale by pixels)
+#   PALETTE: palette of the images (default: schiefer)
 # The distribution build of Plymouth works too but logs nothing; PLY_PREFIX=/usr for that.
 set -eu
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -12,10 +13,9 @@ OUT="$(realpath -m "$1")"; SCENE="${2:-boot}"
 P="${PLY_PREFIX:?set PLY_PREFIX to a Plymouth 22 installation prefix}"
 T="$(mktemp -d)"; trap '[ -n "${KEEP:-}" ] && echo "$T" >&2 || rm -rf "$T"' EXIT
 TH="$T/themes/schiefer"; mkdir -p "$TH"
-cp "$HERE"/schiefer/*.png "$TH/"
 "$HERE/schiefer-plymouth-info" --template "$HERE/schiefer/schiefer.script.in" --out "$TH/schiefer.script" \
-    --screen-mm "${BR_MM:-0}"
-sed -e "s|^ImageDir=.*|ImageDir=$TH|" -e "s|^ScriptFile=.*|ScriptFile=$TH/schiefer.script|" \
+    --screen-mm "${BR_MM:-0}" --palettes "$HERE/palettes" --palette "${PALETTE:-schiefer}"
+sed -e "s|^ImageDir=.*|ImageDir=$TH/images|" -e "s|^ScriptFile=.*|ScriptFile=$TH/schiefer.script|" \
     "$HERE/schiefer/schiefer.plymouth" > "$TH/schiefer.plymouth"
 MODE=boot; [ "$SCENE" = shutdown ] && MODE=shutdown
 # units of this machine in start order as the status feed

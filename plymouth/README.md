@@ -10,14 +10,14 @@ for an encrypted ZFS pool) appear as a Motif text field below the last log line.
 
 | File | Purpose |
 |---|---|
-| `make_plymouth.py` | renders the glyph atlases (Noto Sans Mono, Noto Sans Bold; UI scale 1, 1.5, 2, 2.5 and 3), the emblem and the 1 px colors into `schiefer/`, and fills the glyph tables into `schiefer/schiefer.script.in` |
+| `make_plymouth.py` | renders the glyph atlases (Noto Sans Mono, Noto Sans Bold; UI scale 1, 1.5, 2, 2.5 and 3), the emblem and the 1 px colors for every palette in `colors/` into `palettes/<palette>/`, and fills the glyph tables into `schiefer/schiefer.script.in` |
 | `schiefer.script.tmpl` | the Plymouth script; source of `schiefer.script.in` |
 | `render_emblem.qml` | renders the emblem of the login screens (`greeter/kit/Emblem.qml`) |
-| `schiefer-plymouth-info` | writes `/var/lib/schiefer/plymouth/schiefer.script` from the template with the details of this machine |
+| `schiefer-plymouth-info` | writes `/var/lib/schiefer/plymouth/schiefer.script` from the template with the details of this machine, and copies the images of the system palette (`/etc/schiefer/palette`) to `/var/lib/schiefer/plymouth/images` |
 | `dracut/90schiefer-plymouth/` | runs `schiefer-plymouth-info` for the kernel being built and copies the script into the initramfs; active only while `schiefer` is the default Plymouth theme |
 | `build-test-plymouth.sh`, `test-plymouth.sh` | test tools, see below |
 
-Run `make_plymouth.py` after changing the template or the colors. Its output in `schiefer/` is committed.
+Run `make_plymouth.py` after changing the template or a palette. Its output in `schiefer/` and `palettes/` is committed.
 
 ## How it works
 
@@ -34,6 +34,9 @@ Run `make_plymouth.py` after changing the template or the colors. Its output in 
 - Plymouth cannot read machine details at boot. `schiefer.plymouth` points `ScriptFile` to
   `/var/lib/schiefer/plymouth/schiefer.script`, which `schiefer-plymouth-info` writes at every dracut run
   (and once at installation). The shutdown screen reads the same file from the root file system.
+- The images are colored per palette. `ImageDir` points to `/var/lib/schiefer/plymouth/images`, which holds
+  only the set of the system palette, so the initramfs carries one set. Plymouth's own dracut module copies
+  that directory before `90schiefer-plymouth` runs, so the Schiefer module replaces the copy with the fresh set.
 - systemd sends Plymouth the name of every unit it starts or stops. It does not send the result, so the
   screen shows no OK or FAILED column. Escapes such as `\x2d` in unit names are shown as plain characters.
 
@@ -50,6 +53,7 @@ PLY_PREFIX=~/plytest plymouth/test-plymouth.sh out.png password   # passphrase p
 PLY_PREFIX=~/plytest plymouth/test-plymouth.sh out.png shutdown
 BR_WIDTH=3840 BR_HEIGHT=2160 BR_MM=336 PLY_PREFIX=~/plytest plymouth/test-plymouth.sh out.png
 PLYMOUTH_FORCE_SCALE=2 BR_WIDTH=2560 BR_HEIGHT=1600 PLY_PREFIX=~/plytest plymouth/test-plymouth.sh out.png
+PALETTE=broica PLY_PREFIX=~/plytest plymouth/test-plymouth.sh out.png
 ```
 
 The distribution build of the x11 renderer keeps showing the first frame under Xwayland, and Gentoo builds

@@ -48,8 +48,11 @@ HELP_EN = """schiefer-config: toggle Schiefer options and palettes (Motif/CDE lo
   schiefer-config <option> <number>    set a number option (tab-raise)
   schiefer-config palette [<name>]     list palettes, or apply one (color scheme and desktop colors)
   schiefer-config defaults             set all options to the Schiefer defaults
+  schiefer-config system-palette [<name>]
+                                       palette of the login screen (SDDM) and the boot screen
+                                       (Plymouth) for all users; setting it needs root
 
-Affects only the calling user (~/.config, ~/.local/share)."""
+Except for system-palette, affects only the calling user (~/.config, ~/.local/share)."""
 
 HELP_DE = """schiefer-config: Schalter und Paletten von Schiefer (Motif/CDE für KDE Plasma)
 
@@ -59,8 +62,11 @@ HELP_DE = """schiefer-config: Schalter und Paletten von Schiefer (Motif/CDE für
   schiefer-config <schalter> <zahl>    Zahlenwert setzen (laschen-hoehe)
   schiefer-config palette [<name>]     Paletten zeigen oder eine anwenden (Farbschema und Arbeitsflächenfarben)
   schiefer-config defaults             alle Schalter auf die Schiefer-Vorgabe setzen
+  schiefer-config system-palette [<name>]
+                                       Palette der Anmeldung (SDDM) und des Bootbildschirms
+                                       (Plymouth) für alle Benutzer; Setzen braucht root
 
-Wirkt nur für den aufrufenden Benutzer (~/.config, ~/.local/share).
+Außer system-palette wirkt alles nur für den aufrufenden Benutzer (~/.config, ~/.local/share).
 Die deutschen Befehle (liste, standard, an, aus, Schalternamen) gelten weiterhin."""
 
 
@@ -646,10 +652,11 @@ BY_NAME["kicker"].no_target = True
 
 # ---------------------------------------------------------------- Palettes
 
-def palettes():
-    """{short name: (scheme name, path)} of all installed Schiefer color schemes"""
+def palettes(system=False):
+    """{short name: (scheme name, path)} of all installed Schiefer color schemes; system=True leaves out
+    the user's own data directory"""
     out = {}
-    for d in [DATA_HOME] + DATA_DIRS:
+    for d in ([] if system else [DATA_HOME]) + DATA_DIRS:
         cs = os.path.join(d, "color-schemes")
         try:
             names = sorted(os.listdir(cs))
@@ -662,6 +669,26 @@ def palettes():
             short = (scheme[len("Schiefer"):] or "Schiefer").lower()
             out.setdefault(short, (scheme, os.path.join(cs, fn)))
     return out
+
+
+def palette_short(name, available):
+    short = name.lower()
+    if short.startswith("schiefer") and short != "schiefer":
+        short = short[len("schiefer"):].strip()
+    # Scheme IDs are German; the English display names are accepted too.
+    short = {"sandstone": "sandstein", "granite": "granit"}.get(short, short)
+    if short not in available:
+        raise Error(tr(f"unknown palette {name} (available: {', '.join(sorted(available))})",
+                       f"Palette {name} unbekannt (vorhanden: {', '.join(sorted(available))})"))
+    return short
+
+
+def print_palettes(available, current):
+    for short, (scheme, path) in sorted(available.items(), key=lambda x: (x[0] != "schiefer", x[0])):
+        title = read_scheme(path).get("General", "Name", fallback=scheme)
+        print(f"{'*' if current in (scheme, short) else ' '} {short:12} {title}")
+    if not available:
+        print(tr("no Schiefer color schemes found", "keine Schiefer-Farbschemata gefunden"))
 
 
 def read_scheme(path):
@@ -686,20 +713,9 @@ def palette(name):
     available = palettes()
     current = kread("kdeglobals", ["General"], "ColorScheme", "")
     if name is None:
-        for short, (scheme, path) in sorted(available.items(), key=lambda x: (x[0] != "schiefer", x[0])):
-            title = read_scheme(path).get("General", "Name", fallback=scheme)
-            print(f"{'*' if scheme == current else ' '} {short:12} {title}")
-        if not available:
-            print(tr("no Schiefer color schemes found", "keine Schiefer-Farbschemata gefunden"))
+        print_palettes(available, current)
         return
-    short = name.lower()
-    if short.startswith("schiefer") and short != "schiefer":
-        short = short[len("schiefer"):].strip()
-    # Scheme IDs are German; the English display names are accepted too.
-    short = {"sandstone": "sandstein", "granite": "granit"}.get(short, short)
-    if short not in available:
-        raise Error(tr(f"unknown palette {name} (available: {', '.join(sorted(available))})",
-                       f"Palette {name} unbekannt (vorhanden: {', '.join(sorted(available))})"))
+    short = palette_short(name, available)
     scheme, path = available[short]
     r = run(["plasma-apply-colorscheme", scheme]) if have("plasma-apply-colorscheme") else None
     if r is None or r.returncode != 0:
@@ -712,6 +728,118 @@ def palette(name):
     elif apply_desktop_colors(path):
         print(tr("Desktop colors applied", "Arbeitsflächenfarben übernommen"))
     # The dock reads its colors from the scheme itself; GTK follows through kde-gtk-config.
+    system = system_palette_read()
+    if system != short:
+        print(tr(f"Login and boot screen keep the system palette {system} "
+                 f"(change: sudo schiefer-config system-palette {short})",
+                 f"Anmeldung und Bootbildschirm behalten die Systempalette {system} "
+                 f"(ändern: sudo schiefer-config system-palette {short})"))
+
+
+# ---------------------------------------------------------------- System palette
+# One palette for the screens before anyone logs in. SDDM reads it from theme.conf.user in its theme
+# directory (SDDM's own override file). Plymouth gets it through schiefer-plymouth-info, which reads
+# SYSTEM_PALETTE at every initramfs build.
+SYSTEM_PALETTE = "/etc/schiefer/palette"
+SDDM_THEME = "/usr/share/sddm/themes/schiefer"
+PLYMOUTH_PALETTES = "/usr/share/schiefer/plymouth"
+
+
+def system_palette_read():
+    try:
+        with open(SYSTEM_PALETTE, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    return line.lower()
+    except OSError:
+        pass
+    return "schiefer"
+
+
+def login_roles(path):
+    """The roles of the lock screen (greeter/kit/Pal.qml, through Kirigami), as SDDM theme keys.
+    Same mapping as login_roles in common/schiefercolors.py."""
+    cs = read_scheme(path)
+
+    def get(group, key):
+        v = cs.get(group, key, fallback="").strip()
+        try:
+            return "#%02x%02x%02x" % tuple(int(c) for c in v.split(",")[:3])
+        except ValueError:
+            raise Error(tr(f"{path}: [{group}] {key} missing", f"{path}: [{group}] {key} fehlt"))
+    return {
+        "backgroundColor": cs.get("Schiefer", "DesktopColors", fallback="#8fa3bf").split(",")[0].strip(),
+        "dialogColor": get("Colors:Window", "BackgroundNormal"),
+        "textColor": get("Colors:Window", "ForegroundNormal"),
+        "fieldColor": get("Colors:View", "BackgroundNormal"),
+        "fieldTextColor": get("Colors:View", "ForegroundNormal"),
+        "activeColor": get("Colors:Selection", "BackgroundNormal"),
+        "activeTextColor": get("Colors:Selection", "ForegroundNormal"),
+        "alertColor": get("Colors:Window", "ForegroundNegative"),
+    }
+
+
+def sddm_write(short, path):
+    """Palette keys into theme.conf.user. Other keys there stay, and so does a background image chosen on
+    the SDDM settings page."""
+    user_conf = os.path.join(SDDM_THEME, "theme.conf.user")
+    cp = configparser.ConfigParser(interpolation=None, strict=False)
+    cp.optionxform = str
+    try:
+        cp.read(user_conf, encoding="utf-8")
+    except configparser.Error:
+        cp = configparser.ConfigParser(interpolation=None, strict=False)
+        cp.optionxform = str
+    if not cp.has_section("General"):
+        cp.add_section("General")
+    for key, value in login_roles(path).items():
+        cp.set("General", key, value)
+    tile = os.path.join("backdrops", short + ".png")
+    own = cp.get("General", "background", fallback="")
+    if own == "" or own.startswith("backdrops/"):
+        if os.path.isfile(os.path.join(SDDM_THEME, tile)):
+            cp.set("General", "background", tile)
+        else:
+            cp.remove_option("General", "background")
+    tmp = user_conf + ".new"
+    with open(tmp, "w", encoding="utf-8") as f:
+        cp.write(f, space_around_delimiters=False)
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, user_conf)
+
+
+def system_palette(name):
+    available = palettes(system=True)
+    current = system_palette_read()
+    if name is None:
+        print_palettes(available, current)
+        print(tr("\n* = system palette (login screen and boot screen).  Change: sudo schiefer-config system-palette <name>",
+                 "\n* = Systempalette (Anmeldung und Bootbildschirm).  Ändern: sudo schiefer-config system-palette <name>"))
+        return
+    short = palette_short(name, available)
+    if os.geteuid() != 0:
+        raise Error(tr(f"the system palette needs root: sudo schiefer-config system-palette {short}",
+                       f"die Systempalette braucht root: sudo schiefer-config system-palette {short}"))
+    scheme, path = available[short]
+    os.makedirs(os.path.dirname(SYSTEM_PALETTE), mode=0o755, exist_ok=True)
+    tmp = SYSTEM_PALETTE + ".new"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write("# written by schiefer-config system-palette; read by the SDDM theme and the boot screen\n"
+                f"{short}\n")
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, SYSTEM_PALETTE)
+    title = read_scheme(path).get("General", "Name", fallback=scheme)
+    print(tr(f"System palette: {title}", f"Systempalette: {title}"))
+    if os.path.isdir(SDDM_THEME):
+        sddm_write(short, path)
+        print(tr("Login screen (SDDM): from the next time it starts",
+                 "Anmeldung (SDDM): ab dem nächsten Start der Anmeldemaske"))
+    else:
+        warn(tr(f"SDDM theme not installed ({SDDM_THEME})", f"SDDM-Theme nicht installiert ({SDDM_THEME})"))
+    if os.path.isdir(os.path.join(PLYMOUTH_PALETTES, short)):
+        print(tr("Boot screen (Plymouth): from the next initramfs build (dracut, for example with the next kernel)",
+                 "Bootbildschirm (Plymouth): ab dem nächsten Bau des initramfs (dracut, z. B. mit dem nächsten Kernel)"))
 
 
 # ---------------------------------------------------------------- Lock screen
@@ -844,6 +972,9 @@ def list_options():
     current = kread("kdeglobals", ["General"], "ColorScheme", "?")
     rows.append(("palette", current, "Schiefer", tr("Colors", "Farben"),
                  tr("schiefer-config palette lists all", "schiefer-config palette zeigt alle")))
+    rows.append(("system-palette", system_palette_read(), "schiefer", tr("Login", "Anmeldung"),
+                 tr("login and boot screen for all users: sudo schiefer-config system-palette <name>",
+                    "Anmeldung und Bootbildschirm für alle: sudo schiefer-config system-palette <name>")))
     w = max(len(z[0]) for z in rows)
     print(f"{tr('Option', 'Schalter'):{w}}  {tr('State', 'Zustand'):9} {tr('Default', 'Vorgabe'):9} "
           f"{tr('Area', 'Bereich'):12} {tr('Description', 'Beschreibung')}")
@@ -898,6 +1029,9 @@ def main(argv):
     try:
         if cmd == "palette":
             palette(argv[1] if len(argv) > 1 else None)
+        elif cmd in ("system-palette", "systempalette"):
+            system_palette(argv[1] if len(argv) > 1 else None)
+            return 0
         elif cmd in ("lockscreen-refresh", "sperrbildschirm-auffrischen"):
             lock_refresh()
             return 0

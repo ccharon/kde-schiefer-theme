@@ -77,9 +77,10 @@ schiefer-config                   # list options with state and default
 schiefer-config diamond on        # set an option; takes effect immediately where possible
 schiefer-config defaults          # all options to the Motif defaults
 schiefer-config palette basalt    # color scheme and desktop colors
+sudo schiefer-config system-palette broica   # login screen and boot screen for all users
 ```
 
-The command affects only the calling user. German command names (`liste`, `standard`, `an`, `aus`,
+Except for `system-palette` the command affects only the calling user. German command names (`liste`, `standard`, `an`, `aus`,
 `raute`, ...) are accepted as well.
 
 | Option | Default | Effect | Stored in |
@@ -104,7 +105,12 @@ The command affects only the calling user. German command names (`liste`, `stand
 | `dock-ledge` | on | raised ledge along the bottom of the dock, only under Schiefer widgets | `schieferrc [Dock] Ledge` |
 | `tab-raise` | 3 | pixels (0-16) the drawer tabs and end piece buttons grow upward; what does not fit above the widget makes the tab taller downward | `schieferrc [Dock] TabRaise` |
 
-The SDDM theme reads `/usr/share/sddm/themes/schiefer/theme.conf`:
+The system palette is stored in `/etc/schiefer/palette` (default `schiefer`). `system-palette` writes its
+colors into `/usr/share/sddm/themes/schiefer/theme.conf.user`; other keys there and a background image
+chosen in System Settings stay. The boot screen takes the palette at the next initramfs build (dracut).
+The lock screen always follows the palette of the user.
+
+The SDDM theme reads `/usr/share/sddm/themes/schiefer/theme.conf`, overridden by `theme.conf.user`:
 
 | Key | Type | Default | Effect |
 |---|---|---|---|
@@ -112,7 +118,7 @@ The SDDM theme reads `/usr/share/sddm/themes/schiefer/theme.conf`:
 | `subtitle` | text | `PRETTY_NAME` from `/etc/os-release` | line below the host name |
 | `fontSize` | points | system font, at least 10 | text size |
 | `showClock` | bool | `true` | seven-segment clock |
-| `background`, `backgroundColor`, `dialogColor`, `fieldColor`, `activeColor`, `activeTextColor`, `textColor` | file, colors | Schiefer palette | appearance |
+| `background`, `backgroundColor`, `dialogColor`, `textColor`, `fieldColor`, `fieldTextColor`, `activeColor`, `activeTextColor`, `alertColor` | file, colors | system palette | appearance |
 
 ## Development
 
