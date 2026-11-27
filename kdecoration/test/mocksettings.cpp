@@ -23,7 +23,8 @@ QList<KDecoration3::DecorationButtonType> MockSettings::decorationButtonsLeft() 
 
 QList<KDecoration3::DecorationButtonType> MockSettings::decorationButtonsRight() const
 {
-    return {KDecoration3::DecorationButtonType::Close};
+    // Schiefer test: as in the Schiefer layout (minimize, maximize, close)
+    return {KDecoration3::DecorationButtonType::Minimize, KDecoration3::DecorationButtonType::Maximize, KDecoration3::DecorationButtonType::Close};
 }
 
 bool MockSettings::isAlphaChannelSupported() const

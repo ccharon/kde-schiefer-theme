@@ -18,7 +18,10 @@
 #include <QSignalSpy>
 #include <QStyleHints>
 #include <QTemporaryDir>
+#include <QImage>
+#include <QPainter>
 #include <QTest>
+#include <KSharedConfig>
 
 static QString s_plugin;
 static QString s_cfgDir;
@@ -49,6 +52,10 @@ struct Fixture {
         win = bridge.lastCreatedWindow();
         win->setWidth(400);
         win->setHeight(300);
+        // a normal window: the title buttons are shown
+        win->setCloseable(true);
+        win->setMinimizable(true);
+        win->setMaximizable(true);
         // same order as KWin (decorations/decorationbridge.cpp: create, setSettings, init)
         deco->create();
         deco->setSettings(settings);
@@ -93,7 +100,32 @@ private Q_SLOTS:
     void menuRightClickImmediate();
     void menuDoubleClickOff();
     void menuKWinSettingWins();
+    void paintShot();
 };
+
+// SCHIEFER_DECO_SHOT=out.png [SCHIEFER_DECO_COLORS=file.colors]: renders the decoration of a
+// 400x300 window into a PNG (visual check of frame and buttons without KWin)
+void DecoTest::paintShot()
+{
+    const QString out = qEnvironmentVariable("SCHIEFER_DECO_SHOT");
+    if (out.isEmpty()) {
+        QSKIP("SCHIEFER_DECO_SHOT not set");
+    }
+    const QString colors = qEnvironmentVariable("SCHIEFER_DECO_COLORS");
+    if (!colors.isEmpty()) {
+        QFile::remove(s_cfgDir + QStringLiteral("/kdeglobals"));
+        QVERIFY(QFile::copy(colors, s_cfgDir + QStringLiteral("/kdeglobals")));
+        KSharedConfig::openConfig(QStringLiteral("kdeglobals"))->reparseConfiguration();
+    }
+    Fixture f(4);
+    const QSize sz = f.deco->size().toSize();
+    QImage img(sz, QImage::Format_ARGB32_Premultiplied);
+    img.fill(Qt::white);
+    QPainter p(&img);
+    f.deco->paint(&p, QRectF(QPointF(0, 0), sz));
+    p.end();
+    QVERIFY(img.save(out));
+}
 
 void DecoTest::corners_data()
 {

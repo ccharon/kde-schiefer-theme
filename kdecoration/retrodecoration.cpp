@@ -13,6 +13,8 @@
 #include <KPluginFactory>
 #include <KSharedConfig>
 
+#include <cmath>
+
 #include <QDBusConnection>
 #include <QFontMetricsF>
 #include <QGuiApplication>
@@ -726,13 +728,45 @@ void Button::paint(QPainter *painter, const QRectF &repaintRegion)
         break;
     }
     case DecorationButtonType::Close: {
-        painter->setRenderHint(QPainter::Antialiasing, true);
-        QPen pen(fg, std::max<qreal>(2, std::round(s / 10)));
-        pen.setCapStyle(Qt::SquareCap);
-        painter->setPen(pen);
-        const qreal in = std::round(s * 0.32);
-        painter->drawLine(QPointF(g.left() + in, g.top() + in), QPointF(g.right() - in, g.bottom() - in));
-        painter->drawLine(QPointF(g.left() + in, g.bottom() - in), QPointF(g.right() - in, g.top() + in));
+        // Schiefer: raised X in the frame color like the minimize and maximize boxes, drawn in
+        // whole device pixels: two crossed bars filled with the face; an edge pixel is light when
+        // the outside lies above or left of it, dark when below or right (sunken while pressed)
+        const QRectF r = KDecoration3::snapToPixelGrid(centered(snap(s * 0.6), snap(s * 0.6)), scale);
+        const QTransform dt = painter->deviceTransform();
+        const QRect dr = dt.mapRect(r).toAlignedRect();
+        painter->setWorldTransform(dt.inverted() * painter->worldTransform());
+        const int n = dr.width();
+        const int half = std::max(1, int(std::lround(s * 0.22 * scale / 2))); // bar = 2 * half + 1
+        auto inside = [&](int x, int y) {
+            if (x < 0 || y < 0 || x >= n || y >= n) {
+                return false;
+            }
+            return std::abs(x - y) <= half || std::abs(x - (n - 1 - y)) <= half;
+        };
+        const bool in = isPressed();
+        const QColor light = in ? lo : hi, dark = in ? hi : lo;
+        for (int y = 0; y < n; ++y) {
+            for (int x = 0; x < n; ++x) {
+                if (!inside(x, y)) {
+                    continue;
+                }
+                bool up = false, left = false, down = false, right = false;
+                for (int k = 1; k <= bevelPx; ++k) {
+                    up = up || !inside(x, y - k);
+                    left = left || !inside(x - k, y);
+                    down = down || !inside(x, y + k);
+                    right = right || !inside(x + k, y);
+                }
+                const int score = int(up) + int(left) - int(down) - int(right);
+                QColor c = face;
+                if (score > 0 || (score == 0 && up)) {
+                    c = light;
+                } else if (score < 0 || (score == 0 && down)) {
+                    c = dark;
+                }
+                painter->fillRect(QRect(dr.left() + x, dr.top() + y, 1, 1), c);
+            }
+        }
         break;
     }
     case DecorationButtonType::KeepAbove:
