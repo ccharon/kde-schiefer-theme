@@ -1,0 +1,28 @@
+# Broica: the CDE default palette (Broica, also "Default" in CDE 2.5), lightened so that KDE, GTK and
+# Firefox recognize it as light, with dark text everywhere (CDE draws white text on the darker
+# surfaces). Hues from CDE programs/palettes/Broica.dp; set 6 (petrol) carries the menu bar and
+# the menus as in CDE.
+# Color sets as in CDE: 1 active frame, 2 inactive frame, 3 and 7 desktops, 4 text areas,
+# 5 main windows, 6 menu bar, menus and dialogs, 8 front panel. make_palette.py derives everything else.
+id = "SchieferBroica"
+name = "Schiefer Broica"
+name_de = "Schiefer Broica"
+comment = "light variant of the CDE default palette Broica"
+variant = "light"
+
+[cde]
+1 = "#f0b07a"   # active frame: CDE orange #eda870, a touch lighter for dark title text
+2 = "#b4b4b6"   # inactive frame: CDE gray #99999a, lighter
+3 = "#a3b6c9"   # CDE #8998aa, lighter
+4 = "#ebe6e2"   # text areas: light instead of CDE #686f82 with white text
+5 = "#d4c4bb"   # main window: CDE beige #c6b2a8, lightened to qGray >= 192
+6 = "#8ec0cd"   # menu bar, menus, dialogs: CDE petrol #4992a7, lightened for dark text
+7 = "#cfa9ae"   # CDE #b7878d, lighter
+8 = "#cdbab0"   # front panel: beige like the CDE front panel, a little darker than the windows
+
+[schiefer]
+# workspace buttons in the order of the CDE front panel: One, Two, Three, Four
+desktops = ["#a8bccd", "5", "6", "7", "3", "#b8c79f", "#d6b48c", "#b3a6c9"]
+tooltip = "#f2ecd8"
+header = true
+button = "5"

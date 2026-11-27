@@ -6,20 +6,28 @@
     python3 palettes/make_palette.py --check      print figures only (brightness, Motif branch, edges)
 
 Like CDE a palette has eight color sets; every other color is derived with the Motif formula
-(common/schiefercolors.py). Roles and their KDE mapping:
+(common/schiefercolors.py). Numbering as in CDE (Admin Guide, "Default Color Set Assignments",
+high color). Roles and their KDE mapping:
 
   1  active frame/title      [WM] active*, [Colors:Selection], focus/hover decoration
   2  inactive frame/title    [WM] inactive*
-  3  desktop 1               [Schiefer] DesktopColors (buttons of the dock console)
-  4  desktop 2               [Schiefer] DesktopColors
-  5  text and list areas     [Colors:View]
-  6  main windows            [Colors:Window]
-  7  dialogs/controls        [Colors:Button] (KDE has no dialog color; buttons, combo boxes
-                             and tool buttons carry the dialog color)
+  3  unused in CDE           [Schiefer] DesktopColors (buttons of the dock console)
+  4  text entry areas        [Colors:View]
+  5  main windows            [Colors:Window]
+  6  menu bar, menus,        [Colors:Button] (KDE has no dialog color; buttons, combo boxes and
+     dialogs                 tool buttons carry it), with `header = true` also [Colors:Header]
+  7  unused in CDE           [Schiefer] DesktopColors
   8  front panel             [Colors:Complementary], [Schiefer] FrontPanel
 
+[schiefer] options:
+  header = true   menu bar, top tool bars and menus in color set 6 as in CDE ([Colors:Header];
+                  the Qt style colors the tools area and menus with it). Works without a menu bar:
+                  then only the tool bar carries it, and with neither the window stays plain.
+                  Off (default): no [Colors:Header], GTK header bars take the title color from [WM].
+  button = "5"    color set (or color) of buttons; default 6
+
 Rules: light palettes need qGray(window) >= 192, dark ones < 192, otherwise GTK and Firefox pick
-the wrong variant. No [Colors:Header] group, so GTK header bars take the title color from [WM].
+the wrong variant.
 All surfaces should lie in the medium Motif branch (brightness 20 ... 93 %), because the GTK and
 Plasma styles can only approximate the formula there. --check warns otherwise.
 """
@@ -34,8 +42,8 @@ sys.path.insert(0, os.path.join(ROOT, "common"))
 import schiefercolors as sc  # noqa: E402
 
 ROLES = {
-    1: "active frame", 2: "inactive frame", 3: "desktop 1", 4: "desktop 2",
-    5: "text area", 6: "main window", 7: "dialogs/buttons", 8: "front panel",
+    1: "active frame", 2: "inactive frame", 3: "desktop 1", 4: "text area",
+    5: "main window", 6: "menus/dialogs", 7: "desktop 2", 8: "front panel",
 }
 
 # Accent colors for text (links, states), chosen by the brightness of the surface
@@ -90,7 +98,9 @@ def colorset(bg, focus, hover, fg=None, accents=None):
 
 def build(p):
     c = p["cde"]
-    active, inactive, view, window, button, panel = c[1], c[2], c[5], c[6], c[7], c[8]
+    opts = p.get("schiefer", {})
+    active, inactive, view, window, panel = c[1], c[2], c[4], c[5], c[8]
+    button = ref(p, opts.get("button", "6"))
     ma = sc.motif_colors(active)
     # Focus frame: Motif select color of the active color (a little stronger than the title bar)
     focus = ma["select"] if ma["fg"] == (255, 255, 255) else ma["bottom"]
@@ -99,7 +109,9 @@ def build(p):
     groups["Colors:Window"] = colorset(window, focus, hover)
     groups["Colors:View"] = colorset(view, focus, hover)
     groups["Colors:Button"] = colorset(button, focus, hover)
-    tooltip = ref(p, p.get("schiefer", {}).get("tooltip", "5"))
+    if opts.get("header", False):
+        groups["Colors:Header"] = colorset(c[6], focus, hover)
+    tooltip = ref(p, opts.get("tooltip", "4"))
     groups["Colors:Tooltip"] = colorset(tooltip, focus, hover)
     groups["Colors:Complementary"] = colorset(panel, ma["top"], ma["top"])
     # Selection = active color (like the title bar); foreground after Motif
@@ -146,9 +158,10 @@ def write(p, out_dir, src_name):
         "ChangeSelectionColor": "true", "Color": disabled, "ColorAmount": "0.025", "ColorEffect": "2",
         "ContrastAmount": "0.1", "ContrastEffect": "2", "Enable": "false", "IntensityAmount": "0",
         "IntensityEffect": "0"})
-    for g in ("Colors:Button", "Colors:Complementary", "Colors:Selection", "Colors:Tooltip",
+    for g in ("Colors:Button", "Colors:Complementary", "Colors:Header", "Colors:Selection", "Colors:Tooltip",
               "Colors:View", "Colors:Window"):
-        section(g, groups[g])
+        if g in groups:
+            section(g, groups[g])
     gen = {"ColorScheme": pid, "Name": p.get("name", pid)}
     if "name_de" in p:
         gen["Name[de]"] = p["name_de"]
@@ -173,7 +186,7 @@ def write(p, out_dir, src_name):
 def check(p):
     c = p["cde"]
     ok = True
-    gray = sc.qgray(c[6])
+    gray = sc.qgray(c[5])
     variant = p.get("variant", "light")
     print(f"{p['id']} ({p.get('name', '')}), {variant}, qGray(window)={gray}")
     if variant == "light" and gray < 192 or variant == "dark" and gray >= 192:

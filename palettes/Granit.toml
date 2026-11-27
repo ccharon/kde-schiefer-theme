@@ -9,11 +9,11 @@ variant = "light"
 1 = "#606064"
 2 = "#b6b6b6"
 3 = "#9a9a9a"
-4 = "#b4b4b4"
-5 = "#e4e4e4"
-6 = "#c4c4c4"
-7 = "#bcbcbc"
+4 = "#e4e4e4"
+5 = "#c4c4c4"
+6 = "#bcbcbc"
+7 = "#b4b4b4"
 8 = "#949494"
 
 [schiefer]
-desktops = ["3", "4", "#808080", "#c4c4c4", "#a8a8a8", "#8e8e8e", "#bcbcbc", "#747474"]
+desktops = ["3", "7", "#808080", "#c4c4c4", "#a8a8a8", "#8e8e8e", "#bcbcbc", "#747474"]

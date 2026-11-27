@@ -1,6 +1,6 @@
 # Schiefer: light slate blue gray.
-# Color sets as in CDE: 1 active frame, 2 inactive frame, 3-4 desktops, 5 text areas,
-# 6 main windows, 7 dialogs and buttons, 8 front panel. make_palette.py derives everything else.
+# Color sets as in CDE: 1 active frame, 2 inactive frame, 3 and 7 desktops, 4 text areas,
+# 5 main windows, 6 dialogs and buttons, 8 front panel. make_palette.py derives everything else.
 id = "Schiefer"
 name = "Schiefer"
 name_de = "Schiefer"
@@ -11,12 +11,12 @@ variant = "light"
 1 = "#60729e"   # active frame: strong slate blue, clearly set off from the content
 2 = "#aeb3c6"   # inactive frame: a little darker and grayer than the window
 3 = "#8fa3bf"
-4 = "#bba78e"
-5 = "#e2e5ed"   # text areas: clearly lighter than the window
-6 = "#bec2d3"   # main window 190,194,211
-7 = "#bec2d3"
+4 = "#e2e5ed"   # text areas: clearly lighter than the window
+5 = "#bec2d3"   # main window 190,194,211
+6 = "#bec2d3"
+7 = "#bba78e"
 8 = "#969eb8"
 
 [schiefer]
-desktops = ["3", "4", "#7fa39a", "#b48f96", "#a8a47e", "#9c90b5", "#8faf8f", "#c09c7c"]
+desktops = ["3", "7", "#7fa39a", "#b48f96", "#a8a47e", "#9c90b5", "#8faf8f", "#c09c7c"]
 tooltip = "#ece9d6"

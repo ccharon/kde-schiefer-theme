@@ -9,11 +9,11 @@ variant = "light"
 1 = "#965e44"   # terracotta
 2 = "#c2b7a2"
 3 = "#b88a6a"
-4 = "#9aa47a"
-5 = "#e8e2d4"
-6 = "#ccc2ae"
-7 = "#c4baa6"
+4 = "#e8e2d4"
+5 = "#ccc2ae"
+6 = "#c4baa6"
+7 = "#9aa47a"
 8 = "#aa9c82"
 
 [schiefer]
-desktops = ["3", "4", "#c4a66e", "#8f9fae", "#a88a9a", "#7f9a8a", "#c09478", "#a09a80"]
+desktops = ["3", "7", "#c4a66e", "#8f9fae", "#a88a9a", "#7f9a8a", "#c09478", "#a09a80"]

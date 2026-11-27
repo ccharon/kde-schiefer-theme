@@ -35,7 +35,7 @@ src_compile() {
 }
 
 src_install() {
-	# palettes Schiefer, Sandstein, Jade, Granit, Basalt (switch with: schiefer-config palette <name>)
+	# palettes Schiefer, Broica, Sandstein, Jade, Granit, Basalt (switch with: schiefer-config palette <name>)
 	insinto /usr/share/color-schemes
 	doins colors/*.colors
 
