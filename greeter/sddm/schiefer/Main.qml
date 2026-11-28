@@ -1,7 +1,7 @@
 /*
  * Schiefer login (SDDM) after the CDE login (dtlogin): pattern backdrop, dialog with the
  * greeting, one field that first asks for the user name and then for the password, a picture
- * panel with the clock on the right. The name field starts with the last logged-in user
+ * panel with the emblem on the right. The name field starts with the last logged-in user
  * (SDDM RememberLastUser) or the only user; "Start Over" empties it.
  * Options: session, keyboard layout, sleep, restart, shut down.
  * SPDX-License-Identifier: GPL-2.0-or-later
@@ -32,7 +32,6 @@ Item {
     property string userName: ""
     property string message: ""
     property int sessionIndex: sessionModel.lastIndex >= 0 ? sessionModel.lastIndex : 0
-    property date now: new Date()
     readonly property string host: (config.hostName && config.hostName !== "") ? config.hostName : (sddm.hostName || sysHost)
     property string sysHost: ""
 
@@ -47,7 +46,6 @@ Item {
         Qt.callLater(() => askName(userModel.lastUser || (users.length === 1 ? users[0] : "")));
     }
 
-    Timer { interval: 1000; running: true; repeat: true; onTriggered: root.now = new Date() }
 
     // collect user and session names
     property var users: []
@@ -219,8 +217,6 @@ Item {
             Logo {
                 pal: pal
                 image: config.logo || ""
-                showClock: String(config.showClock) !== "false"
-                now: root.now
                 Layout.fillHeight: true
                 Layout.preferredWidth: 14 * pal.u
             }

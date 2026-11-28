@@ -117,8 +117,7 @@ The SDDM theme reads `/usr/share/sddm/themes/schiefer/theme.conf`, overridden by
 | `hostName` | text | system host name | large name on the panel |
 | `subtitle` | text | `PRETTY_NAME` from `/etc/os-release` | line below the host name |
 | `fontSize` | points | system font, at least 10 | text size |
-| `showClock` | bool | `true` | seven-segment clock in the picture panel |
-| `logo` | file | empty: emblem and name | image in the picture panel on the right, path relative to the theme or absolute |
+| `logo` | file | empty: emblem (three slate plates) | image in the picture panel on the right, path relative to the theme or absolute |
 | `background`, `backgroundColor`, `dialogColor`, `textColor`, `fieldColor`, `fieldTextColor`, `activeColor`, `activeTextColor`, `alertColor` | file, colors | system palette | appearance |
 
 ## Development

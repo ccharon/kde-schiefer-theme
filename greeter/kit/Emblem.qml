@@ -1,5 +1,6 @@
 /*
- * Emblem instead of a vendor logo: three staggered slate plates on a raised tile.
+ * Emblem instead of a vendor logo: three staggered slate plates on a raised tile
+ * (tile: false leaves out the tile and draws only the plates).
  * Colors from the palette (active frame), edges from the Motif formula.
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -9,14 +10,17 @@ import "Motif.js" as Motif
 Bevel {
     id: em
     required property Pal pal
+    property bool tile: true
     base: pal.bg
+    depth: tile ? 2 : 0
+    filled: tile
     implicitWidth: 4 * pal.u
     implicitHeight: implicitWidth
 
     Canvas {
         id: cv
         anchors.fill: parent
-        anchors.margins: 2
+        anchors.margins: em.depth
         onWidthChanged: requestPaint()
         Connections { target: em.pal; function onActiveChanged() { cv.requestPaint(); } }
         onPaint: {
