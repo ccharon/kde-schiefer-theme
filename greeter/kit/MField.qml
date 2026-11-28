@@ -44,7 +44,7 @@ Bevel {
         selectionColor: f.pal.active
         selectedTextColor: f.pal.activeText
         echoMode: f.password ? TextInput.Password : TextInput.Normal
-        passwordCharacter: "*"
+        passwordCharacter: "•"
         passwordMaskDelay: 0
         inputMethodHints: f.password ? Qt.ImhSensitiveData | Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhHiddenText : Qt.ImhNoAutoUppercase
         selectByMouse: true

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Offscreen image of the SDDM theme (no window): greeter/test-sddm.sh out.png [WIDTH HEIGHT]
-#   SCHIEFER_TEST_STAGE=user|pass|busy  SCHIEFER_TEST_MENU=1|user  SCHIEFER_TEST_MSG=1
+#   SCHIEFER_TEST_STAGE=user|pass|busy  SCHIEFER_TEST_MENU=1  SCHIEFER_TEST_MSG=1
 set -eu
 HERE="$(cd "$(dirname "$0")" && pwd)"
 OUT="$(realpath -m "$1")"; W="${2:-1600}"; H="${3:-1000}"
@@ -12,9 +12,11 @@ Item { id: r; width: $W; height: $H
   Loader { id: l; width: $W; height: $H; source: "Main.qml" }
   Timer { interval: 1500; running: true; onTriggered: {
       const m = l.item; const st = "${SCHIEFER_TEST_STAGE:-}";
-      if (st) { m.stage = st; m.userName = "christian"; }
+      if (st) m.askName("christian");
+      if (st === "pass" || st === "busy") { m.proceed(); }
+      if (st === "busy") m.stage = "busy";
       if ("${SCHIEFER_TEST_MSG:-}") m.message = "Login incorrect. Please try again.";
-      if ("${SCHIEFER_TEST_MENU:-}" === "user") m.openUsers(); else if ("${SCHIEFER_TEST_MENU:-}") m.openOptions();
+      if ("${SCHIEFER_TEST_MENU:-}") m.openOptions();
   } }
   Timer { interval: 2500; running: true; onTriggered: l.grabToImage(res => { res.saveToFile("$OUT"); Qt.quit(); }) } }
 QML
